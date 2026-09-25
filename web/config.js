@@ -1,0 +1,1 @@
+var SCRIPT_URL = "";
