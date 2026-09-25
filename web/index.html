@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ofKhorse</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main>
+      <p class="mark">ofKhorse</p>
+      <h1>Boom 2027</h1>
+      <p id="notice" class="notice"></p>
+
+      <section id="auth">
+        <form id="login-form">
+          <h2>Log in</h2>
+          <label>Email <input name="email" type="email" required /></label>
+          <label
+            >Password <input name="password" type="password" required
+          /></label>
+          <button class="solid" type="submit">Log in</button>
+        </form>
+        <form id="register-form">
+          <h2>Register</h2>
+          <label>Email <input name="email" type="email" required /></label>
+          <button class="solid" type="submit">Register</button>
+        </form>
+        <form id="reset-form">
+          <h2>New password</h2>
+          <label>Email <input name="email" type="email" required /></label>
+          <button class="solid" type="submit">Email me a password</button>
+        </form>
+      </section>
+
+      <section id="profile" hidden>
+        <p>
+          Your code is <code id="member-code"></code>. Put it in the payment
+          reference.
+        </p>
+        <p id="fee"></p>
+        <p id="tipi-count"></p>
+        <form id="profile-form">
+          <label>Full name <input name="full_name" /></label>
+          <label>
+            Sleeping
+            <select name="stay">
+              <option value="">Choose later</option>
+              <option value="tipi4">4-person tipi</option>
+              <option value="tipi5">5-person tipi</option>
+              <option value="van">Van or tent</option>
+            </select>
+          </label>
+          <label>Boomer ID <input name="boomer_id" /></label>
+          <label class="row">
+            <input name="purchased" type="checkbox" />
+            I bought a tipi
+          </label>
+          <label>
+            Tipi size
+            <select name="purchased_size">
+              <option value="">Size</option>
+              <option value="2">2</option>
+              <option value="4">4</option>
+              <option value="5">5</option>
+            </select>
+          </label>
+          <h2>Share a tipi with</h2>
+          <p>First choice at the top. The list can be longer than the tipi.</p>
+          <ol id="companions"></ol>
+          <label>
+            Add someone
+            <input id="companion-search" placeholder="Name or code" />
+          </label>
+          <div id="companion-matches"></div>
+          <h2>They picked you</h2>
+          <div id="picked-by"></div>
+          <button class="solid" type="submit">Save</button>
+          <button id="logout" type="button">Log out</button>
+        </form>
+        <section id="payments" hidden>
+          <h2>Payments</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Code</th>
+                <th>Amount</th>
+                <th>Reference</th>
+                <th>Camp fee</th>
+              </tr>
+            </thead>
+            <tbody id="payment-rows"></tbody>
+          </table>
+        </section>
+      </section>
+    </main>
+    <script src="config.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>

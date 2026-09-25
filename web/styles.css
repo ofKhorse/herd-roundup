@@ -1,0 +1,114 @@
+:root {
+  color: #1c1915;
+  background: #f4efe6;
+  font-family: "Iowan Old Style", "Palatino Linotype", Palatino, serif;
+  font-size: 18px;
+  line-height: 1.45;
+}
+
+body {
+  margin: 0;
+}
+
+main {
+  max-width: 38rem;
+  margin: 0 auto;
+  padding: 2rem 1.25rem 4rem;
+}
+
+h1,
+h2 {
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+h1 {
+  margin: 0 0 1.5rem;
+  font-size: 2.4rem;
+}
+
+.mark {
+  margin: 0;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+}
+
+form,
+.card {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0 0 1.5rem;
+}
+
+label {
+  display: grid;
+  gap: 0.25rem;
+}
+
+input,
+select,
+button {
+  font: inherit;
+}
+
+input,
+select {
+  padding: 0.45rem 0.55rem;
+  border: 1px solid #1c1915;
+  background: #fffdf8;
+}
+
+button,
+.linkish {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+button.solid {
+  background: #1f3d32;
+  color: #f4efe6;
+  text-decoration: none;
+  padding: 0.55rem 0.8rem;
+  justify-self: start;
+}
+
+.notice {
+  padding: 0.75rem 0;
+}
+
+.row {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.person {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid #ddd4c6;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  text-align: left;
+  padding: 0.35rem 0.4rem 0.35rem 0;
+  border-bottom: 1px solid #ddd4c6;
+  vertical-align: top;
+}
+
+code {
+  font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
