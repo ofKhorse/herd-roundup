@@ -289,3 +289,27 @@ test("save rejects companions who do not fit the rules", function () {
   assert.equal(missing.error, "That member code is not registered.");
   assert.equal(size.error, "Choose a tipi size of 2, 4, or 5.");
 });
+
+test("admins receive every payment row", function () {
+  const db = memoryDb();
+  const owner = context.handleAction(
+    { action: "register", email: "a@x.test" },
+    db,
+  );
+  context.handleAction({ action: "register", email: "b@x.test" }, db);
+  db.updatePerson("KH-001", { admin: "yes" });
+  db.updatePerson("KH-002", {
+    full_name: "Bea",
+    camp_fee_paid: "yes",
+    amount: "65",
+    payment_ref: "KH-002",
+  });
+  const result = context.handleAction(
+    { action: "login", email: "a@x.test", password: owner.password },
+    db,
+  );
+  assert.equal(result.payments.length, 2);
+  assert.equal(result.payments[1].full_name, "Bea");
+  assert.equal(result.payments[1].camp_fee_paid, "yes");
+  assert.equal(result.payments[1].amount, "65");
+});

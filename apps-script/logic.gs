@@ -226,8 +226,25 @@ function sessionView_(person, people) {
     tipi_count: people.filter(function (other) {
       return other.purchased === "yes";
     }).length,
-    payments: [],
+    payments: isAdmin_(person) ? paymentRows_(people) : [],
   };
+}
+
+function isAdmin_(person) {
+  return String(person.admin || "").toLowerCase() === "yes";
+}
+
+function paymentRows_(people) {
+  return people.map(function (other) {
+    return {
+      member_code: other.member_code,
+      full_name: other.full_name || "",
+      email: normalizeEmail_(other.email),
+      amount: other.amount || "",
+      payment_ref: other.payment_ref || "",
+      camp_fee_paid: other.camp_fee_paid || "",
+    };
+  });
 }
 
 function publicPerson_(person) {
