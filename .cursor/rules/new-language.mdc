@@ -1,0 +1,15 @@
+---
+description: Checklist required in the same pull request that adds a language
+alwaysApply: true
+---
+
+# New language
+
+The pull request that introduces a language also adds:
+
+- a formatter and a linter for that language
+- a CI job that runs them
+- an EditorConfig section when the language needs one
+- a short rule file that names the commands
+
+Follow the add-language skill for the steps.
