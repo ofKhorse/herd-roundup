@@ -1,0 +1,16 @@
+---
+description: Call direction and data boundaries for the camp page
+alwaysApply: true
+---
+
+# Architecture
+
+The page calls only the Apps Script web app URL. The script calls the private sheet and, later, Wise. The Wise token stays in Script properties, never in git or in the page.
+
+Sheet columns are append-only. Add a column. Do not rename or reuse one.
+
+Each script action is one function: `register`, `login`, `reset`, `save`. Return the same JSON shape from each. Validation lives in plain JavaScript. The page renders that JSON and does not repeat the rules.
+
+Copy a block twice before adding a helper. Stay on plain HTML, CSS, and JavaScript until a page needs a framework.
+
+Keep a file under about 300 lines. Split by action.
