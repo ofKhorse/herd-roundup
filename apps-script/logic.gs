@@ -1,4 +1,4 @@
-function handleAction(body, db) {
+function handleAction(body, db, deps) {
   if (!body) {
     return { ok: false, error: "Unknown action." };
   }
@@ -7,6 +7,9 @@ function handleAction(body, db) {
   }
   if (body.action === "login") {
     return loginPerson_(body, db);
+  }
+  if (body.action === "reset") {
+    return resetPassword_(body, db, deps || {});
   }
   return { ok: false, error: "Unknown action." };
 }
@@ -76,6 +79,18 @@ function nextMemberCode_(people) {
     number = "0" + number;
   }
   return "KH-" + number;
+}
+
+function resetPassword_(body, db, deps) {
+  var email = normalizeEmail_(body.email);
+  var person = findByEmail_(db.listPeople(), email);
+  if (!person) {
+    return { ok: false, error: "That email is not registered." };
+  }
+  var password = generatePassword_();
+  deps.sendPassword(email, password);
+  db.updatePerson(person.member_code, { password: password });
+  return { ok: true };
 }
 
 function loginPerson_(body, db) {
