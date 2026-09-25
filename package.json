@@ -3,7 +3,8 @@
   "private": true,
   "scripts": {
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "test": "node --test apps-script/logic.test.js"
   },
   "devDependencies": {
     "prettier": "3.6.2"
