@@ -135,3 +135,41 @@ test("login rejects an unknown email and a wrong password", function () {
   assert.equal(unknown.error, "That email is not registered.");
   assert.equal(wrong.error, "Wrong password.");
 });
+
+test("reset emails a new password", function () {
+  const db = memoryDb();
+  const registered = context.handleAction(
+    { action: "register", email: "a@x.test" },
+    db,
+  );
+  const sent = [];
+  const result = context.handleAction(
+    { action: "reset", email: "a@x.test" },
+    db,
+    {
+      sendPassword: function (email, password) {
+        sent.push([email, password]);
+      },
+    },
+  );
+  assert.equal(result.ok, true);
+  assert.equal(result.password, undefined);
+  assert.equal(sent.length, 1);
+  assert.equal(sent[0][0], "a@x.test");
+  assert.equal(db.listPeople()[0].password, sent[0][1]);
+  assert.notEqual(db.listPeople()[0].password, registered.password);
+});
+
+test("reset reports an unknown email", function () {
+  const result = context.handleAction(
+    { action: "reset", email: "missing@x.test" },
+    memoryDb(),
+    {
+      sendPassword: function () {
+        throw new Error("should not send");
+      },
+    },
+  );
+  assert.equal(result.ok, false);
+  assert.equal(result.error, "That email is not registered.");
+});
