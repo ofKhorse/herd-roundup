@@ -100,3 +100,38 @@ test("register rejects an invalid email", function () {
   assert.equal(result.error, "Enter a valid email.");
   assert.equal(db.listPeople().length, 0);
 });
+
+test("login returns the camper without the password", function () {
+  const db = memoryDb();
+  const registered = context.handleAction(
+    { action: "register", email: "a@x.test" },
+    db,
+  );
+  const result = context.handleAction(
+    { action: "login", email: "a@x.test", password: registered.password },
+    db,
+  );
+  assert.equal(result.ok, true);
+  assert.equal(result.person.member_code, "KH-001");
+  assert.equal(result.person.password, undefined);
+  assert.equal(result.tipi_count, 0);
+  assert.equal(result.payments.length, 0);
+});
+
+test("login rejects an unknown email and a wrong password", function () {
+  const db = memoryDb();
+  const registered = context.handleAction(
+    { action: "register", email: "a@x.test" },
+    db,
+  );
+  const unknown = context.handleAction(
+    { action: "login", email: "missing@x.test", password: "whatever" },
+    db,
+  );
+  const wrong = context.handleAction(
+    { action: "login", email: "a@x.test", password: registered.password + "x" },
+    db,
+  );
+  assert.equal(unknown.error, "That email is not registered.");
+  assert.equal(wrong.error, "Wrong password.");
+});
