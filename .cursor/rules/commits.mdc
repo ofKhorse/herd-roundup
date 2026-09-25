@@ -1,0 +1,16 @@
+---
+description: Squash merge and conventional pull request titles
+alwaysApply: true
+---
+
+# Commits
+
+Pull requests squash onto `main`. The pull request title is the commit.
+
+Types: `feat`, `fix`, `docs`, `chore`, `refactor`.
+
+```
+feat: add login page
+```
+
+One behavior per pull request. Do not add local commit hooks.
