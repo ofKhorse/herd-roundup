@@ -1,8 +1,14 @@
 function handleAction(body, db) {
-  if (!body || body.action !== "register") {
+  if (!body) {
     return { ok: false, error: "Unknown action." };
   }
-  return registerPerson_(body, db);
+  if (body.action === "register") {
+    return registerPerson_(body, db);
+  }
+  if (body.action === "login") {
+    return loginPerson_(body, db);
+  }
+  return { ok: false, error: "Unknown action." };
 }
 
 function registerPerson_(body, db) {
@@ -70,6 +76,67 @@ function nextMemberCode_(people) {
     number = "0" + number;
   }
   return "KH-" + number;
+}
+
+function loginPerson_(body, db) {
+  var people = db.listPeople();
+  var found = authenticatedPerson_(people, body);
+  if (found.error) {
+    return found;
+  }
+  return sessionView_(found.person, people);
+}
+
+function authenticatedPerson_(people, body) {
+  var email = normalizeEmail_(body.email);
+  var person = findByEmail_(people, email);
+  if (!person) {
+    return { ok: false, error: "That email is not registered." };
+  }
+  if (String(person.password) !== String(body.password || "")) {
+    return { ok: false, error: "Wrong password." };
+  }
+  return { person: person };
+}
+
+function sessionView_(person, people) {
+  return {
+    ok: true,
+    person: publicPerson_(person),
+    directory: people
+      .filter(function (other) {
+        return other.member_code !== person.member_code;
+      })
+      .map(function (other) {
+        return {
+          member_code: other.member_code,
+          full_name: other.full_name || "",
+          share_with: other.share_with || [],
+        };
+      }),
+    tipi_count: people.filter(function (other) {
+      return other.purchased === "yes";
+    }).length,
+    payments: [],
+  };
+}
+
+function publicPerson_(person) {
+  return {
+    member_code: person.member_code,
+    email: normalizeEmail_(person.email),
+    full_name: person.full_name || "",
+    admin: person.admin || "",
+    stay: person.stay || "",
+    purchased: person.purchased || "",
+    purchased_size: person.purchased_size || "",
+    purchased_at: person.purchased_at || "",
+    boomer_id: person.boomer_id || "",
+    share_with: person.share_with || [],
+    camp_fee_paid: person.camp_fee_paid || "",
+    amount: person.amount || "",
+    payment_ref: person.payment_ref || "",
+  };
 }
 
 function generatePassword_() {
