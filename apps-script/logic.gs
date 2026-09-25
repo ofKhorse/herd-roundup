@@ -11,6 +11,9 @@ function handleAction(body, db, deps) {
   if (body.action === "reset") {
     return resetPassword_(body, db, deps || {});
   }
+  if (body.action === "save") {
+    return savePerson_(body, db, deps || {});
+  }
   return { ok: false, error: "Unknown action." };
 }
 
@@ -91,6 +94,97 @@ function resetPassword_(body, db, deps) {
   deps.sendPassword(email, password);
   db.updatePerson(person.member_code, { password: password });
   return { ok: true };
+}
+
+function savePerson_(body, db, deps) {
+  var people = db.listPeople();
+  var found = authenticatedPerson_(people, body);
+  if (found.error) {
+    return found;
+  }
+  var person = found.person;
+  var stay = body.stay === undefined ? person.stay || "" : String(body.stay);
+  if (stay !== "" && stay !== "tipi4" && stay !== "tipi5" && stay !== "van") {
+    return { ok: false, error: "Choose tipi4, tipi5, or van." };
+  }
+  var shareWith =
+    body.share_with === undefined ? person.share_with || [] : body.share_with;
+  if (!Array.isArray(shareWith)) {
+    return { ok: false, error: "List companions as member codes." };
+  }
+  var seen = {};
+  for (var i = 0; i < shareWith.length; i++) {
+    var code = String(shareWith[i]);
+    if (code === person.member_code) {
+      return { ok: false, error: "You can't list yourself." };
+    }
+    if (seen[code]) {
+      return { ok: false, error: "List each person once." };
+    }
+    seen[code] = true;
+    if (!findByCode_(people, code)) {
+      return { ok: false, error: "That member code is not registered." };
+    }
+  }
+  if (shareWith.length > 0 && stay !== "tipi4" && stay !== "tipi5") {
+    return { ok: false, error: "Choose a tipi before adding people." };
+  }
+  var purchased =
+    body.purchased === undefined
+      ? person.purchased || ""
+      : String(body.purchased);
+  if (purchased !== "" && purchased !== "yes") {
+    return {
+      ok: false,
+      error: "Mark the tipi purchase as yes or leave it blank.",
+    };
+  }
+  var size =
+    body.purchased_size === undefined
+      ? person.purchased_size || ""
+      : String(body.purchased_size);
+  if (purchased === "yes" && size !== "2" && size !== "4" && size !== "5") {
+    return { ok: false, error: "Choose a tipi size of 2, 4, or 5." };
+  }
+  if (purchased !== "yes") {
+    size = "";
+  }
+  var purchasedAt = person.purchased_at || "";
+  if (purchased === "yes" && person.purchased !== "yes") {
+    purchasedAt = deps.now();
+  }
+  if (purchased !== "yes") {
+    purchasedAt = "";
+  }
+  db.updatePerson(person.member_code, {
+    full_name:
+      body.full_name === undefined
+        ? person.full_name || ""
+        : String(body.full_name).trim(),
+    stay: stay,
+    share_with: shareWith,
+    purchased: purchased,
+    purchased_size: size,
+    purchased_at: purchasedAt,
+    boomer_id:
+      body.boomer_id === undefined
+        ? person.boomer_id || ""
+        : String(body.boomer_id).trim(),
+  });
+  var updatedPeople = db.listPeople();
+  return sessionView_(
+    findByCode_(updatedPeople, person.member_code),
+    updatedPeople,
+  );
+}
+
+function findByCode_(people, code) {
+  for (var i = 0; i < people.length; i++) {
+    if (people[i].member_code === code) {
+      return people[i];
+    }
+  }
+  return null;
 }
 
 function loginPerson_(body, db) {

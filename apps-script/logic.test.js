@@ -173,3 +173,119 @@ test("reset reports an unknown email", function () {
   assert.equal(result.ok, false);
   assert.equal(result.error, "That email is not registered.");
 });
+
+test("save stores an ordered companion list and a tipi purchase", function () {
+  const db = memoryDb();
+  const owner = context.handleAction(
+    { action: "register", email: "a@x.test" },
+    db,
+  );
+  context.handleAction({ action: "register", email: "b@x.test" }, db);
+  context.handleAction({ action: "register", email: "c@x.test" }, db);
+  context.handleAction({ action: "register", email: "d@x.test" }, db);
+  context.handleAction({ action: "register", email: "e@x.test" }, db);
+  const result = context.handleAction(
+    {
+      action: "save",
+      email: "a@x.test",
+      password: owner.password,
+      full_name: "Aurel",
+      stay: "tipi4",
+      share_with: ["KH-002", "KH-003", "KH-004", "KH-005"],
+      purchased: "yes",
+      purchased_size: "4",
+      boomer_id: "B-9",
+    },
+    db,
+    {
+      now: function () {
+        return "2026-09-25T00:00:00.000Z";
+      },
+    },
+  );
+  assert.equal(result.ok, true);
+  assert.equal(result.person.full_name, "Aurel");
+  assert.equal(result.person.share_with.length, 4);
+  assert.equal(result.person.share_with[0], "KH-002");
+  assert.equal(result.person.purchased_at, "2026-09-25T00:00:00.000Z");
+  assert.equal(result.tipi_count, 1);
+  const again = context.handleAction(
+    {
+      action: "save",
+      email: "a@x.test",
+      password: owner.password,
+      full_name: "Aurel",
+      stay: "tipi4",
+      purchased: "yes",
+      purchased_size: "4",
+    },
+    db,
+    {
+      now: function () {
+        return "2026-10-01T00:00:00.000Z";
+      },
+    },
+  );
+  assert.equal(again.person.purchased_at, "2026-09-25T00:00:00.000Z");
+});
+
+test("save rejects companions who do not fit the rules", function () {
+  const db = memoryDb();
+  const owner = context.handleAction(
+    { action: "register", email: "a@x.test" },
+    db,
+  );
+  context.handleAction({ action: "register", email: "b@x.test" }, db);
+  const van = context.handleAction(
+    {
+      action: "save",
+      email: "a@x.test",
+      password: owner.password,
+      stay: "van",
+      share_with: ["KH-002"],
+    },
+    db,
+    {},
+  );
+  const self = context.handleAction(
+    {
+      action: "save",
+      email: "a@x.test",
+      password: owner.password,
+      stay: "tipi5",
+      share_with: ["KH-001"],
+    },
+    db,
+    {},
+  );
+  const missing = context.handleAction(
+    {
+      action: "save",
+      email: "a@x.test",
+      password: owner.password,
+      stay: "tipi5",
+      share_with: ["KH-999"],
+    },
+    db,
+    {},
+  );
+  const size = context.handleAction(
+    {
+      action: "save",
+      email: "a@x.test",
+      password: owner.password,
+      purchased: "yes",
+      purchased_size: "9",
+    },
+    db,
+    {
+      now: function () {
+        return "now";
+      },
+    },
+  );
+  assert.equal(van.error, "Choose a tipi before adding people.");
+  assert.equal(self.error, "You can't list yourself.");
+  assert.equal(missing.error, "That member code is not registered.");
+  assert.equal(size.error, "Choose a tipi size of 2, 4, or 5.");
+});
