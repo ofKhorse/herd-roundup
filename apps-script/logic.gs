@@ -227,8 +227,23 @@ function sessionView_(person, people) {
     tipi_count: people.filter(function (other) {
       return other.purchased === "yes";
     }).length,
+    tipi_by_size: isAdmin_(person) ? tipiBySize_(people) : null,
     payments: isAdmin_(person) ? paymentRows_(people) : [],
   };
+}
+
+function tipiBySize_(people) {
+  var counts = { "2": 0, "4": 0, "5": 0 };
+  people.forEach(function (person) {
+    if (person.purchased !== "yes") {
+      return;
+    }
+    var size = String(person.purchased_size);
+    if (size === "2" || size === "4" || size === "5") {
+      counts[size] += 1;
+    }
+  });
+  return counts;
 }
 
 function isAdmin_(person) {

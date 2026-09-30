@@ -10,7 +10,7 @@ document.querySelector("#register-form").addEventListener("submit", onRegister);
 document.querySelector("#reset-form").addEventListener("submit", onReset);
 document.querySelector("#profile-form").addEventListener("submit", onSave);
 document.querySelector("#logout").addEventListener("click", logout);
-document.querySelector("#payments-logout").addEventListener("click", logout);
+document.querySelector("#admin-logout").addEventListener("click", logout);
 window.addEventListener("hashchange", showView);
 var companionSearch = document.querySelector("#companion-search");
 var matchesOpen = false;
@@ -236,15 +236,31 @@ function renderPickedBy() {
 }
 
 function showView() {
-  var onPayments = state.admin && location.hash === "#payments";
+  var onAdmin =
+    state.admin &&
+    (location.hash === "#admin" || location.hash === "#payments");
   document.querySelector("#nav").hidden = !state.admin;
-  profile.hidden = !state.memberCode || onPayments;
-  document.querySelector("#payments").hidden = !onPayments;
+  profile.hidden = !state.memberCode || onAdmin;
+  document.querySelector("#admin").hidden = !onAdmin;
   document.querySelector("#show-camp").removeAttribute("aria-current");
-  document.querySelector("#show-payments").removeAttribute("aria-current");
+  document.querySelector("#show-admin").removeAttribute("aria-current");
   document
-    .querySelector(onPayments ? "#show-payments" : "#show-camp")
+    .querySelector(onAdmin ? "#show-admin" : "#show-camp")
     .setAttribute("aria-current", "page");
+}
+
+function renderTipiBySize(counts) {
+  var box = document.querySelector("#tipi-by-size");
+  box.innerHTML = "";
+  [
+    ["2", "2-person"],
+    ["4", "4-person"],
+    ["5", "5-person"],
+  ].forEach(function (pair) {
+    var line = document.createElement("p");
+    line.textContent = pair[1] + ": " + (counts[pair[0]] || 0);
+    box.appendChild(line);
+  });
 }
 
 function renderPayments(result) {
@@ -252,11 +268,12 @@ function renderPayments(result) {
   body.innerHTML = "";
   state.admin = result.person.admin === "yes";
   if (!state.admin) {
-    if (location.hash === "#payments") {
+    if (location.hash === "#admin" || location.hash === "#payments") {
       history.replaceState(null, "", location.pathname + location.search);
     }
     return;
   }
+  renderTipiBySize(result.tipi_by_size || {});
   result.payments.forEach(function (payment) {
     var row = document.createElement("tr");
     [
@@ -350,7 +367,7 @@ function logout() {
     history.replaceState(null, "", location.pathname + location.search);
   }
   profile.hidden = true;
-  document.querySelector("#payments").hidden = true;
+  document.querySelector("#admin").hidden = true;
   document.querySelector("#nav").hidden = true;
   auth.hidden = false;
   say("Logged out.");
