@@ -182,6 +182,22 @@ button.solid {
   text-decoration: underline;
 }
 
+.pay .qr {
+  display: block;
+  width: fit-content;
+  margin: 0.75rem 0 0.15rem;
+}
+
+.pay .qr img {
+  display: block;
+  width: 11rem;
+  height: auto;
+}
+
+.pay details a:not(.qr) {
+  color: inherit;
+}
+
 .pay ol {
   margin: 0.6rem 0;
   padding-left: 1.25rem;
