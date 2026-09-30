@@ -6,11 +6,11 @@ const { assignTipis } = require("./tipis");
 test("reads a sizes list and a people export", function () {
   assert.deepEqual(parseSizes("5x2,4"), [5, 5, 4]);
   const people = peopleFromCsv(
-    'member_code,full_name,stay,share_with\nA,"Ada, A.",tipi6,"B, C"\n',
+    'member_code,full_name,stay,share_with\nA,"Ada, A.",6,"B, C"\n',
   );
   assert.equal(people[0].full_name, "Ada, A.");
   assert.deepEqual(people[0].share_with, ["B", "C"]);
-  assert.equal(people[0].stay, "tipi6");
+  assert.equal(people[0].stay, "6");
 });
 
 test("writes one assignment row per person", function () {

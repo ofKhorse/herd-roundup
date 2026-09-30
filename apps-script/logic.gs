@@ -105,8 +105,8 @@ function savePerson_(body, db, deps) {
   }
   var person = found.person;
   var stay = body.stay === undefined ? person.stay || "" : String(body.stay);
-  if (stay !== "" && !isStay_(stay)) {
-    return { ok: false, error: stayListError_() };
+  if (stay !== "" && !isPreference_(stay)) {
+    return { ok: false, error: preferenceError_() };
   }
   var shareWith =
     body.share_with === undefined ? person.share_with || [] : body.share_with;
@@ -127,8 +127,11 @@ function savePerson_(body, db, deps) {
       return { ok: false, error: "That member kode is not registered." };
     }
   }
-  if (shareWith.length > 0 && !isStay_(stay)) {
-    return { ok: false, error: "Khoose where you sleep before adding people." };
+  if (shareWith.length > 0 && !isPreference_(stay)) {
+    return {
+      ok: false,
+      error: "Khoose a sleeping preference before adding people.",
+    };
   }
   var purchased =
     body.purchased === undefined
@@ -144,8 +147,8 @@ function savePerson_(body, db, deps) {
     body.purchased_size === undefined
       ? person.purchased_size || ""
       : String(body.purchased_size);
-  if (purchased === "yes" && !isStay_(size)) {
-    return { ok: false, error: stayListError_() };
+  if (purchased === "yes" && !isPurchase_(size)) {
+    return { ok: false, error: purchaseError_() };
   }
   if (purchased !== "yes") {
     size = "";
@@ -232,13 +235,21 @@ function sessionView_(person, people) {
   };
 }
 
-function isStay_(stay) {
+function isPreference_(stay) {
+  return stay === "2" || stay === "4" || stay === "5" || stay === "6";
+}
+
+function isPurchase_(size) {
   return (
-    stay === "tipi2" || stay === "star2" || stay === "star5" || stay === "tipi6"
+    size === "tipi2" || size === "star2" || size === "star5" || size === "tipi6"
   );
 }
 
-function stayListError_() {
+function preferenceError_() {
+  return "Khoose a sleeping preference of 2, 4, 5, or 6 people.";
+}
+
+function purchaseError_() {
   return "Khoose Tipi, up to 2 people, Star Tent, up to 2 people, Star Tent, up to 5 people, or Tipi, up to 6 people.";
 }
 
@@ -249,7 +260,7 @@ function tipiBySize_(people) {
       return;
     }
     var size = String(person.purchased_size);
-    if (isStay_(size)) {
+    if (isPurchase_(size)) {
       counts[size] += 1;
     }
   });

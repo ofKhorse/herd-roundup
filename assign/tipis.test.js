@@ -5,8 +5,8 @@ const { assignTipis } = require("./tipis");
 test("keeps mutual top picks together and skips vans", function () {
   const result = assignTipis(
     [
-      { member_code: "A", stay: "tipi6", share_with: ["B", "C"] },
-      { member_code: "B", stay: "tipi6", share_with: ["A"] },
+      { member_code: "A", stay: "6", share_with: ["B", "C"] },
+      { member_code: "B", stay: "6", share_with: ["A"] },
       { member_code: "C", stay: "", share_with: ["A"] },
       { member_code: "D", stay: "van", share_with: ["A"] },
     ],

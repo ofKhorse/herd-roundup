@@ -190,13 +190,13 @@ function scoreDelta(chosen, block, size, weights, byCode) {
 }
 
 function stayCapacity(stay) {
-  if (stay === "tipi2" || stay === "star2") {
+  if (stay === "2") {
     return 2;
   }
-  if (stay === "star5") {
+  if (stay === "4" || stay === "5") {
     return 5;
   }
-  if (stay === "tipi6") {
+  if (stay === "6") {
     return 6;
   }
   return 0;

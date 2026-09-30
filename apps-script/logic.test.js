@@ -210,7 +210,7 @@ test("save stores an ordered companion list and a tipi purchase", function () {
       email: "a@x.test",
       password: owner.password,
       full_name: "Aurel",
-      stay: "tipi6",
+      stay: "6",
       share_with: ["KH-002", "KH-003", "KH-004", "KH-005"],
       purchased: "yes",
       purchased_size: "tipi6",
@@ -235,7 +235,7 @@ test("save stores an ordered companion list and a tipi purchase", function () {
       email: "a@x.test",
       password: owner.password,
       full_name: "Aurel",
-      stay: "tipi6",
+      stay: "6",
       purchased: "yes",
       purchased_size: "tipi6",
     },
@@ -269,7 +269,7 @@ test("save rejects companions who do not fit the rules", function () {
       action: "save",
       email: "a@x.test",
       password: owner.password,
-      stay: "star5",
+      stay: "5",
       share_with: ["KH-001"],
     },
     db,
@@ -280,7 +280,7 @@ test("save rejects companions who do not fit the rules", function () {
       action: "save",
       email: "a@x.test",
       password: owner.password,
-      stay: "star5",
+      stay: "5",
       share_with: ["KH-999"],
     },
     db,
@@ -301,7 +301,7 @@ test("save rejects companions who do not fit the rules", function () {
       },
     },
   );
-  assert.equal(van.error, "Khoose where you sleep before adding people.");
+  assert.equal(van.error, "Khoose a sleeping preference before adding people.");
   assert.equal(self.error, "You kan't list yourself.");
   assert.equal(missing.error, "That member kode is not registered.");
   assert.equal(
