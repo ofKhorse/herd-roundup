@@ -86,36 +86,44 @@
               <label>Boomer ID <input name="boomer_id" /></label>
             </div>
             <div class="card">
-              <h2>Sleeping</h2>
-              <select name="stay" aria-label="Sleeping">
-                <option value="">Choose later</option>
-                <option value="tipi4">4-person tipi</option>
-                <option value="tipi5">5-person tipi</option>
-                <option value="van">Van or tent</option>
+              <h2>Sleeping preference</h2>
+              <select name="stay" aria-label="Sleeping preference">
+                <option value="">Khoose later</option>
+                <option value="2">2 people — rare (Tipi or Star Tent)</option>
+                <option value="4">
+                  4 people — underutilized 5-person tent, if available
+                </option>
+                <option value="5">5 people — Star Tent</option>
+                <option value="6">6 people — rare (Tipi)</option>
               </select>
+              <p>
+                2 people is super rare. 6 people is rare. 4 people only if
+                available.
+              </p>
             </div>
           </div>
           <div class="card">
-            <h2>Tipi you bought</h2>
+            <h2>What you bought</h2>
             <label class="row">
               <input name="purchased" type="checkbox" />
-              I bought a tipi
+              I bought one
             </label>
             <label>
-              Tipi size
+              Which one
               <select name="purchased_size">
-                <option value="">Size</option>
-                <option value="2">2</option>
-                <option value="4">4</option>
-                <option value="5">5</option>
+                <option value="">Khoose one</option>
+                <option value="tipi2">Tipi, up to 2 people</option>
+                <option value="star2">Star Tent, up to 2 people</option>
+                <option value="star5">Star Tent, up to 5 people</option>
+                <option value="tipi6">Tipi, up to 6 people</option>
               </select>
             </label>
           </div>
           <div class="card">
-            <h2>Share a tipi</h2>
+            <h2>Share</h2>
             <p>
-              First choice at the top. The list can be longer than the tipi.
-              Click Save to store it. Choose a 4- or 5-person tipi first.
+              First khoice at the top. The list kan be longer than the tent.
+              Klick Save to store it. Khoose a sleeping preference first.
             </p>
             <ol id="companions"></ol>
             <label>
@@ -135,7 +143,7 @@
 
       <section id="admin" class="stack" hidden>
         <div class="card">
-          <h2>Tipis bought</h2>
+          <h2>Bought</h2>
           <div id="tipi-by-size"></div>
         </div>
         <div class="card">

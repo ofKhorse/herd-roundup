@@ -253,9 +253,10 @@ function renderTipiBySize(counts) {
   var box = document.querySelector("#tipi-by-size");
   box.innerHTML = "";
   [
-    ["2", "2-person"],
-    ["4", "4-person"],
-    ["5", "5-person"],
+    ["tipi2", "Tipi, up to 2 people"],
+    ["star2", "Star Tent, up to 2 people"],
+    ["star5", "Star Tent, up to 5 people"],
+    ["tipi6", "Tipi, up to 6 people"],
   ].forEach(function (pair) {
     var line = document.createElement("p");
     line.textContent = pair[1] + ": " + (counts[pair[0]] || 0);

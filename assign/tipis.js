@@ -189,6 +189,19 @@ function scoreDelta(chosen, block, size, weights, byCode) {
   return after - before;
 }
 
+function stayCapacity(stay) {
+  if (stay === "2") {
+    return 2;
+  }
+  if (stay === "4" || stay === "5") {
+    return 5;
+  }
+  if (stay === "6") {
+    return 6;
+  }
+  return 0;
+}
+
 function scoreCodes(codes, size, weights, byCode) {
   var score = 0;
   for (var i = 0; i < codes.length; i++) {
@@ -196,7 +209,7 @@ function scoreCodes(codes, size, weights, byCode) {
       score += weightBetween(weights, codes[i], codes[j]);
     }
     var stay = byCode[codes[i]].stay;
-    if ((stay === "tipi4" && size === 4) || (stay === "tipi5" && size === 5)) {
+    if (stayCapacity(stay) === size) {
       score += 0.05;
     }
   }

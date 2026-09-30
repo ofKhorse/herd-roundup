@@ -210,10 +210,10 @@ test("save stores an ordered companion list and a tipi purchase", function () {
       email: "a@x.test",
       password: owner.password,
       full_name: "Aurel",
-      stay: "tipi4",
+      stay: "6",
       share_with: ["KH-002", "KH-003", "KH-004", "KH-005"],
       purchased: "yes",
-      purchased_size: "4",
+      purchased_size: "tipi6",
       boomer_id: "B-9",
     },
     db,
@@ -235,9 +235,9 @@ test("save stores an ordered companion list and a tipi purchase", function () {
       email: "a@x.test",
       password: owner.password,
       full_name: "Aurel",
-      stay: "tipi4",
+      stay: "6",
       purchased: "yes",
-      purchased_size: "4",
+      purchased_size: "tipi6",
     },
     db,
     {
@@ -258,7 +258,7 @@ test("save rejects companions who do not fit the rules", function () {
       action: "save",
       email: "a@x.test",
       password: owner.password,
-      stay: "van",
+      stay: "",
       share_with: ["KH-002"],
     },
     db,
@@ -269,7 +269,7 @@ test("save rejects companions who do not fit the rules", function () {
       action: "save",
       email: "a@x.test",
       password: owner.password,
-      stay: "tipi5",
+      stay: "5",
       share_with: ["KH-001"],
     },
     db,
@@ -280,7 +280,7 @@ test("save rejects companions who do not fit the rules", function () {
       action: "save",
       email: "a@x.test",
       password: owner.password,
-      stay: "tipi5",
+      stay: "5",
       share_with: ["KH-999"],
     },
     db,
@@ -292,7 +292,7 @@ test("save rejects companions who do not fit the rules", function () {
       email: "a@x.test",
       password: owner.password,
       purchased: "yes",
-      purchased_size: "9",
+      purchased_size: "4",
     },
     db,
     {
@@ -301,10 +301,13 @@ test("save rejects companions who do not fit the rules", function () {
       },
     },
   );
-  assert.equal(van.error, "Choose a tipi before adding people.");
-  assert.equal(self.error, "You can't list yourself.");
-  assert.equal(missing.error, "That member code is not registered.");
-  assert.equal(size.error, "Choose a tipi size of 2, 4, or 5.");
+  assert.equal(van.error, "Khoose a sleeping preference before adding people.");
+  assert.equal(self.error, "You kan't list yourself.");
+  assert.equal(missing.error, "That member kode is not registered.");
+  assert.equal(
+    size.error,
+    "Khoose Tipi, up to 2 people, Star Tent, up to 2 people, Star Tent, up to 5 people, or Tipi, up to 6 people.",
+  );
 });
 
 test("admins receive every payment row", function () {
@@ -314,7 +317,7 @@ test("admins receive every payment row", function () {
   db.updatePerson("KH-001", {
     admin: "yes",
     purchased: "yes",
-    purchased_size: "4",
+    purchased_size: "tipi6",
   });
   db.updatePerson("KH-002", {
     full_name: "Bea",
@@ -322,15 +325,16 @@ test("admins receive every payment row", function () {
     amount: "65",
     payment_ref: "KH-002",
     purchased: "yes",
-    purchased_size: "5",
+    purchased_size: "star5",
   });
   const result = context.handleAction(
     { action: "login", email: "a@x.test", password: owner.password },
     db,
   );
-  assert.equal(result.tipi_by_size["2"], 0);
-  assert.equal(result.tipi_by_size["4"], 1);
-  assert.equal(result.tipi_by_size["5"], 1);
+  assert.equal(result.tipi_by_size.tipi2, 0);
+  assert.equal(result.tipi_by_size.star2, 0);
+  assert.equal(result.tipi_by_size.star5, 1);
+  assert.equal(result.tipi_by_size.tipi6, 1);
   assert.equal(result.payments.length, 2);
   assert.equal(result.payments[1].full_name, "Bea");
   assert.equal(result.payments[1].camp_fee_paid, "yes");
