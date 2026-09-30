@@ -302,8 +302,8 @@ test("save rejects companions who do not fit the rules", function () {
     },
   );
   assert.equal(van.error, "Choose a tipi before adding people.");
-  assert.equal(self.error, "You can't list yourself.");
-  assert.equal(missing.error, "That member code is not registered.");
+  assert.equal(self.error, "You kan't list yourself.");
+  assert.equal(missing.error, "That member kode is not registered.");
   assert.equal(size.error, "Choose a tipi size of 2, 4, or 5.");
 });
 

@@ -145,8 +145,8 @@ function showSession(result) {
     result.person.member_code;
   document.querySelector("#fee").textContent =
     result.person.camp_fee_paid === "yes"
-      ? "Camp fee marked paid."
-      : "Camp fee not marked paid yet.";
+      ? "Kamp fee marked paid."
+      : "Kamp fee not marked paid yet.";
   document.querySelector("#tipi-count").textContent =
     result.tipi_count + " tipis marked as bought.";
   var form = document.querySelector("#profile-form");

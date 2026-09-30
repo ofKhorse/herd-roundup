@@ -1,6 +1,6 @@
 function handleAction(body, db, deps) {
   if (!body) {
-    return { ok: false, error: "Unknown action." };
+    return { ok: false, error: "Unknown aktion." };
   }
   if (body.action === "register") {
     return registerPerson_(body, db, deps || {});
@@ -14,7 +14,7 @@ function handleAction(body, db, deps) {
   if (body.action === "save") {
     return savePerson_(body, db, deps || {});
   }
-  return { ok: false, error: "Unknown action." };
+  return { ok: false, error: "Unknown aktion." };
 }
 
 function registerPerson_(body, db, deps) {
@@ -111,20 +111,20 @@ function savePerson_(body, db, deps) {
   var shareWith =
     body.share_with === undefined ? person.share_with || [] : body.share_with;
   if (!Array.isArray(shareWith)) {
-    return { ok: false, error: "List companions as member codes." };
+    return { ok: false, error: "List kompanions as member kodes." };
   }
   var seen = {};
   for (var i = 0; i < shareWith.length; i++) {
     var code = String(shareWith[i]);
     if (code === person.member_code) {
-      return { ok: false, error: "You can't list yourself." };
+      return { ok: false, error: "You kan't list yourself." };
     }
     if (seen[code]) {
-      return { ok: false, error: "List each person once." };
+      return { ok: false, error: "List eakh person once." };
     }
     seen[code] = true;
     if (!findByCode_(people, code)) {
-      return { ok: false, error: "That member code is not registered." };
+      return { ok: false, error: "That member kode is not registered." };
     }
   }
   if (shareWith.length > 0 && stay !== "tipi4" && stay !== "tipi5") {
@@ -137,7 +137,7 @@ function savePerson_(body, db, deps) {
   if (purchased !== "" && purchased !== "yes") {
     return {
       ok: false,
-      error: "Mark the tipi purchase as yes or leave it blank.",
+      error: "Mark the tipi purkhase as yes or leave it blank.",
     };
   }
   var size =
