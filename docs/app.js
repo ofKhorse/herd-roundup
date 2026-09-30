@@ -14,6 +14,9 @@ document.querySelector("#admin-logout").addEventListener("click", logout);
 window.addEventListener("hashchange", showView);
 document.querySelector("#village-select").addEventListener("change", syncStay);
 document.querySelector("#size-select").addEventListener("change", syncStay);
+document
+  .querySelector("[name=sale_available]")
+  .addEventListener("change", syncKaptain);
 
 var companionSearch = document.querySelector("#companion-search");
 var matchesOpen = false;
@@ -134,6 +137,8 @@ function onSave(event) {
     purchased_size: data.get("purchased_size"),
     whatsapp: data.get("whatsapp"),
     share_with: state.companions,
+    sale_available: data.get("sale_available") === "yes" ? "yes" : "",
+    kaptain: data.get("kaptain") === "yes" ? "yes" : "",
   };
   if (credentials.token) {
     body.token = credentials.token;
@@ -178,11 +183,22 @@ function showSession(result) {
   form.whatsapp.value = result.person.whatsapp || "";
   form.purchased.checked = result.person.purchased === "yes";
   form.purchased_size.value = result.person.purchased_size;
+  form.sale_available.value = result.person.sale_available || "";
+  form.kaptain.value = result.person.kaptain || "";
+  syncKaptain();
   renderCompanions();
   renderMatches();
   renderPickedBy();
   renderPayments(result);
   showView();
+}
+
+function syncKaptain() {
+  var available = document.querySelector("[name=sale_available]").value;
+  document.querySelector("#kaptain-row").hidden = available !== "yes";
+  if (available !== "yes") {
+    document.querySelector("[name=kaptain]").value = "";
+  }
 }
 
 function syncStay() {
