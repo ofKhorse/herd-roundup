@@ -50,6 +50,23 @@ h2 {
   font-size: 0.8rem;
 }
 
+.nav {
+  display: flex;
+  gap: 1.25rem;
+  margin: 0 0 0.25rem;
+}
+
+.nav a {
+  color: inherit;
+  min-height: 44px;
+  line-height: 44px;
+}
+
+.nav a[aria-current="page"] {
+  font-weight: 600;
+  text-decoration: none;
+}
+
 .stack,
 .card,
 .pair,
@@ -133,7 +150,8 @@ button.solid {
   gap: 0.75rem;
 }
 
-.actions #logout {
+.actions #logout,
+#payments-logout {
   min-height: 44px;
   text-align: center;
 }
@@ -257,7 +275,8 @@ code {
     justify-self: start;
   }
 
-  .actions #logout {
+  .actions #logout,
+  #payments-logout {
     text-align: left;
   }
 }
