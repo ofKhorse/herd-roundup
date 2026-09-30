@@ -174,6 +174,19 @@ function showSession(result) {
     result.person.camp_fee_paid === "yes"
       ? "Kamp fee marked paid."
       : "Kamp fee not marked paid yet.";
+  var feeOwed = result.person.fee_owed;
+  var recorded = Number(result.person.amount) || 0;
+  var feeOwedEl = document.querySelector("#fee-owed");
+  var feeSummaryEl = document.querySelector("#fee-summary");
+  if (feeOwed != null) {
+    feeOwedEl.textContent =
+      "You owe " + feeOwed + " EUR. We recorded " + recorded + " EUR.";
+    feeSummaryEl.textContent =
+      "You owe " + feeOwed + " EUR. We recorded " + recorded + " EUR.";
+  } else {
+    feeOwedEl.textContent = "Choose whether you kamp with us to see your fee.";
+    feeSummaryEl.textContent = "";
+  }
   document.querySelector("#tipi-count").textContent =
     result.tipi_count + " tipis marked as bought.";
   var form = document.querySelector("#profile-form");
