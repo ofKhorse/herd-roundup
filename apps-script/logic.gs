@@ -143,7 +143,13 @@ function savePerson_(body, db, deps) {
     body.purchased_size === undefined
       ? person.purchased_size || ""
       : String(body.purchased_size);
-  if (purchased === "yes" && size !== "2" && size !== "4" && size !== "5") {
+  if (
+    purchased === "yes" &&
+    size !== "" &&
+    size !== "2" &&
+    size !== "4" &&
+    size !== "5"
+  ) {
     return { ok: false, error: "Choose a tipi size of 2, 4, or 5." };
   }
   if (purchased !== "yes") {

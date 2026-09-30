@@ -97,8 +97,8 @@ function onSave(event) {
         say(result.error);
         return;
       }
-      say("Saved.");
       showSession(result);
+      say("Saved.");
     })
     .catch(fail);
 }

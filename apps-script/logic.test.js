@@ -229,6 +229,34 @@ test("save stores an ordered companion list and a tipi purchase", function () {
   assert.equal(again.person.purchased_at, "2026-09-25T00:00:00.000Z");
 });
 
+test("save records a tipi purchase without a size", function () {
+  const db = memoryDb();
+  const owner = context.handleAction(
+    { action: "register", email: "a@x.test" },
+    db,
+  );
+  const result = context.handleAction(
+    {
+      action: "save",
+      email: "a@x.test",
+      password: owner.password,
+      purchased: "yes",
+      purchased_size: "",
+    },
+    db,
+    {
+      now: function () {
+        return "2026-09-25T00:00:00.000Z";
+      },
+    },
+  );
+  assert.equal(result.ok, true);
+  assert.equal(result.person.purchased, "yes");
+  assert.equal(result.person.purchased_size, "");
+  assert.equal(result.person.purchased_at, "2026-09-25T00:00:00.000Z");
+  assert.equal(result.tipi_count, 1);
+});
+
 test("save rejects companions who do not fit the rules", function () {
   const db = memoryDb();
   const owner = context.handleAction(
