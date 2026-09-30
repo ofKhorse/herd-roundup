@@ -12,103 +12,123 @@
       <h1>Boom 2027</h1>
       <p id="notice" class="notice"></p>
 
-      <section id="auth">
-        <form id="login-form">
+      <section id="auth" class="stack">
+        <form id="login-form" class="card">
           <h2>Log in</h2>
           <label>Email <input name="email" type="email" required /></label>
-          <label
-            >Password <input name="password" type="password" required
-          /></label>
+          <label>
+            Password <input name="password" type="password" required />
+          </label>
           <button class="solid" type="submit">Log in</button>
         </form>
-        <form id="register-form">
-          <h2>Register</h2>
-          <label>Email <input name="email" type="email" required /></label>
-          <button class="solid" type="submit">Register</button>
-        </form>
-        <form id="reset-form">
-          <h2>New password</h2>
-          <label>Email <input name="email" type="email" required /></label>
-          <button class="solid" type="submit">Email me a password</button>
-        </form>
+        <div class="pair">
+          <form id="register-form" class="card">
+            <h2>Register</h2>
+            <label>Email <input name="email" type="email" required /></label>
+            <button class="solid" type="submit">Register</button>
+          </form>
+          <form id="reset-form" class="card">
+            <h2>New password</h2>
+            <label>Email <input name="email" type="email" required /></label>
+            <button class="solid" type="submit">Email me a password</button>
+          </form>
+        </div>
       </section>
 
-      <section id="profile" hidden>
-        <div class="pay">
-          <p>Your code is <code id="member-code"></code>.</p>
-          <details>
-            <summary>How to pay</summary>
-            <ol>
-              <li>Open the camp Leetchi pot.</li>
-              <li>Click Participate and pay the camp fee by card.</li>
-              <li>
-                On the confirmation page, leave a message that is only your
-                code.
-              </li>
-              <li>
-                If you skip that, open the pot later. Sign in, or create a
-                Leetchi account, with the same email you paid with. Under
-                Messages, choose Write, and attach the message to that payment.
-              </li>
-              <li>
-                To correct a message, open Messages, choose the three dots
-                beside it, then Edit and Save.
-              </li>
-              <li>
-                Deleting the message is final for that payment. Leetchi will not
-                let you add another one unless you pay again.
-              </li>
-            </ol>
-            <p>
-              The message is public on the pot page. That code is how we match
-              your payment.
-            </p>
-          </details>
+      <section id="profile" class="stack" hidden>
+        <div class="card">
+          <h2>Your code</h2>
+          <div class="pay">
+            <p>Your code is <code id="member-code"></code>.</p>
+            <details>
+              <summary>How to pay</summary>
+              <ol>
+                <li>Open the camp Leetchi pot.</li>
+                <li>Click Participate and pay the camp fee by card.</li>
+                <li>
+                  On the confirmation page, leave a message that is only your
+                  code.
+                </li>
+                <li>
+                  If you skip that, open the pot later. Sign in, or create a
+                  Leetchi account, with the same email you paid with. Under
+                  Messages, choose Write, and attach the message to that
+                  payment.
+                </li>
+                <li>
+                  To correct a message, open Messages, choose the three dots
+                  beside it, then Edit and Save.
+                </li>
+                <li>
+                  Deleting the message is final for that payment. Leetchi will
+                  not let you add another one unless you pay again.
+                </li>
+              </ol>
+              <p>
+                The message is public on the pot page. That code is how we match
+                your payment.
+              </p>
+            </details>
+          </div>
+          <p id="fee"></p>
+          <p id="tipi-count"></p>
         </div>
-        <p id="fee"></p>
-        <p id="tipi-count"></p>
-        <form id="profile-form">
-          <label>Full name <input name="full_name" /></label>
-          <label>
-            Sleeping
-            <select name="stay">
-              <option value="">Choose later</option>
-              <option value="tipi4">4-person tipi</option>
-              <option value="tipi5">5-person tipi</option>
-              <option value="van">Van or tent</option>
-            </select>
-          </label>
-          <label>Boomer ID <input name="boomer_id" /></label>
-          <label class="row">
-            <input name="purchased" type="checkbox" />
-            I bought a tipi
-          </label>
-          <label>
-            Tipi size
-            <select name="purchased_size">
-              <option value="">Size</option>
-              <option value="2">2</option>
-              <option value="4">4</option>
-              <option value="5">5</option>
-            </select>
-          </label>
-          <h2>Share a tipi with</h2>
-          <p>
-            First choice at the top. The list can be longer than the tipi. Click
-            Save to store it. Choose a 4- or 5-person tipi first.
-          </p>
-          <ol id="companions"></ol>
-          <label>
-            Add someone
-            <input id="companion-search" placeholder="Name or code" />
-          </label>
-          <div id="companion-matches"></div>
-          <h2>They picked you</h2>
-          <div id="picked-by"></div>
-          <button class="solid" type="submit">Save</button>
-          <button id="logout" type="button">Log out</button>
+
+        <form id="profile-form" class="stack">
+          <div class="pair">
+            <div class="card">
+              <h2>You</h2>
+              <label>Full name <input name="full_name" /></label>
+              <label>Boomer ID <input name="boomer_id" /></label>
+            </div>
+            <div class="card">
+              <h2>Sleeping</h2>
+              <select name="stay" aria-label="Sleeping">
+                <option value="">Choose later</option>
+                <option value="tipi4">4-person tipi</option>
+                <option value="tipi5">5-person tipi</option>
+                <option value="van">Van or tent</option>
+              </select>
+            </div>
+          </div>
+          <div class="card">
+            <h2>Tipi you bought</h2>
+            <label class="row">
+              <input name="purchased" type="checkbox" />
+              I bought a tipi
+            </label>
+            <label>
+              Tipi size
+              <select name="purchased_size">
+                <option value="">Size</option>
+                <option value="2">2</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+              </select>
+            </label>
+          </div>
+          <div class="card">
+            <h2>Share a tipi</h2>
+            <p>
+              First choice at the top. The list can be longer than the tipi.
+              Click Save to store it. Choose a 4- or 5-person tipi first.
+            </p>
+            <ol id="companions"></ol>
+            <label>
+              Add someone
+              <input id="companion-search" placeholder="Name or code" />
+            </label>
+            <div id="companion-matches"></div>
+            <h2>They picked you</h2>
+            <div id="picked-by"></div>
+          </div>
+          <div class="actions">
+            <button class="solid" type="submit">Save</button>
+            <button id="logout" type="button">Log out</button>
+          </div>
         </form>
-        <section id="payments" hidden>
+
+        <section id="payments" class="card" hidden>
           <h2>Payments</h2>
           <table>
             <thead>

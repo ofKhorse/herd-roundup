@@ -6,14 +6,25 @@
   line-height: 1.45;
 }
 
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+[hidden] {
+  display: none !important;
+}
+
 body {
   margin: 0;
 }
 
 main {
-  max-width: 38rem;
+  width: 100%;
+  max-width: 40rem;
   margin: 0 auto;
-  padding: 2rem 1.25rem 4rem;
+  padding: 1.25rem 1rem 3rem;
 }
 
 h1,
@@ -23,8 +34,13 @@ h2 {
 }
 
 h1 {
-  margin: 0 0 1.5rem;
+  margin: 0 0 1.25rem;
   font-size: 2.4rem;
+}
+
+h2 {
+  margin: 0;
+  font-size: 1.35rem;
 }
 
 .mark {
@@ -34,29 +50,62 @@ h1 {
   font-size: 0.8rem;
 }
 
-form,
+.stack,
+.card,
+.pair,
+.actions {
+  min-width: 0;
+}
+
+.stack {
+  display: grid;
+  gap: 1rem;
+}
+
+.pair {
+  display: grid;
+  gap: 1rem;
+}
+
 .card {
   display: grid;
   gap: 0.75rem;
-  margin: 0 0 1.5rem;
+  align-content: start;
+  margin: 0;
+  padding: 1rem 1.05rem 1.15rem;
+  background: #fffdf8;
+  border: 1px solid #ddd4c6;
+}
+
+.card p {
+  margin: 0;
 }
 
 label {
   display: grid;
   gap: 0.25rem;
+  min-width: 0;
 }
 
 input,
 select,
 button {
   font: inherit;
+  max-width: 100%;
 }
 
-input,
+input:not([type="checkbox"]),
+select,
+button.solid {
+  min-height: 44px;
+}
+
+input:not([type="checkbox"]),
 select {
+  width: 100%;
   padding: 0.45rem 0.55rem;
   border: 1px solid #1c1915;
-  background: #fffdf8;
+  background: #fff;
 }
 
 button,
@@ -75,15 +124,23 @@ button.solid {
   color: #f4efe6;
   text-decoration: none;
   padding: 0.55rem 0.8rem;
-  justify-self: start;
+  justify-self: stretch;
+  text-align: center;
+}
+
+.actions {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.actions #logout {
+  min-height: 44px;
+  text-align: center;
 }
 
 .notice {
-  padding: 0.75rem 0;
-}
-
-.pay {
-  margin: 0 0 0.75rem;
+  min-height: 1.5rem;
+  margin: 0;
 }
 
 .pay > p {
@@ -93,6 +150,7 @@ button.solid {
 
 .pay details {
   display: inline-block;
+  max-width: 100%;
   vertical-align: baseline;
 }
 
@@ -119,14 +177,33 @@ button.solid {
   display: flex;
   gap: 0.75rem;
   align-items: center;
+  min-height: 44px;
+}
+
+.row input {
+  width: 1.15rem;
+  height: 1.15rem;
 }
 
 .person {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
-  gap: 0.75rem;
-  padding: 0.35rem 0;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  padding: 0.45rem 0;
   border-bottom: 1px solid #ddd4c6;
+}
+
+.person > span:last-child {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.7rem;
+}
+
+#companions {
+  margin: 0;
+  padding-left: 1.25rem;
 }
 
 table {
@@ -140,8 +217,87 @@ td {
   padding: 0.35rem 0.4rem 0.35rem 0;
   border-bottom: 1px solid #ddd4c6;
   vertical-align: top;
+  overflow-wrap: anywhere;
 }
 
 code {
   font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+
+@media (min-width: 700px) {
+  .pair {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .actions {
+    grid-template-columns: auto auto;
+    justify-content: start;
+    align-items: center;
+  }
+
+  button.solid {
+    justify-self: start;
+  }
+
+  .actions #logout {
+    text-align: left;
+  }
+}
+
+@media (max-width: 699px) {
+  #payments table,
+  #payments thead,
+  #payments tbody,
+  #payments tr,
+  #payments td {
+    display: block;
+  }
+
+  #payments thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    border: 0;
+  }
+
+  #payments tr {
+    padding: 0.65rem 0;
+    border-bottom: 1px solid #ddd4c6;
+  }
+
+  #payments td {
+    border: 0;
+    padding: 0.15rem 0;
+  }
+
+  #payments td::before {
+    display: block;
+    font-size: 0.75rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  #payments td:nth-child(1)::before {
+    content: "Name";
+  }
+
+  #payments td:nth-child(2)::before {
+    content: "Code";
+  }
+
+  #payments td:nth-child(3)::before {
+    content: "Amount";
+  }
+
+  #payments td:nth-child(4)::before {
+    content: "Reference";
+  }
+
+  #payments td:nth-child(5)::before {
+    content: "Camp fee";
+  }
 }
