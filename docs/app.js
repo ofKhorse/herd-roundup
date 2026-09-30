@@ -278,7 +278,8 @@ function renderMatches() {
   if (!matchesOpen) {
     return;
   }
-  var query = companionSearch.value.trim().toLowerCase();
+  var query = companionSearch.value.trim();
+  var queryLower = query.toLowerCase();
   var matches = state.directory.filter(function (person) {
     if (state.companions.indexOf(person.member_code) !== -1) {
       return false;
@@ -287,15 +288,8 @@ function renderMatches() {
       return true;
     }
     var haystack = (person.full_name + " " + person.member_code).toLowerCase();
-    return haystack.indexOf(query) !== -1;
+    return haystack.indexOf(queryLower) !== -1;
   });
-  if (!matches.length) {
-    var empty = document.createElement("p");
-    empty.className = "no-match";
-    empty.textContent = "No match found";
-    box.appendChild(empty);
-    return;
-  }
   matches.forEach(function (person) {
     var button = document.createElement("button");
     button.type = "button";
@@ -311,6 +305,26 @@ function renderMatches() {
     });
     box.appendChild(button);
   });
+  if (query && !matches.length && state.companions.indexOf(query) === -1) {
+    var addButton = document.createElement("button");
+    addButton.type = "button";
+    addButton.textContent = 'Add "' + query + '"';
+    addButton.addEventListener("mousedown", function (event) {
+      event.preventDefault();
+    });
+    addButton.addEventListener("click", function () {
+      state.companions.push(query);
+      companionSearch.value = "";
+      renderCompanions();
+      renderMatches();
+    });
+    box.appendChild(addButton);
+  } else if (!query && !matches.length) {
+    var empty = document.createElement("p");
+    empty.className = "no-match";
+    empty.textContent = "No match found";
+    box.appendChild(empty);
+  }
 }
 
 function renderPickedBy() {
