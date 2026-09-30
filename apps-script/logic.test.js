@@ -331,12 +331,12 @@ test("save rejects companions who do not fit the rules", function () {
       },
     },
   );
-  assert.equal(van.error, "Khoose a sleeping preference before adding people.");
+  assert.equal(van.error, "Choose a sleeping preference before adding people.");
   assert.equal(self.error, "You kan't list yourself.");
   assert.equal(missing.error, "That member kode is not registered.");
   assert.equal(
     size.error,
-    "Khoose Tipi, up to 2 people, Star Tent, up to 2 people, Star Tent, up to 5 people, or Tipi, up to 6 people.",
+    "Choose Tipi, up to 2 people, Star Tent, up to 2 people, Star Tent, up to 5 people, or Tipi, up to 6 people.",
   );
 });
 
