@@ -12,6 +12,9 @@ document.querySelector("#profile-form").addEventListener("submit", onSave);
 document.querySelector("#logout").addEventListener("click", logout);
 document.querySelector("#admin-logout").addEventListener("click", logout);
 window.addEventListener("hashchange", showView);
+document.querySelector("#village-select").addEventListener("change", syncStay);
+document.querySelector("#size-select").addEventListener("change", syncStay);
+
 var companionSearch = document.querySelector("#companion-search");
 var matchesOpen = false;
 companionSearch.addEventListener("focus", function () {
@@ -170,7 +173,7 @@ function showSession(result) {
     result.tipi_count + " tipis marked as bought.";
   var form = document.querySelector("#profile-form");
   form.full_name.value = result.person.full_name;
-  form.stay.value = result.person.stay;
+  restoreStay(result.person.stay);
   form.boomer_id.value = result.person.boomer_id;
   form.whatsapp.value = result.person.whatsapp || "";
   form.purchased.checked = result.person.purchased === "yes";
@@ -180,6 +183,44 @@ function showSession(result) {
   renderPickedBy();
   renderPayments(result);
   showView();
+}
+
+function syncStay() {
+  var village = document.querySelector("#village-select").value;
+  var size = document.querySelector("#size-select").value;
+  var sizeRow = document.querySelector("#size-row");
+  var stayHidden = document.querySelector("#stay-hidden");
+  if (village === "arrange") {
+    sizeRow.hidden = true;
+    stayHidden.value = "arrange";
+  } else if (village === "yes") {
+    sizeRow.hidden = false;
+    stayHidden.value = size;
+  } else {
+    sizeRow.hidden = true;
+    stayHidden.value = "";
+  }
+}
+
+function restoreStay(stay) {
+  var village = document.querySelector("#village-select");
+  var size = document.querySelector("#size-select");
+  var sizeRow = document.querySelector("#size-row");
+  var stayHidden = document.querySelector("#stay-hidden");
+  if (stay === "arrange") {
+    village.value = "arrange";
+    sizeRow.hidden = true;
+    size.value = "";
+  } else if (stay === "2" || stay === "4" || stay === "5" || stay === "6") {
+    village.value = "yes";
+    sizeRow.hidden = false;
+    size.value = stay;
+  } else {
+    village.value = "";
+    sizeRow.hidden = true;
+    size.value = "";
+  }
+  stayHidden.value = stay || "";
 }
 
 function renderCompanions() {
