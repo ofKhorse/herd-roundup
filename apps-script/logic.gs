@@ -148,7 +148,7 @@ function savePerson_(body, db, deps) {
       return { ok: false, error: "You kan't list yourself." };
     }
     if (seen[code]) {
-      return { ok: false, error: "List eakh person once." };
+      return { ok: false, error: "List each person once." };
     }
     seen[code] = true;
     if (!findByCode_(people, code)) {
@@ -158,7 +158,7 @@ function savePerson_(body, db, deps) {
   if (shareWith.length > 0 && !isPreference_(stay)) {
     return {
       ok: false,
-      error: "Khoose a sleeping preference before adding people.",
+      error: "Choose a sleeping preference before adding people.",
     };
   }
   var purchased =
@@ -168,7 +168,7 @@ function savePerson_(body, db, deps) {
   if (purchased !== "" && purchased !== "yes") {
     return {
       ok: false,
-      error: "Mark the tipi purkhase as yes or leave it blank.",
+      error: "Mark the tipi purchase as yes or leave it blank.",
     };
   }
   var size =
@@ -279,11 +279,11 @@ function isPurchase_(size) {
 }
 
 function preferenceError_() {
-  return "Khoose a sleeping preference of 2, 4, 5, or 6 people.";
+  return "Choose a sleeping preference of 2, 4, 5, or 6 people.";
 }
 
 function purchaseError_() {
-  return "Khoose Tipi, up to 2 people, Star Tent, up to 2 people, Star Tent, up to 5 people, or Tipi, up to 6 people.";
+  return "Choose Tipi, up to 2 people, Star Tent, up to 2 people, Star Tent, up to 5 people, or Tipi, up to 6 people.";
 }
 
 function tipiBySize_(people) {

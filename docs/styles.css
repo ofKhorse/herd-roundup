@@ -340,7 +340,7 @@ code {
   }
 
   #admin td:nth-child(4)::before {
-    content: "Referenke";
+    content: "Reference";
   }
 
   #admin td:nth-child(5)::before {
