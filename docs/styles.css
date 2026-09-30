@@ -161,50 +161,77 @@ button.solid {
   margin: 0;
 }
 
+.pay {
+  display: grid;
+  gap: 0.7rem;
+}
+
 .pay > p {
-  display: inline;
-  margin: 0 0.75rem 0 0;
+  margin: 0;
 }
 
 .pay details {
-  display: inline-block;
-  max-width: 100%;
-  vertical-align: baseline;
-}
-
-.pay details[open] {
-  display: block;
-  margin-top: 0.35rem;
+  border: 1px solid #ddd4c6;
+  border-radius: 0.65rem;
+  background: #f4efe6;
 }
 
 .pay summary {
   cursor: pointer;
-  text-decoration: underline;
+  list-style: none;
+  padding: 0.7rem 0.9rem;
+  min-height: 44px;
+  font-weight: 600;
+}
+
+.pay summary::-webkit-details-marker {
+  display: none;
+}
+
+.pay summary::before {
+  content: "";
+  display: inline-block;
+  width: 0.45rem;
+  height: 0.45rem;
+  margin-right: 0.55rem;
+  border-right: 2px solid #1f3d32;
+  border-bottom: 2px solid #1f3d32;
+  transform: translateY(-0.05rem) rotate(-45deg);
+}
+
+.pay details[open] summary::before {
+  transform: translateY(0.05rem) rotate(45deg);
 }
 
 .pay .qr {
   display: block;
   width: fit-content;
-  margin: 0.75rem 0 0.15rem;
+  margin: 0.15rem auto 0.85rem;
+  padding: 0.4rem;
+  background: #fff;
+  border-radius: 0.5rem;
 }
 
 .pay .qr img {
   display: block;
-  width: 11rem;
+  width: 10.5rem;
   height: auto;
 }
 
 .pay details a:not(.qr) {
-  color: inherit;
+  color: #1f3d32;
 }
 
 .pay ol {
-  margin: 0.6rem 0;
+  margin: 0 0.9rem;
   padding-left: 1.25rem;
+  display: grid;
+  gap: 0.55rem;
 }
 
 .pay details p {
-  margin: 0;
+  margin: 0.85rem 0.9rem 0.95rem;
+  color: #5c564c;
 }
 
 .row {
