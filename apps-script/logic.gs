@@ -117,14 +117,14 @@ function savePerson_(body, db, deps) {
   for (var i = 0; i < shareWith.length; i++) {
     var code = String(shareWith[i]);
     if (code === person.member_code) {
-      return { ok: false, error: "You can't list yourself." };
+      return { ok: false, error: "You kan't list yourself." };
     }
     if (seen[code]) {
       return { ok: false, error: "List each person once." };
     }
     seen[code] = true;
     if (!findByCode_(people, code)) {
-      return { ok: false, error: "That member code is not registered." };
+      return { ok: false, error: "That member kode is not registered." };
     }
   }
   if (shareWith.length > 0 && !isStay_(stay)) {
