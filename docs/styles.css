@@ -332,7 +332,7 @@ code {
   }
 
   #admin td:nth-child(2)::before {
-    content: "Code";
+    content: "Kode";
   }
 
   #admin td:nth-child(3)::before {
@@ -340,11 +340,11 @@ code {
   }
 
   #admin td:nth-child(4)::before {
-    content: "Reference";
+    content: "Referenke";
   }
 
   #admin td:nth-child(5)::before {
-    content: "Camp fee";
+    content: "Kamp fee";
   }
 
   #admin td:nth-child(6)::before {
