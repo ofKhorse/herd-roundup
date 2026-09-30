@@ -29,6 +29,10 @@
           <form id="register-form" class="card">
             <h2>Register</h2>
             <label>Email <input name="email" type="email" required /></label>
+            <label>
+              WhatsApp
+              <input name="whatsapp" type="tel" required />
+            </label>
             <button class="solid" type="submit">Register</button>
           </form>
           <form id="reset-form" class="card">
@@ -84,6 +88,10 @@
               <h2>You</h2>
               <label>Full name <input name="full_name" /></label>
               <label>Boomer ID <input name="boomer_id" /></label>
+              <label>
+                WhatsApp
+                <input name="whatsapp" type="tel" required />
+              </label>
             </div>
             <div class="card">
               <h2>Sleeping</h2>
@@ -148,6 +156,7 @@
                 <th>Amount</th>
                 <th>Reference</th>
                 <th>Camp fee</th>
+                <th>WhatsApp</th>
               </tr>
             </thead>
             <tbody id="payment-rows"></tbody>

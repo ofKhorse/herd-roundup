@@ -20,7 +20,10 @@ function runMigrations() {
 }
 
 function migrations_() {
-  return [{ id: "001_create_camp_tables", run: migration001CreateCampTables_ }];
+  return [
+    { id: "001_create_camp_tables", run: migration001CreateCampTables_ },
+    { id: "002_add_whatsapp", run: migration002AddWhatsapp_ },
+  ];
 }
 
 function ensureMigrationLog_(ss) {

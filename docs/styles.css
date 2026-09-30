@@ -346,4 +346,8 @@ code {
   #admin td:nth-child(5)::before {
     content: "Camp fee";
   }
+
+  #admin td:nth-child(6)::before {
+    content: "WhatsApp";
+  }
 }

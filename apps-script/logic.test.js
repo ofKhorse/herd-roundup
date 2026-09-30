@@ -19,7 +19,7 @@ vm.runInContext(
 function register(db, email) {
   let password;
   const result = context.handleAction(
-    { action: "register", email: email },
+    { action: "register", email: email, whatsapp: "+41 79 000 00 00" },
     db,
     {
       sendPassword: function (_to, value) {
@@ -66,7 +66,7 @@ test("register emails a password and does not return it", function () {
   const db = memoryDb();
   const sent = [];
   const result = context.handleAction(
-    { action: "register", email: " A@x.test " },
+    { action: "register", email: " A@x.test ", whatsapp: "+41 79 000 00 00" },
     db,
     {
       sendPassword: function (email, password) {
@@ -84,6 +84,7 @@ test("register emails a password and does not return it", function () {
   assert.equal(people.length, 1);
   assert.equal(people[0].email, "a@x.test");
   assert.equal(people[0].member_code, "KH-001");
+  assert.equal(people[0].whatsapp, "+41 79 000 00 00");
   assert.equal(people[0].password, sent[0][1]);
   assert.equal(people[0].full_name, "");
 });
@@ -91,11 +92,15 @@ test("register emails a password and does not return it", function () {
 test("register keeps the sheet unchanged when the email fails", function () {
   const db = memoryDb();
   assert.throws(function () {
-    context.handleAction({ action: "register", email: "a@x.test" }, db, {
-      sendPassword: function () {
-        throw new Error("Could not send the password email.");
+    context.handleAction(
+      { action: "register", email: "a@x.test", whatsapp: "+41 79 000 00 00" },
+      db,
+      {
+        sendPassword: function () {
+          throw new Error("Could not send the password email.");
+        },
       },
-    });
+    );
   }, /Could not send the password email/);
   assert.equal(db.listPeople().length, 0);
 });
@@ -114,11 +119,27 @@ test("register rejects a duplicate email", function () {
     { member_code: "KH-001", email: "a@x.test", share_with: [] },
   ]);
   const result = context.handleAction(
-    { action: "register", email: "A@x.test" },
+    { action: "register", email: "A@x.test", whatsapp: "+41 79 000 00 00" },
     db,
   );
   assert.equal(result.ok, false);
   assert.equal(result.error, "That email is already registered.");
+});
+
+test("register requires a WhatsApp number", function () {
+  const db = memoryDb();
+  const result = context.handleAction(
+    { action: "register", email: "a@x.test", whatsapp: "123" },
+    db,
+    {
+      sendPassword: function () {
+        throw new Error("should not email");
+      },
+    },
+  );
+  assert.equal(result.ok, false);
+  assert.equal(result.error, "Enter a WhatsApp number.");
+  assert.equal(db.listPeople().length, 0);
 });
 
 test("register rejects an invalid email", function () {
@@ -215,6 +236,7 @@ test("save stores an ordered companion list and a tipi purchase", function () {
       purchased: "yes",
       purchased_size: "4",
       boomer_id: "B-9",
+      whatsapp: "+41 79 111 22 33",
     },
     db,
     {
@@ -228,6 +250,7 @@ test("save stores an ordered companion list and a tipi purchase", function () {
   assert.equal(result.person.share_with.length, 4);
   assert.equal(result.person.share_with[0], "KH-002");
   assert.equal(result.person.purchased_at, "2026-09-25T00:00:00.000Z");
+  assert.equal(result.person.whatsapp, "+41 79 111 22 33");
   assert.equal(result.tipi_count, 1);
   const again = context.handleAction(
     {
@@ -335,4 +358,5 @@ test("admins receive every payment row", function () {
   assert.equal(result.payments[1].full_name, "Bea");
   assert.equal(result.payments[1].camp_fee_paid, "yes");
   assert.equal(result.payments[1].amount, "65");
+  assert.equal(result.payments[1].whatsapp, "+41 79 000 00 00");
 });
