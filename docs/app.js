@@ -326,6 +326,27 @@ function showView() {
     .setAttribute("aria-current", "page");
 }
 
+function renderSignupCounts(signupCount, stayCounts) {
+  var box = document.querySelector("#signup-counts");
+  box.innerHTML = "";
+  var total = document.createElement("p");
+  total.textContent = "Total signups: " + signupCount;
+  box.appendChild(total);
+  [
+    ["2", "2 people (Tipi or Star Tent)"],
+    ["4", "4 people (5-person tent)"],
+    ["5", "5 people (Star Tent)"],
+    ["6", "6 people (Tipi)"],
+    ["arrange", "I arrange myself"],
+    ["", "No preference yet"],
+  ].forEach(function (pair) {
+    var line = document.createElement("p");
+    line.textContent =
+      pair[1] + ": " + ((stayCounts && stayCounts[pair[0]]) || 0);
+    box.appendChild(line);
+  });
+}
+
 function renderTipiBySize(counts) {
   var box = document.querySelector("#tipi-by-size");
   box.innerHTML = "";
@@ -352,6 +373,9 @@ function renderPayments(result) {
     return;
   }
   renderTipiBySize(result.tipi_by_size || {});
+  if (result.signup_count != null) {
+    renderSignupCounts(result.signup_count, result.stay_counts);
+  }
   result.payments.forEach(function (payment) {
     var row = document.createElement("tr");
     [
