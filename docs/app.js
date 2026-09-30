@@ -63,6 +63,7 @@ function onRegister(event) {
         return;
       }
       say("Your password was emailed to you. Then log in.");
+      alert("Your password was emailed to you. Then log in.");
     })
     .catch(fail);
 }
@@ -72,7 +73,12 @@ function onReset(event) {
   var data = new FormData(event.target);
   post({ action: "reset", email: data.get("email") })
     .then(function (result) {
-      say(result.ok ? "A new password was emailed to you." : result.error);
+      if (!result.ok) {
+        say(result.error);
+        return;
+      }
+      say("A new password was emailed to you.");
+      alert("A new password was emailed to you.");
     })
     .catch(fail);
 }
