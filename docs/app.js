@@ -1,5 +1,5 @@
 var sessionKey = "herd-roundup-session";
-var state = { directory: [], companions: [], memberCode: "" };
+var state = { directory: [], companions: [], memberCode: "", admin: false };
 
 var notice = document.querySelector("#notice");
 var auth = document.querySelector("#auth");
@@ -10,6 +10,8 @@ document.querySelector("#register-form").addEventListener("submit", onRegister);
 document.querySelector("#reset-form").addEventListener("submit", onReset);
 document.querySelector("#profile-form").addEventListener("submit", onSave);
 document.querySelector("#logout").addEventListener("click", logout);
+document.querySelector("#payments-logout").addEventListener("click", logout);
+window.addEventListener("hashchange", showView);
 var companionSearch = document.querySelector("#companion-search");
 var matchesOpen = false;
 companionSearch.addEventListener("focus", function () {
@@ -139,7 +141,6 @@ function showSession(result) {
   }
   notice.textContent = "";
   auth.hidden = true;
-  profile.hidden = false;
   state.directory = result.directory;
   state.companions = result.person.share_with.slice();
   state.memberCode = result.person.member_code;
@@ -161,6 +162,7 @@ function showSession(result) {
   renderMatches();
   renderPickedBy();
   renderPayments(result);
+  showView();
 }
 
 function renderCompanions() {
@@ -236,15 +238,28 @@ function renderPickedBy() {
   box.textContent = names.length ? names.join(", ") : "Nobody yet.";
 }
 
+function showView() {
+  var onPayments = state.admin && location.hash === "#payments";
+  document.querySelector("#nav").hidden = !state.admin;
+  profile.hidden = !state.memberCode || onPayments;
+  document.querySelector("#payments").hidden = !onPayments;
+  document.querySelector("#show-camp").removeAttribute("aria-current");
+  document.querySelector("#show-payments").removeAttribute("aria-current");
+  document
+    .querySelector(onPayments ? "#show-payments" : "#show-camp")
+    .setAttribute("aria-current", "page");
+}
+
 function renderPayments(result) {
-  var section = document.querySelector("#payments");
   var body = document.querySelector("#payment-rows");
   body.innerHTML = "";
-  if (result.person.admin !== "yes") {
-    section.hidden = true;
+  state.admin = result.person.admin === "yes";
+  if (!state.admin) {
+    if (location.hash === "#payments") {
+      history.replaceState(null, "", location.pathname + location.search);
+    }
     return;
   }
-  section.hidden = false;
   result.payments.forEach(function (payment) {
     var row = document.createElement("tr");
     [
@@ -332,7 +347,14 @@ function clearSession() {
 
 function logout() {
   clearSession();
+  state.memberCode = "";
+  state.admin = false;
+  if (location.hash) {
+    history.replaceState(null, "", location.pathname + location.search);
+  }
   profile.hidden = true;
+  document.querySelector("#payments").hidden = true;
+  document.querySelector("#nav").hidden = true;
   auth.hidden = false;
   say("Logged out.");
 }
