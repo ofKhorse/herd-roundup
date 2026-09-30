@@ -9,6 +9,8 @@ const context = {
   Number: Number,
   String: String,
   RegExp: RegExp,
+  Date: Date,
+  JSON: JSON,
 };
 vm.createContext(context);
 vm.runInContext(
@@ -450,4 +452,79 @@ test("password hashes are salted PBKDF2-SHA256", function () {
   assert.equal(context.passwordMatches_(cells[0][0], "secret12"), true);
   assert.equal(cells[1][0], "");
   assert.equal(cells[2][0], first);
+});
+
+test("a session token signs in without the password", function () {
+  const db = memoryDb();
+  const registered = register(db, "a@x.test");
+  const deps = {
+    sessionSecret: "test-secret",
+    now: function () {
+      return "2026-09-30T12:00:00.000Z";
+    },
+  };
+  const login = context.handleAction(
+    { action: "login", email: "a@x.test", password: registered.password },
+    db,
+    deps,
+  );
+  assert.equal(login.ok, true);
+  assert.equal(login.token.split(".").length, 3);
+  assert.equal(login.token.indexOf(registered.password), -1);
+  const again = context.handleAction(
+    { action: "login", token: login.token },
+    db,
+    deps,
+  );
+  assert.equal(again.ok, true);
+  assert.equal(again.person.password, undefined);
+  const saved = context.handleAction(
+    {
+      action: "save",
+      token: again.token,
+      full_name: "Aurel",
+      stay: "arrange",
+    },
+    db,
+    deps,
+  );
+  assert.equal(saved.ok, true);
+  assert.equal(saved.person.full_name, "Aurel");
+  const expired = context.handleAction(
+    { action: "login", token: login.token },
+    db,
+    {
+      sessionSecret: "test-secret",
+      now: function () {
+        return "2026-11-01T12:00:00.000Z";
+      },
+    },
+  );
+  assert.equal(expired.error, "Log in again.");
+  let nextPassword;
+  context.handleAction({ action: "reset", email: "a@x.test" }, db, {
+    sendPassword: function (_email, password) {
+      nextPassword = password;
+    },
+  });
+  const stale = context.handleAction(
+    { action: "login", token: again.token },
+    db,
+    deps,
+  );
+  assert.equal(stale.error, "Log in again.");
+  const fresh = context.handleAction(
+    { action: "login", email: "a@x.test", password: nextPassword },
+    db,
+    deps,
+  );
+  assert.equal(fresh.ok, true);
+  const tampered =
+    login.token.slice(0, -1) + (login.token.slice(-1) === "a" ? "b" : "a");
+  const bad = context.handleAction(
+    { action: "login", token: tampered },
+    db,
+    deps,
+  );
+  assert.equal(bad.error, "Log in again.");
 });

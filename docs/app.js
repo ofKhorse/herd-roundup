@@ -35,25 +35,28 @@ companionSearch.addEventListener("keydown", function (event) {
 });
 
 var saved = readSession();
-if (saved) {
-  signIn(saved.email, saved.password, true);
+if (saved && (saved.token || (saved.email && saved.password))) {
+  signIn(saved, true);
 }
 
 function onLogin(event) {
   event.preventDefault();
   var data = new FormData(event.target);
-  signIn(data.get("email"), data.get("password"), false);
+  signIn({ email: data.get("email"), password: data.get("password") }, false);
 }
 
-function signIn(email, password, fromCookie) {
+function signIn(credentials, fromCookie) {
   var button = document.querySelector("#login-form button");
   button.disabled = true;
   setLoading("Signing in…");
-  post({
-    action: "login",
-    email: email,
-    password: password,
-  })
+  var body = { action: "login" };
+  if (credentials.token) {
+    body.token = credentials.token;
+  } else {
+    body.email = credentials.email;
+    body.password = credentials.password;
+  }
+  post(body)
     .then(function (result) {
       setLoading("");
       if (!result.ok) {
@@ -63,8 +66,13 @@ function signIn(email, password, fromCookie) {
         say(result.error);
         return;
       }
-      if (!fromCookie) {
-        writeSession(email, password);
+      if (result.token) {
+        writeSession({ token: result.token });
+      } else if (!fromCookie) {
+        writeSession({
+          email: credentials.email,
+          password: credentials.password,
+        });
       }
       showSession(result);
     })
@@ -109,15 +117,13 @@ function onReset(event) {
 function onSave(event) {
   event.preventDefault();
   var credentials = readSession();
-  if (!credentials) {
+  if (!credentials || (!credentials.token && !credentials.password)) {
     say("Log in again.");
     return;
   }
   var data = new FormData(event.target);
-  post({
+  var body = {
     action: "save",
-    email: credentials.email,
-    password: credentials.password,
     full_name: data.get("full_name"),
     stay: data.get("stay"),
     boomer_id: data.get("boomer_id"),
@@ -125,7 +131,14 @@ function onSave(event) {
     purchased_size: data.get("purchased_size"),
     whatsapp: data.get("whatsapp"),
     share_with: state.companions,
-  })
+  };
+  if (credentials.token) {
+    body.token = credentials.token;
+  } else {
+    body.email = credentials.email;
+    body.password = credentials.password;
+  }
+  post(body)
     .then(function (result) {
       if (!result.ok) {
         say(result.error);
@@ -355,11 +368,11 @@ function readSession() {
   return null;
 }
 
-function writeSession(email, password) {
+function writeSession(value) {
   document.cookie =
     sessionKey +
     "=" +
-    encodeURIComponent(JSON.stringify({ email: email, password: password })) +
+    encodeURIComponent(JSON.stringify(value)) +
     "; Max-Age=2592000; Path=/herd-roundup; SameSite=Lax; Secure";
 }
 

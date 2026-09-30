@@ -6,7 +6,7 @@ function handleAction(body, db, deps) {
     return registerPerson_(body, db, deps || {});
   }
   if (body.action === "login") {
-    return loginPerson_(body, db);
+    return loginPerson_(body, db, deps || {});
   }
   if (body.action === "reset") {
     return resetPassword_(body, db, deps || {});
@@ -120,7 +120,7 @@ function resetPassword_(body, db, deps) {
 
 function savePerson_(body, db, deps) {
   var people = db.listPeople();
-  var found = authenticatedPerson_(people, body, db);
+  var found = authenticatedPerson_(people, body, db, deps);
   if (found.error) {
     return found;
   }
@@ -223,16 +223,42 @@ function findByCode_(people, code) {
   return null;
 }
 
-function loginPerson_(body, db) {
+function loginPerson_(body, db, deps) {
   var people = db.listPeople();
-  var found = authenticatedPerson_(people, body, db);
+  if (body.token) {
+    var fromToken = personFromToken_(people, body.token, deps);
+    if (fromToken.error) {
+      return fromToken;
+    }
+    var tokenView = sessionView_(fromToken.person, people);
+    var refreshed = signToken_(fromToken.person, deps);
+    if (refreshed.error) {
+      return refreshed;
+    }
+    tokenView.token = refreshed.token;
+    return tokenView;
+  }
+  var found = authenticatedPerson_(people, body, db, deps);
   if (found.error) {
     return found;
   }
-  return sessionView_(found.person, people);
+  var freshPeople = db.listPeople();
+  var fresh = findByEmail_(freshPeople, normalizeEmail_(body.email));
+  var view = sessionView_(fresh, freshPeople);
+  if (deps.sessionSecret) {
+    var issued = signToken_(fresh, deps);
+    if (issued.error) {
+      return issued;
+    }
+    view.token = issued.token;
+  }
+  return view;
 }
 
-function authenticatedPerson_(people, body, db) {
+function authenticatedPerson_(people, body, db, deps) {
+  if (body.token) {
+    return personFromToken_(people, body.token, deps || {});
+  }
   var email = normalizeEmail_(body.email);
   var person = findByEmail_(people, email);
   if (!person) {
@@ -342,6 +368,132 @@ function publicPerson_(person) {
     payment_ref: person.payment_ref || "",
     whatsapp: normalizeWhatsapp_(person.whatsapp),
   };
+}
+
+function personFromToken_(people, token, deps) {
+  var claims = verifyToken_(token, deps);
+  if (claims.error) {
+    return claims;
+  }
+  var person = findByEmail_(people, claims.email);
+  if (
+    !person ||
+    passwordStamp_(person.password, deps.sessionSecret) !== claims.stamp
+  ) {
+    return { ok: false, error: "Log in again." };
+  }
+  return { person: person };
+}
+
+function signToken_(person, deps) {
+  var now = sessionUnix_(deps);
+  if (!deps.sessionSecret || now === null) {
+    return { ok: false, error: "Log in again." };
+  }
+  var header = base64UrlEncodeText_('{"alg":"HS256","typ":"JWT"}');
+  var payload = base64UrlEncodeText_(
+    JSON.stringify({
+      email: normalizeEmail_(person.email),
+      stamp: passwordStamp_(person.password, deps.sessionSecret),
+      exp: now + 2592000,
+    }),
+  );
+  var signing = header + "." + payload;
+  var signature = base64UrlEncode_(
+    hmacSha256_(utf8Bytes_(deps.sessionSecret), utf8Bytes_(signing)),
+  );
+  return { token: signing + "." + signature };
+}
+
+function verifyToken_(token, deps) {
+  var parts = String(token || "").split(".");
+  if (parts.length !== 3 || !deps || !deps.sessionSecret) {
+    return { ok: false, error: "Log in again." };
+  }
+  var signing = parts[0] + "." + parts[1];
+  var expected = hmacSha256_(
+    utf8Bytes_(deps.sessionSecret),
+    utf8Bytes_(signing),
+  );
+  var actual = base64UrlDecode_(parts[2]);
+  if (!actual || !constantTimeEqual_(expected, actual)) {
+    return { ok: false, error: "Log in again." };
+  }
+  var payload = base64UrlDecode_(parts[1]);
+  if (!payload) {
+    return { ok: false, error: "Log in again." };
+  }
+  var claims;
+  try {
+    claims = JSON.parse(utf8Text_(payload));
+  } catch (error) {
+    return { ok: false, error: "Log in again." };
+  }
+  var now = sessionUnix_(deps);
+  if (
+    !claims ||
+    !claims.email ||
+    !claims.stamp ||
+    !claims.exp ||
+    now === null ||
+    Number(claims.exp) < now
+  ) {
+    return { ok: false, error: "Log in again." };
+  }
+  return {
+    email: normalizeEmail_(claims.email),
+    stamp: String(claims.stamp),
+  };
+}
+
+function passwordStamp_(stored, secret) {
+  return base64UrlEncode_(
+    hmacSha256_(utf8Bytes_(String(secret)), utf8Bytes_(String(stored))).slice(
+      0,
+      12,
+    ),
+  );
+}
+
+function sessionUnix_(deps) {
+  var raw =
+    deps && typeof deps.now === "function"
+      ? deps.now()
+      : new Date().toISOString();
+  var parsed = Date.parse(raw);
+  if (parsed !== parsed) {
+    return null;
+  }
+  return Math.floor(parsed / 1000);
+}
+
+function base64UrlEncodeText_(text) {
+  return base64UrlEncode_(utf8Bytes_(text));
+}
+
+function base64UrlEncode_(bytes) {
+  return base64Encode_(bytes)
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
+}
+
+function base64UrlDecode_(text) {
+  var padded = String(text || "")
+    .replace(/-/g, "+")
+    .replace(/_/g, "/");
+  while (padded.length % 4 !== 0) {
+    padded += "=";
+  }
+  return base64Decode_(padded);
+}
+
+function utf8Text_(bytes) {
+  var text = "";
+  for (var i = 0; i < bytes.length; i++) {
+    text += String.fromCharCode(bytes[i]);
+  }
+  return text;
 }
 
 function generatePassword_() {

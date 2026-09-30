@@ -20,6 +20,7 @@ function doPost(e) {
             "Your password is " + password,
           );
         },
+        sessionSecret: sessionSecret_(),
       }),
     );
   } catch (error) {
@@ -32,6 +33,17 @@ function doPost(e) {
 // Run once from the editor so this account may send password email.
 function authorizeMail() {
   MailApp.getRemainingDailyQuota();
+}
+
+function sessionSecret_() {
+  var props = PropertiesService.getScriptProperties();
+  var secret = props.getProperty("SESSION_SECRET");
+  if (secret) {
+    return secret;
+  }
+  secret = Utilities.getUuid() + Utilities.getUuid();
+  props.setProperty("SESSION_SECRET", secret);
+  return secret;
 }
 
 function sheetDatabase_() {
