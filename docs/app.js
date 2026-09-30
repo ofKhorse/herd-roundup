@@ -13,6 +13,18 @@ document.querySelector("#logout").addEventListener("click", logout);
 document
   .querySelector("#companion-search")
   .addEventListener("input", renderMatches);
+document
+  .querySelector("#companion-search")
+  .addEventListener("keydown", function (event) {
+    if (event.key !== "Enter") {
+      return;
+    }
+    event.preventDefault();
+    var match = document.querySelector("#companion-matches button");
+    if (match) {
+      match.click();
+    }
+  });
 
 var saved = sessionStorage.getItem(sessionKey);
 if (saved) {
@@ -101,10 +113,11 @@ function onSave(event) {
     .then(function (result) {
       if (!result.ok) {
         say(result.error);
+        alert(result.error);
         return;
       }
-      say("Saved.");
       showSession(result);
+      say("Saved.");
     })
     .catch(fail);
 }
