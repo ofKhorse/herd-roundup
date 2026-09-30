@@ -60,6 +60,8 @@ function emptyPerson_(email, password, memberCode, whatsapp) {
     amount: "",
     payment_ref: "",
     whatsapp: whatsapp || "",
+    sale_available: "",
+    kaptain: "",
   };
 }
 
@@ -191,6 +193,13 @@ function savePerson_(body, db, deps) {
   if (purchased !== "yes") {
     purchasedAt = "";
   }
+  var saleAvailable =
+    body.sale_available === undefined
+      ? person.sale_available || ""
+      : body.sale_available === "yes"
+        ? "yes"
+        : "";
+  var kaptain = saleAvailable === "yes" && body.kaptain === "yes" ? "yes" : "";
   db.updatePerson(person.member_code, {
     full_name:
       body.full_name === undefined
@@ -206,6 +215,8 @@ function savePerson_(body, db, deps) {
         ? person.boomer_id || ""
         : String(body.boomer_id).trim(),
     whatsapp: whatsapp,
+    sale_available: saleAvailable,
+    kaptain: kaptain,
   });
   var updatedPeople = db.listPeople();
   return sessionView_(
@@ -367,6 +378,8 @@ function publicPerson_(person) {
     amount: person.amount || "",
     payment_ref: person.payment_ref || "",
     whatsapp: normalizeWhatsapp_(person.whatsapp),
+    sale_available: person.sale_available || "",
+    kaptain: person.kaptain || "",
   };
 }
 
