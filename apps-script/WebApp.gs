@@ -102,7 +102,7 @@ function updatePersonRow_(sheet, memberCode, fields) {
     });
     return;
   }
-  throw new Error("That member code is not registered.");
+  throw new Error("That member kode is not registered.");
 }
 
 function headerRow_(sheet) {
