@@ -4,9 +4,13 @@
   "scripts": {
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "test": "node --test apps-script/logic.test.js"
+    "test": "node --test apps-script/logic.test.js assign/tipis.test.js assign/cli.test.js",
+    "assign": "node assign/cli.js"
   },
   "devDependencies": {
     "prettier": "3.6.2"
+  },
+  "dependencies": {
+    "google-auth-library": "^11.1.0"
   }
 }
