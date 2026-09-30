@@ -33,7 +33,12 @@ function registerPerson_(body, db, deps) {
   var password = generatePassword_();
   deps.sendPassword(email, password);
   db.insertPerson(
-    emptyPerson_(email, password, nextMemberCode_(people), whatsapp),
+    emptyPerson_(
+      email,
+      hashPassword_(password),
+      nextMemberCode_(people),
+      whatsapp,
+    ),
   );
   return { ok: true };
 }
@@ -109,13 +114,13 @@ function resetPassword_(body, db, deps) {
   }
   var password = generatePassword_();
   deps.sendPassword(email, password);
-  db.updatePerson(person.member_code, { password: password });
+  db.updatePerson(person.member_code, { password: hashPassword_(password) });
   return { ok: true };
 }
 
 function savePerson_(body, db, deps) {
   var people = db.listPeople();
-  var found = authenticatedPerson_(people, body);
+  var found = authenticatedPerson_(people, body, db);
   if (found.error) {
     return found;
   }
@@ -217,21 +222,25 @@ function findByCode_(people, code) {
 
 function loginPerson_(body, db) {
   var people = db.listPeople();
-  var found = authenticatedPerson_(people, body);
+  var found = authenticatedPerson_(people, body, db);
   if (found.error) {
     return found;
   }
   return sessionView_(found.person, people);
 }
 
-function authenticatedPerson_(people, body) {
+function authenticatedPerson_(people, body, db) {
   var email = normalizeEmail_(body.email);
   var person = findByEmail_(people, email);
   if (!person) {
     return { ok: false, error: "That email is not registered." };
   }
-  if (String(person.password) !== String(body.password || "")) {
+  var password = String(body.password || "");
+  if (!passwordMatches_(person.password, password)) {
     return { ok: false, error: "Wrong password." };
+  }
+  if (!isHashedPassword_(person.password)) {
+    db.updatePerson(person.member_code, { password: hashPassword_(password) });
   }
   return { person: person };
 }
@@ -335,4 +344,312 @@ function generatePassword_() {
     password += alphabet.charAt(Math.floor(Math.random() * alphabet.length));
   }
   return password;
+}
+
+var PASSWORD_ITERATIONS_ = 10000;
+var PASSWORD_ITERATION_LIMIT_ = 200000;
+var BASE64_ALPHABET_ =
+  "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+var SHA256_K_ = [
+  0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1,
+  0x923f82a4, 0xab1c5ed5, 0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3,
+  0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174, 0xe49b69c1, 0xefbe4786,
+  0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
+  0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147,
+  0x06ca6351, 0x14292967, 0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13,
+  0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85, 0xa2bfe8a1, 0xa81a664b,
+  0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
+  0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a,
+  0x5b9cca4f, 0x682e6ff3, 0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208,
+  0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2,
+];
+
+function hashPassword_(password, saltBytes) {
+  var salt = saltBytes || randomBytes_(16);
+  var hash = pbkdf2Sha256_(
+    utf8Bytes_(String(password)),
+    salt,
+    PASSWORD_ITERATIONS_,
+    32,
+  );
+  return (
+    "pbkdf2_sha256$" +
+    PASSWORD_ITERATIONS_ +
+    "$" +
+    base64Encode_(salt) +
+    "$" +
+    base64Encode_(hash)
+  );
+}
+
+function isHashedPassword_(stored) {
+  return String(stored || "").indexOf("pbkdf2_sha256$") === 0;
+}
+
+function passwordMatches_(stored, password) {
+  var saved = String(stored || "");
+  var attempt = String(password || "");
+  if (!isHashedPassword_(saved)) {
+    return saved === attempt;
+  }
+  var parts = saved.split("$");
+  if (parts.length !== 4) {
+    return false;
+  }
+  var iterations = Number(parts[1]);
+  if (
+    !iterations ||
+    iterations < 1 ||
+    iterations > PASSWORD_ITERATION_LIMIT_ ||
+    Math.floor(iterations) !== iterations
+  ) {
+    return false;
+  }
+  var salt = base64Decode_(parts[2]);
+  var expected = base64Decode_(parts[3]);
+  if (!salt || !expected || salt.length === 0 || expected.length === 0) {
+    return false;
+  }
+  var actual = pbkdf2Sha256_(
+    utf8Bytes_(attempt),
+    salt,
+    iterations,
+    expected.length,
+  );
+  return constantTimeEqual_(actual, expected);
+}
+
+function hashPlainPasswords_(cells) {
+  return cells.map(function (row) {
+    var current = String(row[0]);
+    if (current === "" || isHashedPassword_(current)) {
+      return [current];
+    }
+    return [hashPassword_(current)];
+  });
+}
+
+function randomBytes_(length) {
+  var bytes = [];
+  for (var i = 0; i < length; i++) {
+    bytes.push(Math.floor(Math.random() * 256));
+  }
+  return bytes;
+}
+
+function utf8Bytes_(text) {
+  var bytes = [];
+  for (var i = 0; i < text.length; i++) {
+    var code = text.charCodeAt(i);
+    if (code < 0x80) {
+      bytes.push(code);
+    } else if (code < 0x800) {
+      bytes.push(0xc0 | (code >> 6), 0x80 | (code & 0x3f));
+    } else if (code >= 0xd800 && code <= 0xdbff && i + 1 < text.length) {
+      var next = text.charCodeAt(++i);
+      var point = 0x10000 + ((code - 0xd800) << 10) + (next - 0xdc00);
+      bytes.push(
+        0xf0 | (point >> 18),
+        0x80 | ((point >> 12) & 0x3f),
+        0x80 | ((point >> 6) & 0x3f),
+        0x80 | (point & 0x3f),
+      );
+    } else {
+      bytes.push(
+        0xe0 | (code >> 12),
+        0x80 | ((code >> 6) & 0x3f),
+        0x80 | (code & 0x3f),
+      );
+    }
+  }
+  return bytes;
+}
+
+function pbkdf2Sha256_(password, salt, iterations, length) {
+  var blockCount = Math.ceil(length / 32);
+  var derived = [];
+  for (var block = 1; block <= blockCount; block++) {
+    var u = hmacSha256_(
+      password,
+      salt.concat([
+        (block >>> 24) & 255,
+        (block >>> 16) & 255,
+        (block >>> 8) & 255,
+        block & 255,
+      ]),
+    );
+    var t = u.slice();
+    for (var round = 1; round < iterations; round++) {
+      u = hmacSha256_(password, u);
+      for (var byte = 0; byte < t.length; byte++) {
+        t[byte] ^= u[byte];
+      }
+    }
+    derived = derived.concat(t);
+  }
+  return derived.slice(0, length);
+}
+
+function hmacSha256_(key, message) {
+  var block = 64;
+  var normalized = key.slice();
+  if (normalized.length > block) {
+    normalized = sha256Bytes_(normalized);
+  }
+  while (normalized.length < block) {
+    normalized.push(0);
+  }
+  var inner = [];
+  var outer = [];
+  for (var i = 0; i < block; i++) {
+    inner.push(normalized[i] ^ 0x36);
+    outer.push(normalized[i] ^ 0x5c);
+  }
+  return sha256Bytes_(outer.concat(sha256Bytes_(inner.concat(message))));
+}
+
+function sha256Bytes_(bytes) {
+  var state = [
+    0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c,
+    0x1f83d9ab, 0x5be0cd19,
+  ];
+  var bitLength = bytes.length * 8;
+  var padded = bytes.slice();
+  padded.push(0x80);
+  while (padded.length % 64 !== 56) {
+    padded.push(0);
+  }
+  var high = Math.floor(bitLength / 0x100000000);
+  var low = bitLength >>> 0;
+  for (var shift = 24; shift >= 0; shift -= 8) {
+    padded.push((high >>> shift) & 255);
+  }
+  for (var lowShift = 24; lowShift >= 0; lowShift -= 8) {
+    padded.push((low >>> lowShift) & 255);
+  }
+  var words = new Array(64);
+  for (var offset = 0; offset < padded.length; offset += 64) {
+    for (var i = 0; i < 16; i++) {
+      var index = offset + i * 4;
+      words[i] =
+        ((padded[index] << 24) |
+          (padded[index + 1] << 16) |
+          (padded[index + 2] << 8) |
+          padded[index + 3]) >>>
+        0;
+    }
+    for (var word = 16; word < 64; word++) {
+      var s0 =
+        ((words[word - 15] >>> 7) | (words[word - 15] << 25)) ^
+        ((words[word - 15] >>> 18) | (words[word - 15] << 14)) ^
+        (words[word - 15] >>> 3);
+      var s1 =
+        ((words[word - 2] >>> 17) | (words[word - 2] << 15)) ^
+        ((words[word - 2] >>> 19) | (words[word - 2] << 13)) ^
+        (words[word - 2] >>> 10);
+      words[word] = (words[word - 16] + s0 + words[word - 7] + s1) >>> 0;
+    }
+    var a = state[0];
+    var b = state[1];
+    var c = state[2];
+    var d = state[3];
+    var e = state[4];
+    var f = state[5];
+    var g = state[6];
+    var h = state[7];
+    for (var round = 0; round < 64; round++) {
+      var capitalS1 =
+        ((e >>> 6) | (e << 26)) ^
+        ((e >>> 11) | (e << 21)) ^
+        ((e >>> 25) | (e << 7));
+      var choose = (e & f) ^ (~e & g);
+      var temp1 =
+        (h + capitalS1 + choose + SHA256_K_[round] + words[round]) >>> 0;
+      var capitalS0 =
+        ((a >>> 2) | (a << 30)) ^
+        ((a >>> 13) | (a << 19)) ^
+        ((a >>> 22) | (a << 10));
+      var majority = (a & b) ^ (a & c) ^ (b & c);
+      var temp2 = (capitalS0 + majority) >>> 0;
+      h = g;
+      g = f;
+      f = e;
+      e = (d + temp1) >>> 0;
+      d = c;
+      c = b;
+      b = a;
+      a = (temp1 + temp2) >>> 0;
+    }
+    state[0] = (state[0] + a) >>> 0;
+    state[1] = (state[1] + b) >>> 0;
+    state[2] = (state[2] + c) >>> 0;
+    state[3] = (state[3] + d) >>> 0;
+    state[4] = (state[4] + e) >>> 0;
+    state[5] = (state[5] + f) >>> 0;
+    state[6] = (state[6] + g) >>> 0;
+    state[7] = (state[7] + h) >>> 0;
+  }
+  var out = [];
+  for (var part = 0; part < 8; part++) {
+    out.push(
+      (state[part] >>> 24) & 255,
+      (state[part] >>> 16) & 255,
+      (state[part] >>> 8) & 255,
+      state[part] & 255,
+    );
+  }
+  return out;
+}
+
+function base64Encode_(bytes) {
+  var out = "";
+  for (var i = 0; i < bytes.length; i += 3) {
+    var first = bytes[i];
+    var second = i + 1 < bytes.length ? bytes[i + 1] : 0;
+    var third = i + 2 < bytes.length ? bytes[i + 2] : 0;
+    var triple = (first << 16) | (second << 8) | third;
+    out += BASE64_ALPHABET_.charAt((triple >> 18) & 63);
+    out += BASE64_ALPHABET_.charAt((triple >> 12) & 63);
+    out +=
+      i + 1 < bytes.length ? BASE64_ALPHABET_.charAt((triple >> 6) & 63) : "=";
+    out += i + 2 < bytes.length ? BASE64_ALPHABET_.charAt(triple & 63) : "=";
+  }
+  return out;
+}
+
+function base64Decode_(text) {
+  if (text.length % 4 !== 0) {
+    return null;
+  }
+  var out = [];
+  for (var i = 0; i < text.length; i += 4) {
+    var c0 = BASE64_ALPHABET_.indexOf(text.charAt(i));
+    var c1 = BASE64_ALPHABET_.indexOf(text.charAt(i + 1));
+    var pad2 = text.charAt(i + 2) === "=";
+    var pad3 = text.charAt(i + 3) === "=";
+    var c2 = pad2 ? 0 : BASE64_ALPHABET_.indexOf(text.charAt(i + 2));
+    var c3 = pad3 ? 0 : BASE64_ALPHABET_.indexOf(text.charAt(i + 3));
+    if (c0 < 0 || c1 < 0 || c2 < 0 || c3 < 0) {
+      return null;
+    }
+    out.push((c0 << 2) | (c1 >> 4));
+    if (!pad2) {
+      out.push(((c1 & 15) << 4) | (c2 >> 2));
+    }
+    if (!pad3) {
+      out.push(((c2 & 3) << 6) | c3);
+    }
+  }
+  return out;
+}
+
+function constantTimeEqual_(left, right) {
+  if (left.length !== right.length) {
+    return false;
+  }
+  var diff = 0;
+  for (var i = 0; i < left.length; i++) {
+    diff |= left[i] ^ right[i];
+  }
+  return diff === 0;
 }

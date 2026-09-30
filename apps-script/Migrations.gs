@@ -23,6 +23,7 @@ function migrations_() {
   return [
     { id: "001_create_camp_tables", run: migration001CreateCampTables_ },
     { id: "002_add_whatsapp", run: migration002AddWhatsapp_ },
+    { id: "003_hash_passwords", run: migration003HashPasswords_ },
   ];
 }
 
