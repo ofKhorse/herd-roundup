@@ -85,7 +85,8 @@ test("register emails a password and does not return it", function () {
   assert.equal(people[0].email, "a@x.test");
   assert.equal(people[0].member_code, "KH-001");
   assert.equal(people[0].whatsapp, "+41 79 000 00 00");
-  assert.equal(people[0].password, sent[0][1]);
+  assert.notEqual(people[0].password, sent[0][1]);
+  assert.equal(context.passwordMatches_(people[0].password, sent[0][1]), true);
   assert.equal(people[0].full_name, "");
 });
 
@@ -186,6 +187,7 @@ test("login rejects an unknown email and a wrong password", function () {
 test("reset emails a new password", function () {
   const db = memoryDb();
   const registered = register(db, "a@x.test");
+  const previous = db.listPeople()[0].password;
   const sent = [];
   const result = context.handleAction(
     { action: "reset", email: "a@x.test" },
@@ -200,8 +202,13 @@ test("reset emails a new password", function () {
   assert.equal(result.password, undefined);
   assert.equal(sent.length, 1);
   assert.equal(sent[0][0], "a@x.test");
-  assert.equal(db.listPeople()[0].password, sent[0][1]);
-  assert.notEqual(db.listPeople()[0].password, registered.password);
+  assert.notEqual(db.listPeople()[0].password, previous);
+  assert.equal(
+    context.passwordMatches_(db.listPeople()[0].password, sent[0][1]),
+    true,
+  );
+  assert.equal(context.passwordMatches_(previous, registered.password), true);
+  assert.equal(context.passwordMatches_(previous, sent[0][1]), false);
 });
 
 test("reset reports an unknown email", function () {
@@ -363,4 +370,52 @@ test("admins receive every payment row", function () {
   assert.equal(result.payments[1].camp_fee_paid, "yes");
   assert.equal(result.payments[1].amount, "65");
   assert.equal(result.payments[1].whatsapp, "+41 79 000 00 00");
+});
+
+test("a stored plaintext password is hashed on the next login", function () {
+  const db = memoryDb([
+    {
+      member_code: "KH-001",
+      email: "a@x.test",
+      password: "secret12",
+      share_with: [],
+    },
+  ]);
+  const result = context.handleAction(
+    { action: "login", email: "a@x.test", password: "secret12" },
+    db,
+  );
+  assert.equal(result.ok, true);
+  const stored = db.listPeople()[0].password;
+  assert.equal(context.isHashedPassword_(stored), true);
+  assert.equal(context.passwordMatches_(stored, "secret12"), true);
+  const again = context.handleAction(
+    { action: "login", email: "a@x.test", password: "secret12" },
+    db,
+  );
+  assert.equal(again.ok, true);
+  assert.equal(db.listPeople()[0].password, stored);
+});
+
+test("password hashes are salted PBKDF2-SHA256", function () {
+  const first = context.hashPassword_("samepass");
+  const second = context.hashPassword_("samepass");
+  assert.notEqual(first, second);
+  assert.equal(context.passwordMatches_(first, "samepass"), true);
+  assert.equal(context.passwordMatches_(first, "other"), false);
+  assert.equal(context.passwordMatches_("pbkdf2_sha256$nope", "x"), false);
+  const hash = context.pbkdf2Sha256_(
+    context.utf8Bytes_("password"),
+    context.utf8Bytes_("salt"),
+    4096,
+    32,
+  );
+  assert.equal(
+    hash.map((byte) => byte.toString(16).padStart(2, "0")).join(""),
+    "c5e478d59288c841aa530db6845c4c8d962893a001ce4e11a4963873aa98134a",
+  );
+  const cells = context.hashPlainPasswords_([["secret12"], [""], [first]]);
+  assert.equal(context.passwordMatches_(cells[0][0], "secret12"), true);
+  assert.equal(cells[1][0], "");
+  assert.equal(cells[2][0], first);
 });
