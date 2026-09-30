@@ -321,7 +321,8 @@ function sessionView_(person, people) {
   };
 }
 
-function feeOwed_(stay) {
+function feeOwed_(stayVal) {
+  var stay = String(stayVal || "");
   if (stay === "arrange") {
     return 50;
   }

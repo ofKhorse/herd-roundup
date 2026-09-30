@@ -231,7 +231,8 @@ function syncStay() {
   }
 }
 
-function restoreStay(stay) {
+function restoreStay(stayVal) {
+  var stay = String(stayVal || "");
   var village = document.querySelector("#village-select");
   var size = document.querySelector("#size-select");
   var sizeRow = document.querySelector("#size-row");
