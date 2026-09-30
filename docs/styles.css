@@ -1,6 +1,5 @@
 :root {
   color: #1c1915;
-  background: #f4efe6;
   font-family: "Iowan Old Style", "Palatino Linotype", Palatino, serif;
   font-size: 18px;
   line-height: 1.45;
@@ -18,6 +17,11 @@
 
 body {
   margin: 0;
+  background-color: #f4efe6;
+  background-image: url("background.jpg");
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
 }
 
 main {
@@ -25,6 +29,7 @@ main {
   max-width: 40rem;
   margin: 0 auto;
   padding: 1.25rem 1rem 3rem;
+  background: rgba(244, 239, 230, 0.82);
 }
 
 h1,
