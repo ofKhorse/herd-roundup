@@ -321,6 +321,16 @@ function sessionView_(person, people) {
   };
 }
 
+function feeOwed_(stay) {
+  if (stay === "arrange") {
+    return 50;
+  }
+  if (stay === "2" || stay === "4" || stay === "5" || stay === "6") {
+    return 365;
+  }
+  return null;
+}
+
 function isTent_(stay) {
   return stay === "2" || stay === "4" || stay === "5" || stay === "6";
 }
@@ -393,6 +403,7 @@ function publicPerson_(person) {
     whatsapp: normalizeWhatsapp_(person.whatsapp),
     sale_available: person.sale_available || "",
     kaptain: person.kaptain || "",
+    fee_owed: feeOwed_(person.stay || ""),
   };
 }
 
