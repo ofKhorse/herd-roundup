@@ -147,6 +147,8 @@ function showSession(result) {
     result.person.camp_fee_paid === "yes"
       ? "Camp fee marked paid."
       : "Camp fee not marked paid yet.";
+  document.querySelector("#tipi-count").textContent =
+    result.tipi_count + " tipis marked as bought.";
   var form = document.querySelector("#profile-form");
   form.full_name.value = result.person.full_name;
   form.stay.value = result.person.stay;
