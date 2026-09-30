@@ -105,8 +105,8 @@ function savePerson_(body, db, deps) {
   }
   var person = found.person;
   var stay = body.stay === undefined ? person.stay || "" : String(body.stay);
-  if (stay !== "" && stay !== "tipi4" && stay !== "tipi5" && stay !== "van") {
-    return { ok: false, error: "Choose tipi4, tipi5, or van." };
+  if (stay !== "" && !isStay_(stay)) {
+    return { ok: false, error: stayListError_() };
   }
   var shareWith =
     body.share_with === undefined ? person.share_with || [] : body.share_with;
@@ -127,8 +127,8 @@ function savePerson_(body, db, deps) {
       return { ok: false, error: "That member code is not registered." };
     }
   }
-  if (shareWith.length > 0 && stay !== "tipi4" && stay !== "tipi5") {
-    return { ok: false, error: "Choose a tipi before adding people." };
+  if (shareWith.length > 0 && !isStay_(stay)) {
+    return { ok: false, error: "Khoose where you sleep before adding people." };
   }
   var purchased =
     body.purchased === undefined
@@ -144,8 +144,8 @@ function savePerson_(body, db, deps) {
     body.purchased_size === undefined
       ? person.purchased_size || ""
       : String(body.purchased_size);
-  if (purchased === "yes" && size !== "2" && size !== "4" && size !== "5") {
-    return { ok: false, error: "Choose a tipi size of 2, 4, or 5." };
+  if (purchased === "yes" && !isStay_(size)) {
+    return { ok: false, error: stayListError_() };
   }
   if (purchased !== "yes") {
     size = "";
@@ -232,14 +232,24 @@ function sessionView_(person, people) {
   };
 }
 
+function isStay_(stay) {
+  return (
+    stay === "tipi2" || stay === "star2" || stay === "star5" || stay === "tipi6"
+  );
+}
+
+function stayListError_() {
+  return "Khoose Tipi, up to 2 people, Star Tent, up to 2 people, Star Tent, up to 5 people, or Tipi, up to 6 people.";
+}
+
 function tipiBySize_(people) {
-  var counts = { 2: 0, 4: 0, 5: 0 };
+  var counts = { tipi2: 0, star2: 0, star5: 0, tipi6: 0 };
   people.forEach(function (person) {
     if (person.purchased !== "yes") {
       return;
     }
     var size = String(person.purchased_size);
-    if (size === "2" || size === "4" || size === "5") {
+    if (isStay_(size)) {
       counts[size] += 1;
     }
   });
