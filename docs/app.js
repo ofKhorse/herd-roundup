@@ -76,7 +76,11 @@ function onLogin(event) {
 function onRegister(event) {
   event.preventDefault();
   var data = new FormData(event.target);
-  post({ action: "register", email: data.get("email") })
+  post({
+    action: "register",
+    email: data.get("email"),
+    whatsapp: data.get("whatsapp"),
+  })
     .then(function (result) {
       if (!result.ok) {
         say(result.error);
@@ -118,6 +122,7 @@ function onSave(event) {
     boomer_id: data.get("boomer_id"),
     purchased: data.get("purchased") ? "yes" : "",
     purchased_size: data.get("purchased_size"),
+    whatsapp: data.get("whatsapp"),
     share_with: state.companions,
   })
     .then(function (result) {
@@ -153,6 +158,7 @@ function showSession(result) {
   form.full_name.value = result.person.full_name;
   form.stay.value = result.person.stay;
   form.boomer_id.value = result.person.boomer_id;
+  form.whatsapp.value = result.person.whatsapp || "";
   form.purchased.checked = result.person.purchased === "yes";
   form.purchased_size.value = result.person.purchased_size;
   renderCompanions();
@@ -283,6 +289,7 @@ function renderPayments(result) {
       payment.amount,
       payment.payment_ref,
       payment.camp_fee_paid,
+      payment.whatsapp,
     ].forEach(function (value) {
       var cell = document.createElement("td");
       cell.textContent = value || "";

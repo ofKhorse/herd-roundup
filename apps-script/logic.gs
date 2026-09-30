@@ -22,17 +22,23 @@ function registerPerson_(body, db, deps) {
   if (!isEmail_(email)) {
     return { ok: false, error: "Enter a valid email." };
   }
+  var whatsapp = normalizeWhatsapp_(body.whatsapp);
+  if (!isWhatsapp_(whatsapp)) {
+    return { ok: false, error: "Enter a WhatsApp number." };
+  }
   var people = db.listPeople();
   if (findByEmail_(people, email)) {
     return { ok: false, error: "That email is already registered." };
   }
   var password = generatePassword_();
   deps.sendPassword(email, password);
-  db.insertPerson(emptyPerson_(email, password, nextMemberCode_(people)));
+  db.insertPerson(
+    emptyPerson_(email, password, nextMemberCode_(people), whatsapp),
+  );
   return { ok: true };
 }
 
-function emptyPerson_(email, password, memberCode) {
+function emptyPerson_(email, password, memberCode, whatsapp) {
   return {
     member_code: memberCode,
     email: email,
@@ -48,7 +54,17 @@ function emptyPerson_(email, password, memberCode) {
     camp_fee_paid: "",
     amount: "",
     payment_ref: "",
+    whatsapp: whatsapp || "",
   };
+}
+
+function normalizeWhatsapp_(value) {
+  return String(value || "").trim();
+}
+
+function isWhatsapp_(value) {
+  var digits = value.replace(/\D/g, "");
+  return digits.length >= 8 && digits.length <= 15;
 }
 
 function normalizeEmail_(email) {
@@ -104,6 +120,13 @@ function savePerson_(body, db, deps) {
     return found;
   }
   var person = found.person;
+  var whatsapp =
+    body.whatsapp === undefined
+      ? normalizeWhatsapp_(person.whatsapp)
+      : normalizeWhatsapp_(body.whatsapp);
+  if (body.whatsapp !== undefined && !isWhatsapp_(whatsapp)) {
+    return { ok: false, error: "Enter a WhatsApp number." };
+  }
   var stay = body.stay === undefined ? person.stay || "" : String(body.stay);
   if (stay !== "" && !isPreference_(stay)) {
     return { ok: false, error: preferenceError_() };
@@ -174,6 +197,7 @@ function savePerson_(body, db, deps) {
       body.boomer_id === undefined
         ? person.boomer_id || ""
         : String(body.boomer_id).trim(),
+    whatsapp: whatsapp,
   });
   var updatedPeople = db.listPeople();
   return sessionView_(
@@ -280,6 +304,7 @@ function paymentRows_(people) {
       amount: other.amount || "",
       payment_ref: other.payment_ref || "",
       camp_fee_paid: other.camp_fee_paid || "",
+      whatsapp: normalizeWhatsapp_(other.whatsapp),
     };
   });
 }
@@ -299,6 +324,7 @@ function publicPerson_(person) {
     camp_fee_paid: person.camp_fee_paid || "",
     amount: person.amount || "",
     payment_ref: person.payment_ref || "",
+    whatsapp: normalizeWhatsapp_(person.whatsapp),
   };
 }
 
