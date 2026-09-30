@@ -75,7 +75,6 @@ function onRegister(event) {
         return;
       }
       say("Your password was emailed to you. Then log in.");
-      alert("Your password was emailed to you. Then log in.");
     })
     .catch(fail);
 }
@@ -90,7 +89,6 @@ function onReset(event) {
         return;
       }
       say("A new password was emailed to you.");
-      alert("A new password was emailed to you.");
     })
     .catch(fail);
 }
@@ -113,7 +111,6 @@ function onSave(event) {
     .then(function (result) {
       if (!result.ok) {
         say(result.error);
-        alert(result.error);
         return;
       }
       showSession(result);
@@ -312,4 +309,7 @@ function fail(error) {
 
 function say(message) {
   notice.textContent = message;
+  if (message) {
+    alert(message);
+  }
 }
