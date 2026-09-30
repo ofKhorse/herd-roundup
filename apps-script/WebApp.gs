@@ -29,6 +29,11 @@ function doPost(e) {
   }
 }
 
+// Run once from the editor so this account may send password email.
+function authorizeMail() {
+  MailApp.getRemainingDailyQuota();
+}
+
 function sheetDatabase_() {
   var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("people");
   if (!sheet) {
