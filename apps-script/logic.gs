@@ -155,10 +155,13 @@ function savePerson_(body, db, deps) {
       return { ok: false, error: "That member kode is not registered." };
     }
   }
-  if (shareWith.length > 0 && !isPreference_(stay)) {
+  if (shareWith.length > 0 && !isTent_(stay)) {
     return {
       ok: false,
-      error: "Choose a sleeping preference before adding people.",
+      error:
+        stay === "arrange"
+          ? "You kan add people only when you choose a tent or a tipi."
+          : "Choose a sleeping preference before adding people.",
     };
   }
   var purchased =
@@ -268,8 +271,12 @@ function sessionView_(person, people) {
   };
 }
 
-function isPreference_(stay) {
+function isTent_(stay) {
   return stay === "2" || stay === "4" || stay === "5" || stay === "6";
+}
+
+function isPreference_(stay) {
+  return isTent_(stay) || stay === "arrange";
 }
 
 function isPurchase_(size) {
@@ -279,7 +286,7 @@ function isPurchase_(size) {
 }
 
 function preferenceError_() {
-  return "Choose a sleeping preference of 2, 4, 5, or 6 people.";
+  return "Choose 2, 4, 5, or 6 people, or I arrange myself.";
 }
 
 function purchaseError_() {

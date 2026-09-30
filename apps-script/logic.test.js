@@ -331,7 +331,39 @@ test("save rejects companions who do not fit the rules", function () {
       },
     },
   );
+  const arrange = context.handleAction(
+    {
+      action: "save",
+      email: "a@x.test",
+      password: owner.password,
+      stay: "arrange",
+      share_with: ["KH-002"],
+    },
+    db,
+    {},
+  );
+  const alone = context.handleAction(
+    {
+      action: "save",
+      email: "a@x.test",
+      password: owner.password,
+      stay: "arrange",
+      share_with: [],
+    },
+    db,
+    {
+      now: function () {
+        return "now";
+      },
+    },
+  );
   assert.equal(van.error, "Choose a sleeping preference before adding people.");
+  assert.equal(
+    arrange.error,
+    "You kan add people only when you choose a tent or a tipi.",
+  );
+  assert.equal(alone.ok, true);
+  assert.equal(alone.person.stay, "arrange");
   assert.equal(self.error, "You kan't list yourself.");
   assert.equal(missing.error, "That member kode is not registered.");
   assert.equal(

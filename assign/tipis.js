@@ -1,6 +1,6 @@
 function assignTipis(people, sizes) {
   var eligible = people.filter(function (person) {
-    return person.stay !== "van";
+    return person.stay !== "van" && person.stay !== "arrange";
   });
   var byCode = indexByCode(eligible);
   var weights = pairWeights(eligible);
