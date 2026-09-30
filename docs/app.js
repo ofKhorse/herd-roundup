@@ -95,10 +95,11 @@ function onSave(event) {
     .then(function (result) {
       if (!result.ok) {
         say(result.error);
+        showFormError(result.error);
         return;
       }
-      say("Saved.");
       showSession(result);
+      say("Saved.");
     })
     .catch(fail);
 }
@@ -109,6 +110,7 @@ function showSession(result) {
     return;
   }
   notice.textContent = "";
+  showFormError("");
   auth.hidden = true;
   profile.hidden = false;
   state.directory = result.directory;
@@ -289,6 +291,21 @@ function post(body) {
 
 function fail(error) {
   say(error.message);
+}
+
+function showFormError(message) {
+  var formError = document.querySelector("#form-error");
+  var size = document.querySelector("#profile-form").purchased_size;
+  formError.textContent = message;
+  formError.hidden = !message;
+  if (message.indexOf("tipi size") !== -1) {
+    size.setAttribute("aria-invalid", "true");
+  } else {
+    size.removeAttribute("aria-invalid");
+  }
+  if (message) {
+    formError.scrollIntoView({ block: "center" });
+  }
 }
 
 function say(message) {

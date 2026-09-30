@@ -287,7 +287,10 @@ test("save rejects companions who do not fit the rules", function () {
   assert.equal(van.error, "Choose a tipi before adding people.");
   assert.equal(self.error, "You can't list yourself.");
   assert.equal(missing.error, "That member code is not registered.");
-  assert.equal(size.error, "Choose a tipi size of 2, 4, or 5.");
+  assert.equal(
+    size.error,
+    "Choose a tipi size of 2, 4, or 5. The tipi purchase was not saved.",
+  );
 });
 
 test("admins receive every payment row", function () {
