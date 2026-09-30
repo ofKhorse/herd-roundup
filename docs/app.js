@@ -62,7 +62,7 @@ function onRegister(event) {
         say(result.error);
         return;
       }
-      say("Your password is " + result.password + ". Save it, then log in.");
+      say("Your password was emailed to you. Then log in.");
     })
     .catch(fail);
 }
