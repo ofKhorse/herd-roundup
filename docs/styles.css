@@ -206,6 +206,24 @@ button.solid {
   padding-left: 1.25rem;
 }
 
+#companion-matches {
+  display: grid;
+  max-height: 14rem;
+  overflow: auto;
+}
+
+#companion-matches button {
+  min-height: 44px;
+  padding: 0.35rem 0;
+  text-decoration: none;
+  border-bottom: 1px solid #ddd4c6;
+}
+
+.no-match {
+  margin: 0;
+  color: #8a8175;
+}
+
 table {
   width: 100%;
   border-collapse: collapse;

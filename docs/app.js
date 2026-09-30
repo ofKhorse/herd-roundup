@@ -10,21 +10,27 @@ document.querySelector("#register-form").addEventListener("submit", onRegister);
 document.querySelector("#reset-form").addEventListener("submit", onReset);
 document.querySelector("#profile-form").addEventListener("submit", onSave);
 document.querySelector("#logout").addEventListener("click", logout);
-document
-  .querySelector("#companion-search")
-  .addEventListener("input", renderMatches);
-document
-  .querySelector("#companion-search")
-  .addEventListener("keydown", function (event) {
-    if (event.key !== "Enter") {
-      return;
-    }
-    event.preventDefault();
-    var match = document.querySelector("#companion-matches button");
-    if (match) {
-      match.click();
-    }
-  });
+var companionSearch = document.querySelector("#companion-search");
+var matchesOpen = false;
+companionSearch.addEventListener("focus", function () {
+  matchesOpen = true;
+  renderMatches();
+});
+companionSearch.addEventListener("input", renderMatches);
+companionSearch.addEventListener("blur", function () {
+  matchesOpen = false;
+  document.querySelector("#companion-matches").innerHTML = "";
+});
+companionSearch.addEventListener("keydown", function (event) {
+  if (event.key !== "Enter") {
+    return;
+  }
+  event.preventDefault();
+  var match = document.querySelector("#companion-matches button");
+  if (match) {
+    match.click();
+  }
+});
 
 var saved = readSession();
 if (saved) {
@@ -178,39 +184,44 @@ function renderCompanions() {
 }
 
 function renderMatches() {
-  var query = document
-    .querySelector("#companion-search")
-    .value.trim()
-    .toLowerCase();
   var box = document.querySelector("#companion-matches");
   box.innerHTML = "";
-  if (!query) {
+  if (!matchesOpen) {
     return;
   }
-  state.directory
-    .filter(function (person) {
-      if (state.companions.indexOf(person.member_code) !== -1) {
-        return false;
-      }
-      var haystack = (
-        person.full_name +
-        " " +
-        person.member_code
-      ).toLowerCase();
-      return haystack.indexOf(query) !== -1;
-    })
-    .forEach(function (person) {
-      var button = document.createElement("button");
-      button.type = "button";
-      button.textContent = labelFor(person.member_code);
-      button.addEventListener("click", function () {
-        state.companions.push(person.member_code);
-        document.querySelector("#companion-search").value = "";
-        renderCompanions();
-        renderMatches();
-      });
-      box.appendChild(button);
+  var query = companionSearch.value.trim().toLowerCase();
+  var matches = state.directory.filter(function (person) {
+    if (state.companions.indexOf(person.member_code) !== -1) {
+      return false;
+    }
+    if (!query) {
+      return true;
+    }
+    var haystack = (person.full_name + " " + person.member_code).toLowerCase();
+    return haystack.indexOf(query) !== -1;
+  });
+  if (!matches.length) {
+    var empty = document.createElement("p");
+    empty.className = "no-match";
+    empty.textContent = "No match found";
+    box.appendChild(empty);
+    return;
+  }
+  matches.forEach(function (person) {
+    var button = document.createElement("button");
+    button.type = "button";
+    button.textContent = labelFor(person.member_code);
+    button.addEventListener("mousedown", function (event) {
+      event.preventDefault();
     });
+    button.addEventListener("click", function () {
+      state.companions.push(person.member_code);
+      companionSearch.value = "";
+      renderCompanions();
+      renderMatches();
+    });
+    box.appendChild(button);
+  });
 }
 
 function renderPickedBy() {
