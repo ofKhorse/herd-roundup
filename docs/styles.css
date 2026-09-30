@@ -288,6 +288,15 @@ button.solid {
   padding-left: 1.25rem;
 }
 
+#signup-counts {
+  display: grid;
+  gap: 0.15rem;
+}
+
+#signup-counts p {
+  margin: 0;
+}
+
 #tipi-by-size {
   display: grid;
   gap: 0.15rem;

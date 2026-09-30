@@ -286,6 +286,17 @@ function authenticatedPerson_(people, body, db, deps) {
 }
 
 function sessionView_(person, people) {
+  var stayKeys = ["2", "4", "5", "6", "arrange", ""];
+  var stayCounts = {};
+  stayKeys.forEach(function (k) {
+    stayCounts[k] = 0;
+  });
+  people.forEach(function (other) {
+    var s = other.stay || "";
+    if (stayCounts[s] !== undefined) {
+      stayCounts[s] += 1;
+    }
+  });
   return {
     ok: true,
     person: publicPerson_(person),
@@ -305,6 +316,8 @@ function sessionView_(person, people) {
     }).length,
     tipi_by_size: isAdmin_(person) ? tipiBySize_(people) : null,
     payments: isAdmin_(person) ? paymentRows_(people) : [],
+    signup_count: isAdmin_(person) ? people.length : null,
+    stay_counts: isAdmin_(person) ? stayCounts : null,
   };
 }
 
