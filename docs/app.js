@@ -36,41 +36,42 @@ companionSearch.addEventListener("keydown", function (event) {
 
 var saved = readSession();
 if (saved) {
-  post({
-    action: "login",
-    email: saved.email,
-    password: saved.password,
-  })
-    .then(function (result) {
-      if (!result.ok) {
-        clearSession();
-        say(result.error);
-        return;
-      }
-      showSession(result);
-    })
-    .catch(function (error) {
-      say(error.message);
-    });
+  signIn(saved.email, saved.password, true);
 }
 
 function onLogin(event) {
   event.preventDefault();
   var data = new FormData(event.target);
+  signIn(data.get("email"), data.get("password"), false);
+}
+
+function signIn(email, password, fromCookie) {
+  var button = document.querySelector("#login-form button");
+  button.disabled = true;
+  setLoading("Signing in…");
   post({
     action: "login",
-    email: data.get("email"),
-    password: data.get("password"),
+    email: email,
+    password: password,
   })
     .then(function (result) {
+      setLoading("");
       if (!result.ok) {
+        if (fromCookie) {
+          clearSession();
+        }
         say(result.error);
         return;
       }
-      writeSession(data.get("email"), data.get("password"));
+      if (!fromCookie) {
+        writeSession(email, password);
+      }
       showSession(result);
     })
-    .catch(fail);
+    .catch(fail)
+    .then(function () {
+      button.disabled = false;
+    });
 }
 
 function onRegister(event) {
@@ -399,7 +400,15 @@ function fail(error) {
   say(error.message);
 }
 
+function setLoading(message) {
+  notice.classList.toggle("loading", message !== "");
+  if (message) {
+    notice.textContent = message;
+  }
+}
+
 function say(message) {
+  notice.classList.remove("loading");
   notice.textContent = message;
   if (message) {
     alert(message);

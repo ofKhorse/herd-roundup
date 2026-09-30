@@ -161,6 +161,14 @@ button.solid {
   margin: 0;
 }
 
+.notice.loading {
+  padding: 0.75rem 0.9rem;
+  background: #1f3d32;
+  color: #f4efe6;
+  border-radius: 0.65rem;
+  font-weight: 600;
+}
+
 .pay {
   display: grid;
   gap: 0.7rem;
