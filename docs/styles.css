@@ -82,6 +82,39 @@ button.solid {
   padding: 0.75rem 0;
 }
 
+.pay {
+  margin: 0 0 0.75rem;
+}
+
+.pay > p {
+  display: inline;
+  margin: 0 0.75rem 0 0;
+}
+
+.pay details {
+  display: inline-block;
+  vertical-align: baseline;
+}
+
+.pay details[open] {
+  display: block;
+  margin-top: 0.35rem;
+}
+
+.pay summary {
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.pay ol {
+  margin: 0.6rem 0;
+  padding-left: 1.25rem;
+}
+
+.pay details p {
+  margin: 0;
+}
+
 .row {
   display: flex;
   gap: 0.75rem;
