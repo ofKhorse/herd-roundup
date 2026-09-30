@@ -151,7 +151,7 @@ button.solid {
 }
 
 .actions #logout,
-#payments-logout {
+#admin-logout {
   min-height: 44px;
   text-align: center;
 }
@@ -224,6 +224,15 @@ button.solid {
   padding-left: 1.25rem;
 }
 
+#tipi-by-size {
+  display: grid;
+  gap: 0.15rem;
+}
+
+#tipi-by-size p {
+  margin: 0;
+}
+
 #companion-matches {
   display: grid;
   max-height: 14rem;
@@ -276,21 +285,21 @@ code {
   }
 
   .actions #logout,
-  #payments-logout {
+  #admin-logout {
     text-align: left;
   }
 }
 
 @media (max-width: 699px) {
-  #payments table,
-  #payments thead,
-  #payments tbody,
-  #payments tr,
-  #payments td {
+  #admin table,
+  #admin thead,
+  #admin tbody,
+  #admin tr,
+  #admin td {
     display: block;
   }
 
-  #payments thead {
+  #admin thead {
     position: absolute;
     width: 1px;
     height: 1px;
@@ -301,40 +310,40 @@ code {
     border: 0;
   }
 
-  #payments tr {
+  #admin tr {
     padding: 0.65rem 0;
     border-bottom: 1px solid #ddd4c6;
   }
 
-  #payments td {
+  #admin td {
     border: 0;
     padding: 0.15rem 0;
   }
 
-  #payments td::before {
+  #admin td::before {
     display: block;
     font-size: 0.75rem;
     letter-spacing: 0.06em;
     text-transform: uppercase;
   }
 
-  #payments td:nth-child(1)::before {
+  #admin td:nth-child(1)::before {
     content: "Name";
   }
 
-  #payments td:nth-child(2)::before {
+  #admin td:nth-child(2)::before {
     content: "Code";
   }
 
-  #payments td:nth-child(3)::before {
+  #admin td:nth-child(3)::before {
     content: "Amount";
   }
 
-  #payments td:nth-child(4)::before {
+  #admin td:nth-child(4)::before {
     content: "Reference";
   }
 
-  #payments td:nth-child(5)::before {
+  #admin td:nth-child(5)::before {
     content: "Camp fee";
   }
 }

@@ -12,7 +12,7 @@
       <h1>Boom 2027</h1>
       <nav id="nav" class="nav" hidden>
         <a id="show-camp" href="#camp">Camp</a>
-        <a id="show-payments" href="#payments">Payments</a>
+        <a id="show-admin" href="#admin">Admin</a>
       </nav>
       <p id="notice" class="notice"></p>
 
@@ -133,22 +133,28 @@
         </form>
       </section>
 
-      <section id="payments" class="card" hidden>
-        <h2>Payments</h2>
-        <table>
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Code</th>
-              <th>Amount</th>
-              <th>Reference</th>
-              <th>Camp fee</th>
-            </tr>
-          </thead>
-          <tbody id="payment-rows"></tbody>
-        </table>
+      <section id="admin" class="stack" hidden>
+        <div class="card">
+          <h2>Tipis bought</h2>
+          <div id="tipi-by-size"></div>
+        </div>
+        <div class="card">
+          <h2>Payments</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Code</th>
+                <th>Amount</th>
+                <th>Reference</th>
+                <th>Camp fee</th>
+              </tr>
+            </thead>
+            <tbody id="payment-rows"></tbody>
+          </table>
+        </div>
         <div class="actions">
-          <button id="payments-logout" type="button">Log out</button>
+          <button id="admin-logout" type="button">Log out</button>
         </div>
       </section>
     </main>

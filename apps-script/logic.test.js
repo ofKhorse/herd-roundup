@@ -143,6 +143,7 @@ test("login returns the camper without the password", function () {
   assert.equal(result.person.member_code, "KH-001");
   assert.equal(result.person.password, undefined);
   assert.equal(result.tipi_count, 0);
+  assert.equal(result.tipi_by_size, null);
   assert.equal(result.payments.length, 0);
 });
 
@@ -310,17 +311,26 @@ test("admins receive every payment row", function () {
   const db = memoryDb();
   const owner = register(db, "a@x.test");
   register(db, "b@x.test");
-  db.updatePerson("KH-001", { admin: "yes" });
+  db.updatePerson("KH-001", {
+    admin: "yes",
+    purchased: "yes",
+    purchased_size: "4",
+  });
   db.updatePerson("KH-002", {
     full_name: "Bea",
     camp_fee_paid: "yes",
     amount: "65",
     payment_ref: "KH-002",
+    purchased: "yes",
+    purchased_size: "5",
   });
   const result = context.handleAction(
     { action: "login", email: "a@x.test", password: owner.password },
     db,
   );
+  assert.equal(result.tipi_by_size["2"], 0);
+  assert.equal(result.tipi_by_size["4"], 1);
+  assert.equal(result.tipi_by_size["5"], 1);
   assert.equal(result.payments.length, 2);
   assert.equal(result.payments[1].full_name, "Bea");
   assert.equal(result.payments[1].camp_fee_paid, "yes");
