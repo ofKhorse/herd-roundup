@@ -26,15 +26,21 @@ document
     }
   });
 
-var saved = sessionStorage.getItem(sessionKey);
+var saved = readSession();
 if (saved) {
-  var credentials = JSON.parse(saved);
   post({
     action: "login",
-    email: credentials.email,
-    password: credentials.password,
+    email: saved.email,
+    password: saved.password,
   })
-    .then(showSession)
+    .then(function (result) {
+      if (!result.ok) {
+        clearSession();
+        say(result.error);
+        return;
+      }
+      showSession(result);
+    })
     .catch(function (error) {
       say(error.message);
     });
@@ -53,13 +59,7 @@ function onLogin(event) {
         say(result.error);
         return;
       }
-      sessionStorage.setItem(
-        sessionKey,
-        JSON.stringify({
-          email: data.get("email"),
-          password: data.get("password"),
-        }),
-      );
+      writeSession(data.get("email"), data.get("password"));
       showSession(result);
     })
     .catch(fail);
@@ -97,7 +97,11 @@ function onReset(event) {
 
 function onSave(event) {
   event.preventDefault();
-  var credentials = JSON.parse(sessionStorage.getItem(sessionKey));
+  var credentials = readSession();
+  if (!credentials) {
+    say("Log in again.");
+    return;
+  }
   var data = new FormData(event.target);
   post({
     action: "save",
@@ -285,8 +289,38 @@ function labelFor(code) {
   return person.full_name + " (" + code + ")";
 }
 
+function readSession() {
+  var prefix = sessionKey + "=";
+  var parts = document.cookie ? document.cookie.split(";") : [];
+  for (var i = 0; i < parts.length; i++) {
+    var part = parts[i].trim();
+    if (part.indexOf(prefix) !== 0) {
+      continue;
+    }
+    try {
+      return JSON.parse(decodeURIComponent(part.slice(prefix.length)));
+    } catch (error) {
+      return null;
+    }
+  }
+  return null;
+}
+
+function writeSession(email, password) {
+  document.cookie =
+    sessionKey +
+    "=" +
+    encodeURIComponent(JSON.stringify({ email: email, password: password })) +
+    "; Max-Age=2592000; Path=/herd-roundup; SameSite=Lax; Secure";
+}
+
+function clearSession() {
+  document.cookie =
+    sessionKey + "=; Max-Age=0; Path=/herd-roundup; SameSite=Lax; Secure";
+}
+
 function logout() {
-  sessionStorage.removeItem(sessionKey);
+  clearSession();
   profile.hidden = true;
   auth.hidden = false;
   say("Logged out.");
