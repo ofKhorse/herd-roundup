@@ -3,7 +3,7 @@ function handleAction(body, db, deps) {
     return { ok: false, error: "Unknown action." };
   }
   if (body.action === "register") {
-    return registerPerson_(body, db);
+    return registerPerson_(body, db, deps || {});
   }
   if (body.action === "login") {
     return loginPerson_(body, db);
@@ -17,7 +17,7 @@ function handleAction(body, db, deps) {
   return { ok: false, error: "Unknown action." };
 }
 
-function registerPerson_(body, db) {
+function registerPerson_(body, db, deps) {
   var email = normalizeEmail_(body.email);
   if (!isEmail_(email)) {
     return { ok: false, error: "Enter a valid email." };
@@ -27,8 +27,9 @@ function registerPerson_(body, db) {
     return { ok: false, error: "That email is already registered." };
   }
   var password = generatePassword_();
+  deps.sendPassword(email, password);
   db.insertPerson(emptyPerson_(email, password, nextMemberCode_(people)));
-  return { ok: true, password: password };
+  return { ok: true };
 }
 
 function emptyPerson_(email, password, memberCode) {

@@ -16,6 +16,20 @@ vm.runInContext(
   context,
 );
 
+function register(db, email) {
+  let password;
+  const result = context.handleAction(
+    { action: "register", email: email },
+    db,
+    {
+      sendPassword: function (_to, value) {
+        password = value;
+      },
+    },
+  );
+  return { ok: result.ok, error: result.error, password: password };
+}
+
 function memoryDb(seed) {
   const people = (seed || []).map(function (person) {
     return Object.assign({}, person, {
@@ -48,32 +62,49 @@ function memoryDb(seed) {
   };
 }
 
-test("register stores a camper and returns a password", function () {
+test("register emails a password and does not return it", function () {
   const db = memoryDb();
+  const sent = [];
   const result = context.handleAction(
     { action: "register", email: " A@x.test " },
     db,
+    {
+      sendPassword: function (email, password) {
+        sent.push([email, password]);
+      },
+    },
   );
   assert.equal(result.ok, true);
-  assert.equal(typeof result.password, "string");
-  assert.equal(result.password.length, 8);
+  assert.equal(result.password, undefined);
   assert.equal(result.member_code, undefined);
+  assert.equal(sent.length, 1);
+  assert.equal(sent[0][0], "a@x.test");
+  assert.equal(sent[0][1].length, 8);
   const people = db.listPeople();
   assert.equal(people.length, 1);
   assert.equal(people[0].email, "a@x.test");
   assert.equal(people[0].member_code, "KH-001");
-  assert.equal(people[0].password, result.password);
+  assert.equal(people[0].password, sent[0][1]);
   assert.equal(people[0].full_name, "");
+});
+
+test("register keeps the sheet unchanged when the email fails", function () {
+  const db = memoryDb();
+  assert.throws(function () {
+    context.handleAction({ action: "register", email: "a@x.test" }, db, {
+      sendPassword: function () {
+        throw new Error("Could not send the password email.");
+      },
+    });
+  }, /Could not send the password email/);
+  assert.equal(db.listPeople().length, 0);
 });
 
 test("register assigns the next member code", function () {
   const db = memoryDb([
     { member_code: "KH-004", email: "a@x.test", share_with: [] },
   ]);
-  const result = context.handleAction(
-    { action: "register", email: "b@x.test" },
-    db,
-  );
+  const result = register(db, "b@x.test");
   assert.equal(result.ok, true);
   assert.equal(db.listPeople()[1].member_code, "KH-005");
 });
@@ -103,10 +134,7 @@ test("register rejects an invalid email", function () {
 
 test("login returns the camper without the password", function () {
   const db = memoryDb();
-  const registered = context.handleAction(
-    { action: "register", email: "a@x.test" },
-    db,
-  );
+  const registered = register(db, "a@x.test");
   const result = context.handleAction(
     { action: "login", email: "a@x.test", password: registered.password },
     db,
@@ -120,10 +148,7 @@ test("login returns the camper without the password", function () {
 
 test("login rejects an unknown email and a wrong password", function () {
   const db = memoryDb();
-  const registered = context.handleAction(
-    { action: "register", email: "a@x.test" },
-    db,
-  );
+  const registered = register(db, "a@x.test");
   const unknown = context.handleAction(
     { action: "login", email: "missing@x.test", password: "whatever" },
     db,
@@ -138,10 +163,7 @@ test("login rejects an unknown email and a wrong password", function () {
 
 test("reset emails a new password", function () {
   const db = memoryDb();
-  const registered = context.handleAction(
-    { action: "register", email: "a@x.test" },
-    db,
-  );
+  const registered = register(db, "a@x.test");
   const sent = [];
   const result = context.handleAction(
     { action: "reset", email: "a@x.test" },
@@ -176,14 +198,11 @@ test("reset reports an unknown email", function () {
 
 test("save stores an ordered companion list and a tipi purchase", function () {
   const db = memoryDb();
-  const owner = context.handleAction(
-    { action: "register", email: "a@x.test" },
-    db,
-  );
-  context.handleAction({ action: "register", email: "b@x.test" }, db);
-  context.handleAction({ action: "register", email: "c@x.test" }, db);
-  context.handleAction({ action: "register", email: "d@x.test" }, db);
-  context.handleAction({ action: "register", email: "e@x.test" }, db);
+  const owner = register(db, "a@x.test");
+  register(db, "b@x.test");
+  register(db, "c@x.test");
+  register(db, "d@x.test");
+  register(db, "e@x.test");
   const result = context.handleAction(
     {
       action: "save",
@@ -231,11 +250,8 @@ test("save stores an ordered companion list and a tipi purchase", function () {
 
 test("save rejects companions who do not fit the rules", function () {
   const db = memoryDb();
-  const owner = context.handleAction(
-    { action: "register", email: "a@x.test" },
-    db,
-  );
-  context.handleAction({ action: "register", email: "b@x.test" }, db);
+  const owner = register(db, "a@x.test");
+  register(db, "b@x.test");
   const van = context.handleAction(
     {
       action: "save",
@@ -292,11 +308,8 @@ test("save rejects companions who do not fit the rules", function () {
 
 test("admins receive every payment row", function () {
   const db = memoryDb();
-  const owner = context.handleAction(
-    { action: "register", email: "a@x.test" },
-    db,
-  );
-  context.handleAction({ action: "register", email: "b@x.test" }, db);
+  const owner = register(db, "a@x.test");
+  register(db, "b@x.test");
   db.updatePerson("KH-001", { admin: "yes" });
   db.updatePerson("KH-002", {
     full_name: "Bea",
