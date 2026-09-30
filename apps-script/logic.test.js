@@ -367,7 +367,7 @@ test("save rejects companions who do not fit the rules", function () {
   assert.equal(alone.ok, true);
   assert.equal(alone.person.stay, "arrange");
   assert.equal(self.error, "You kan't list yourself.");
-  assert.equal(missing.error, "That member kode is not registered.");
+  assert.equal(missing.ok, true);
   assert.equal(
     size.error,
     "Choose Tipi, up to 2 people, Star Tent, up to 2 people, Star Tent, up to 5 people, or Tipi, up to 6 people.",

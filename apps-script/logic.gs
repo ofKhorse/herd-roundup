@@ -152,10 +152,10 @@ function savePerson_(body, db, deps) {
     if (seen[code]) {
       return { ok: false, error: "List each person once." };
     }
-    seen[code] = true;
-    if (!findByCode_(people, code)) {
-      return { ok: false, error: "That member kode is not registered." };
+    if (code.indexOf(",") !== -1) {
+      return { ok: false, error: "Names kan't contain a comma." };
     }
+    seen[code] = true;
   }
   if (shareWith.length > 0 && !isTent_(stay)) {
     return {
