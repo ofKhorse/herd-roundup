@@ -9,6 +9,7 @@ test("keeps mutual top picks together and skips vans", function () {
       { member_code: "B", stay: "6", share_with: ["A"] },
       { member_code: "C", stay: "", share_with: ["A"] },
       { member_code: "D", stay: "van", share_with: ["A"] },
+      { member_code: "E", stay: "arrange", share_with: ["A"] },
     ],
     [3],
   );
