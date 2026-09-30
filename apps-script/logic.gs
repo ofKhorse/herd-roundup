@@ -233,7 +233,7 @@ function sessionView_(person, people) {
 }
 
 function tipiBySize_(people) {
-  var counts = { "2": 0, "4": 0, "5": 0 };
+  var counts = { 2: 0, 4: 0, 5: 0 };
   people.forEach(function (person) {
     if (person.purchased !== "yes") {
       return;
