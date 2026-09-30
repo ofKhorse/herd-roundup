@@ -104,36 +104,53 @@
         </div>
 
         <form id="profile-form" class="stack">
-          <div class="pair">
-            <div class="card">
-              <h2>You</h2>
-              <label>Full name <input name="full_name" /></label>
-              <label>Boomer ID <input name="boomer_id" /></label>
-              <label>
-                WhatsApp
-                <input name="whatsapp" type="tel" required />
-              </label>
-            </div>
-            <div class="card">
-              <h2>Sleeping preference</h2>
-              <select name="stay" aria-label="Sleeping preference">
+          <div class="card">
+            <h2>You</h2>
+            <label>Full name <input name="full_name" /></label>
+            <label>Boomer ID <input name="boomer_id" /></label>
+            <label>
+              WhatsApp
+              <input name="whatsapp" type="tel" required />
+            </label>
+          </div>
+
+          <h2 class="section-label">Pre-sale information</h2>
+          <div class="card">
+            <h2>Sleeping preference</h2>
+            <label>
+              Will you kamp in the tipi village with us?
+              <select id="village-select">
                 <option value="">Choose later</option>
-                <option value="2">2 people — rare (Tipi or Star Tent)</option>
-                <option value="4">
-                  4 people — underutilized 5-person tent, if available
-                </option>
-                <option value="5">5 people — Star Tent</option>
-                <option value="6">6 people — rare (Tipi)</option>
+                <option value="yes">Yes</option>
                 <option value="arrange">I arrange myself</option>
               </select>
+            </label>
+            <p>
+              "I arrange myself" means you sort your own sleeping, for example
+              when coming with a van.
+            </p>
+            <div id="size-row" hidden>
+              <label>
+                Preferred size
+                <select id="size-select">
+                  <option value="">Choose later</option>
+                  <option value="2">2 people — rare (Tipi or Star Tent)</option>
+                  <option value="4">
+                    4 people — underutilized 5-person tent, if available
+                  </option>
+                  <option value="5">5 people — Star Tent</option>
+                  <option value="6">6 people — rare (Tipi)</option>
+                </select>
+              </label>
               <p>
-                2 people tents are super rare, you most likely won't get that. 6
-                people is rare as well. 4 people only if available, since it is
-                a 5 people tent we don't fill. "I arrange myself" means you sort
-                your own sleeping, for example when coming with a van.
+                2 people is super rare. 6 people is rare. 4 people only if
+                available.
               </p>
             </div>
+            <input type="hidden" name="stay" id="stay-hidden" />
           </div>
+
+          <h2 class="section-label">During sale information</h2>
           <div class="card">
             <h2>Did you get a tent or tipi?</h2>
             <label class="row">
@@ -151,6 +168,8 @@
               </select>
             </label>
           </div>
+
+          <h2 class="section-label">Post-sale information</h2>
           <div class="card">
             <h2>Name your stable mates</h2>
             <p>

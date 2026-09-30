@@ -43,6 +43,15 @@ h2 {
   font-size: 1.35rem;
 }
 
+h2.section-label {
+  margin: 0.25rem 0 -0.5rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: #5c564c;
+}
+
 .mark {
   margin: 0;
   letter-spacing: 0.08em;
@@ -286,6 +295,11 @@ button.solid {
 
 #tipi-by-size p {
   margin: 0;
+}
+
+#size-row {
+  display: grid;
+  gap: 0.5rem;
 }
 
 #companion-matches {
