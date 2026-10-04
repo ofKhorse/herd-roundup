@@ -1,5 +1,12 @@
 var sessionKey = "herd-roundup-session";
-var state = { directory: [], companions: [], memberCode: "", admin: false };
+var state = {
+  directory: [],
+  companions: [],
+  memberCode: "",
+  admin: false,
+  kaptains: [],
+  bought: [],
+};
 
 var notice = document.querySelector("#notice");
 var auth = document.querySelector("#auth");
@@ -11,6 +18,16 @@ document.querySelector("#reset-form").addEventListener("submit", onReset);
 document.querySelector("#profile-form").addEventListener("submit", onSave);
 document.querySelector("#logout").addEventListener("click", logout);
 document.querySelector("#admin-logout").addEventListener("click", logout);
+document
+  .querySelector("#copy-kaptain-phones")
+  .addEventListener("click", function (event) {
+    copyPhones(state.kaptains, event.currentTarget);
+  });
+document
+  .querySelector("#copy-bought-phones")
+  .addEventListener("click", function (event) {
+    copyPhones(state.bought, event.currentTarget);
+  });
 window.addEventListener("hashchange", showView);
 document.querySelector("#village-select").addEventListener("change", syncStay);
 document.querySelector("#size-select").addEventListener("change", syncStay);
@@ -101,6 +118,15 @@ function signIn(credentials, fromCookie) {
 function onRegister(event) {
   event.preventDefault();
   var data = new FormData(event.target);
+  var whatsappError = whatsappProblem(data.get("whatsapp"));
+  var error = event.target.querySelector(".field-error");
+  if (whatsappError) {
+    error.hidden = false;
+    error.textContent = whatsappError;
+    return;
+  }
+  error.hidden = true;
+  error.textContent = "";
   callServer(
     {
       action: "register",
@@ -418,6 +444,10 @@ function renderTipiBySize(counts) {
 function renderMembers(result) {
   var body = document.querySelector("#member-rows");
   body.innerHTML = "";
+  state.kaptains = [];
+  state.bought = [];
+  renderPeopleRows("#kaptain-rows", [], 3);
+  renderPeopleRows("#bought-rows", [], 4);
   state.admin = result.person.admin === "yes";
   if (!state.admin) {
     if (location.hash === "#admin" || location.hash === "#payments") {
@@ -463,6 +493,88 @@ function renderMembers(result) {
     });
     body.appendChild(row);
   });
+  var people = result.payments || [];
+  state.kaptains = people.filter(function (member) {
+    return member.kaptain === "yes";
+  });
+  state.bought = people.filter(function (member) {
+    return member.purchased === "yes";
+  });
+  renderPeopleRows("#kaptain-rows", state.kaptains, 3, function (member) {
+    return [member.full_name, member.member_code, member.whatsapp];
+  });
+  renderPeopleRows("#bought-rows", state.bought, 4, function (member) {
+    return [
+      member.full_name,
+      member.member_code,
+      member.whatsapp,
+      memberTent(member.purchased_size),
+    ];
+  });
+}
+
+function renderPeopleRows(selector, people, columns, values) {
+  var body = document.querySelector(selector);
+  body.innerHTML = "";
+  if (!people.length) {
+    var empty = document.createElement("tr");
+    var cell = document.createElement("td");
+    cell.colSpan = columns;
+    cell.textContent = "Nobody yet.";
+    empty.appendChild(cell);
+    body.appendChild(empty);
+    return;
+  }
+  people.forEach(function (member) {
+    var row = document.createElement("tr");
+    values(member).forEach(function (value) {
+      var cell = document.createElement("td");
+      cell.textContent = value || "";
+      row.appendChild(cell);
+    });
+    body.appendChild(row);
+  });
+}
+
+function copyPhones(people, button) {
+  var numbers = people
+    .map(function (member) {
+      return String(member.whatsapp || "").trim();
+    })
+    .filter(Boolean);
+  var previous = button.textContent;
+  if (!numbers.length) {
+    button.textContent = "No phone numbers";
+    window.setTimeout(function () {
+      button.textContent = previous;
+    }, 1500);
+    return;
+  }
+  var text = numbers.join(", ");
+  var done = function () {
+    button.textContent = "Copied";
+    window.setTimeout(function () {
+      button.textContent = previous;
+    }, 1500);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(done, function () {
+      copyWithFallback(text);
+      done();
+    });
+    return;
+  }
+  copyWithFallback(text);
+  done();
+}
+
+function copyWithFallback(text) {
+  var area = document.createElement("textarea");
+  area.value = text;
+  document.body.appendChild(area);
+  area.select();
+  document.execCommand("copy");
+  area.remove();
 }
 
 function closeMemberDetails() {
@@ -698,14 +810,27 @@ function say(message) {
   notice.textContent = message;
 }
 
+function whatsappProblem(value) {
+  var number = String(value || "").trim();
+  if (!number) {
+    return "Enter a WhatsApp number.";
+  }
+  if (number.charAt(0) !== "+") {
+    return "Start the WhatsApp number with a country kode, such as +41 or +49.";
+  }
+  var digits = number.replace(/\D/g, "");
+  if (digits.length < 8 || digits.length > 15) {
+    return "Enter a WhatsApp number.";
+  }
+  return "";
+}
+
 function profileProblems() {
   var form = document.querySelector("#profile-form");
   var problems = [];
-  var digits = String(form.whatsapp.value || "")
-    .trim()
-    .replace(/\D/g, "");
-  if (digits.length < 8 || digits.length > 15) {
-    problems.push({ field: "whatsapp", error: "Enter a WhatsApp number." });
+  var whatsappError = whatsappProblem(form.whatsapp.value);
+  if (whatsappError) {
+    problems.push({ field: "whatsapp", error: whatsappError });
   }
   var village = document.querySelector("#village-select").value;
   var size = document.querySelector("#size-select").value;

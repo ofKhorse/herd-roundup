@@ -23,8 +23,9 @@ function registerPerson_(body, db, deps) {
     return { ok: false, error: "Enter a valid email." };
   }
   var whatsapp = normalizeWhatsapp_(body.whatsapp);
-  if (!isWhatsapp_(whatsapp)) {
-    return { ok: false, error: "Enter a WhatsApp number." };
+  var whatsappError = whatsappError_(whatsapp);
+  if (whatsappError) {
+    return { ok: false, error: whatsappError };
   }
   var people = db.listPeople();
   if (findByEmail_(people, email)) {
@@ -70,8 +71,22 @@ function normalizeWhatsapp_(value) {
 }
 
 function isWhatsapp_(value) {
-  var digits = value.replace(/\D/g, "");
-  return digits.length >= 8 && digits.length <= 15;
+  return whatsappError_(value) === "";
+}
+
+function whatsappError_(value) {
+  var number = normalizeWhatsapp_(value);
+  if (!number) {
+    return "Enter a WhatsApp number.";
+  }
+  if (number.charAt(0) !== "+") {
+    return "Start the WhatsApp number with a country kode, such as +41 or +49.";
+  }
+  var digits = number.replace(/\D/g, "");
+  if (digits.length < 8 || digits.length > 15) {
+    return "Enter a WhatsApp number.";
+  }
+  return "";
 }
 
 function normalizeEmail_(email) {
@@ -132,11 +147,7 @@ function savePerson_(body, db, deps) {
       ? normalizeWhatsapp_(person.whatsapp)
       : normalizeWhatsapp_(body.whatsapp);
   if (body.whatsapp !== undefined && !isWhatsapp_(whatsapp)) {
-    return {
-      ok: false,
-      error: "Enter a WhatsApp number.",
-      field: "whatsapp",
-    };
+    return { ok: false, error: whatsappError_(whatsapp), field: "whatsapp" };
   }
   var stay = body.stay === undefined ? person.stay || "" : String(body.stay);
   if (stay !== "" && !isPreference_(stay)) {

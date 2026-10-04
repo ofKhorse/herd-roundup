@@ -120,6 +120,19 @@ h2.section-label {
   margin: 0;
 }
 
+.card-heading {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.card-heading button.solid {
+  width: auto;
+  justify-self: start;
+}
+
 .field-error {
   color: #8f1d1d;
   font-weight: 600;
@@ -399,36 +412,36 @@ td {
   overflow-wrap: anywhere;
 }
 
-#admin table {
+#members {
   table-layout: fixed;
 }
 
-#admin td {
+#members td {
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
 }
 
-#admin th {
+#members th {
   white-space: normal;
   overflow-wrap: normal;
   vertical-align: bottom;
 }
 
-#admin tbody tr {
+#members tbody tr {
   cursor: pointer;
 }
 
-#admin tbody tr:hover td {
+#members tbody tr:hover td {
   background: rgba(0, 0, 0, 0.08);
 }
 
-#admin tr.member-detail:hover td {
+#members tr.member-detail:hover td {
   background: transparent;
 }
 
-#admin tr.member-detail,
-#admin tr.member-detail td {
+#members tr.member-detail,
+#members tr.member-detail td {
   cursor: default;
   overflow: visible;
   white-space: normal;

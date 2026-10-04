@@ -141,7 +141,33 @@ test("register requires a WhatsApp number", function () {
     },
   );
   assert.equal(result.ok, false);
-  assert.equal(result.error, "Enter a WhatsApp number.");
+  assert.equal(
+    result.error,
+    "Start the WhatsApp number with a country kode, such as +41 or +49.",
+  );
+  const missing = context.handleAction(
+    { action: "register", email: "b@x.test", whatsapp: "" },
+    db,
+    {
+      sendPassword: function () {
+        throw new Error("should not email");
+      },
+    },
+  );
+  assert.equal(missing.error, "Enter a WhatsApp number.");
+  const local = context.handleAction(
+    { action: "register", email: "c@x.test", whatsapp: "41791234567" },
+    db,
+    {
+      sendPassword: function () {
+        throw new Error("should not email");
+      },
+    },
+  );
+  assert.equal(
+    local.error,
+    "Start the WhatsApp number with a country kode, such as +41 or +49.",
+  );
   assert.equal(db.listPeople().length, 0);
 });
 
