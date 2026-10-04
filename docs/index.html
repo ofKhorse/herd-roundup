@@ -251,6 +251,19 @@
         </div>
       </section>
     </main>
+    <div id="busy" class="busy" hidden>
+      <div
+        class="busy-card"
+        tabindex="-1"
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="busy-message"
+      >
+        <div id="busy-spinner" class="spinner"></div>
+        <p id="busy-message"></p>
+        <button id="busy-ok" class="solid" type="button" hidden>OK</button>
+      </div>
+    </div>
     <script src="config.js"></script>
     <script src="app.js"></script>
   </body>
