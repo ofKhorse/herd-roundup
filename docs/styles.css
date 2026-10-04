@@ -112,6 +112,11 @@ h2.section-label {
   margin: 0;
 }
 
+.field-error {
+  color: #8f1d1d;
+  font-weight: 600;
+}
+
 label {
   display: grid;
   gap: 0.25rem;

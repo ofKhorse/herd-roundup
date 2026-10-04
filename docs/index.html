@@ -113,6 +113,7 @@
               WhatsApp
               <input name="whatsapp" type="tel" required />
             </label>
+            <p class="field-error" data-field="whatsapp" hidden></p>
           </div>
 
           <h2 class="section-label">Pre-sale information</h2>
@@ -142,6 +143,7 @@
                   <option value="6">6 people — rare (Tipi)</option>
                 </select>
               </label>
+              <p class="field-error" data-field="stay" hidden></p>
               <p>
                 2 people is super rare. 6 people is rare. 4 people only if
                 available.
@@ -184,6 +186,7 @@
               <input name="purchased" type="checkbox" />
               I bought one
             </label>
+            <p class="field-error" data-field="purchased" hidden></p>
             <label>
               Which one
               <select name="purchased_size">
@@ -194,6 +197,7 @@
                 <option value="tipi6">Tipi, up to 6 people</option>
               </select>
             </label>
+            <p class="field-error" data-field="purchased_size" hidden></p>
           </div>
 
           <h2 class="section-label">Post-sale information</h2>
@@ -205,6 +209,7 @@
               you choose a sleeping preference, a tent or a tipi.
             </p>
             <ol id="companions"></ol>
+            <p class="field-error" data-field="share_with" hidden></p>
             <label>
               Add someone
               <input id="companion-search" placeholder="Name or kode" />

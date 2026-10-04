@@ -15,6 +15,23 @@ window.addEventListener("hashchange", showView);
 document.querySelector("#village-select").addEventListener("change", syncStay);
 document.querySelector("#size-select").addEventListener("change", syncStay);
 document
+  .querySelector("#profile-form [name=whatsapp]")
+  .addEventListener("input", function () {
+    clearFieldError("whatsapp");
+  });
+document
+  .querySelector("#profile-form [name=purchased]")
+  .addEventListener("change", function () {
+    clearFieldError("purchased");
+    clearFieldError("purchased_size");
+  });
+document
+  .querySelector("#profile-form [name=purchased_size]")
+  .addEventListener("change", function () {
+    clearFieldError("purchased");
+    clearFieldError("purchased_size");
+  });
+document
   .querySelector("[name=sale_available]")
   .addEventListener("change", syncKaptain);
 
@@ -135,9 +152,18 @@ function onSave(event) {
     body.email = credentials.email;
     body.password = credentials.password;
   }
+  var problems = profileProblems();
+  if (problems.length) {
+    showFieldErrors(problems);
+    return;
+  }
+  clearFieldErrors();
   callServer(body, { pending: "Saving…", success: "Saved." }).then(
     function (result) {
       if (!result.ok) {
+        if (result.field) {
+          showFieldErrors([{ field: result.field, error: result.error }]);
+        }
         return;
       }
       showSession(result);
@@ -150,6 +176,7 @@ function showSession(result) {
     say(result.error);
     return;
   }
+  clearFieldErrors();
   notice.textContent = "";
   auth.hidden = true;
   state.directory = result.directory;
@@ -210,6 +237,8 @@ function syncKaptain() {
 }
 
 function syncStay() {
+  clearFieldError("stay");
+  clearFieldError("share_with");
   var village = document.querySelector("#village-select").value;
   var size = document.querySelector("#size-select").value;
   var sizeRow = document.querySelector("#size-row");
@@ -249,6 +278,7 @@ function restoreStay(stayVal) {
 }
 
 function renderCompanions() {
+  clearFieldError("share_with");
   var list = document.querySelector("#companions");
   list.innerHTML = "";
   state.companions.forEach(function (code, index) {
@@ -583,4 +613,116 @@ function finishBusy(message) {
 
 function say(message) {
   notice.textContent = message;
+}
+
+function profileProblems() {
+  var form = document.querySelector("#profile-form");
+  var problems = [];
+  var digits = String(form.whatsapp.value || "")
+    .trim()
+    .replace(/\D/g, "");
+  if (digits.length < 8 || digits.length > 15) {
+    problems.push({ field: "whatsapp", error: "Enter a WhatsApp number." });
+  }
+  var village = document.querySelector("#village-select").value;
+  var size = document.querySelector("#size-select").value;
+  if (village === "yes" && size !== "4" && size !== "5" && size !== "6") {
+    problems.push({
+      field: "stay",
+      error: "Choose how many people will sleep in the tent.",
+    });
+  }
+  var bought = form.purchased.checked;
+  var boughtSize = form.purchased_size.value;
+  if (bought && !boughtSize) {
+    problems.push({
+      field: "purchased_size",
+      error: "Choose which tent or tipi you bought.",
+    });
+  }
+  if (!bought && boughtSize) {
+    problems.push({
+      field: "purchased",
+      error: "Tick I bought one, or clear which tent or tipi you chose.",
+    });
+  }
+  var stay = document.querySelector("#stay-hidden").value;
+  if (
+    state.companions.length > 0 &&
+    stay !== "4" &&
+    stay !== "5" &&
+    stay !== "6"
+  ) {
+    problems.push({
+      field: "share_with",
+      error:
+        stay === "arrange"
+          ? "You kan add people only when you choose a tent or a tipi."
+          : "Choose a sleeping preference before adding people.",
+    });
+  } else {
+    var seen = {};
+    for (var i = 0; i < state.companions.length; i++) {
+      var code = String(state.companions[i]);
+      if (code === state.memberCode) {
+        problems.push({
+          field: "share_with",
+          error: "You kan't list yourself.",
+        });
+        break;
+      }
+      if (seen[code]) {
+        problems.push({ field: "share_with", error: "List each person once." });
+        break;
+      }
+      if (code.indexOf(",") !== -1) {
+        problems.push({
+          field: "share_with",
+          error: "Names kan't contain a comma.",
+        });
+        break;
+      }
+      seen[code] = true;
+    }
+  }
+  return problems;
+}
+
+function clearFieldError(field) {
+  var el = document.querySelector('.field-error[data-field="' + field + '"]');
+  if (!el) {
+    return;
+  }
+  el.hidden = true;
+  el.textContent = "";
+}
+
+function clearFieldErrors() {
+  document.querySelectorAll(".field-error").forEach(function (el) {
+    el.hidden = true;
+    el.textContent = "";
+  });
+}
+
+function showFieldErrors(problems) {
+  clearFieldErrors();
+  var seen = {};
+  problems.forEach(function (problem) {
+    if (seen[problem.field]) {
+      return;
+    }
+    seen[problem.field] = true;
+    var el = document.querySelector(
+      '.field-error[data-field="' + problem.field + '"]',
+    );
+    if (!el) {
+      return;
+    }
+    el.hidden = false;
+    el.textContent = problem.error;
+  });
+  var first = document.querySelector(".field-error:not([hidden])");
+  if (first && first.scrollIntoView) {
+    first.scrollIntoView({ block: "center" });
+  }
 }
