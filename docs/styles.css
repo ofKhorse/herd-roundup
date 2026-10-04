@@ -399,6 +399,52 @@ td {
   overflow-wrap: anywhere;
 }
 
+#admin table {
+  table-layout: fixed;
+}
+
+#admin th,
+#admin td {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+#admin tbody tr {
+  cursor: pointer;
+}
+
+#admin tr.member-detail,
+#admin tr.member-detail td {
+  cursor: default;
+  overflow: visible;
+  white-space: normal;
+  text-overflow: clip;
+}
+
+.member-box {
+  display: grid;
+  gap: 0.55rem;
+  margin: 0.35rem 0 0.6rem;
+  padding: 0.85rem 0.9rem;
+  background: rgba(255, 253, 248, 0.96);
+  border: 1px solid #1c1915;
+  border-radius: 0.65rem;
+}
+
+.member-box p {
+  margin: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.member-label {
+  display: block;
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
 code {
   font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
 }
@@ -421,44 +467,5 @@ code {
   .actions #logout,
   #admin-logout {
     text-align: left;
-  }
-}
-
-@media (max-width: 699px) {
-  #admin table,
-  #admin thead,
-  #admin tbody,
-  #admin tr,
-  #admin td {
-    display: block;
-  }
-
-  #admin thead {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    margin: -1px;
-    padding: 0;
-    overflow: hidden;
-    clip: rect(0 0 0 0);
-    border: 0;
-  }
-
-  #admin tr {
-    padding: 0.65rem 0;
-    border-bottom: 1px solid #ddd4c6;
-  }
-
-  #admin td {
-    border: 0;
-    padding: 0.15rem 0;
-  }
-
-  #admin td::before {
-    content: attr(data-label);
-    display: block;
-    font-size: 0.75rem;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
   }
 }
