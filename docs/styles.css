@@ -414,6 +414,14 @@ td {
   cursor: pointer;
 }
 
+#admin tbody tr:hover td {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+#admin tr.member-detail:hover td {
+  background: transparent;
+}
+
 #admin tr.member-detail,
 #admin tr.member-detail td {
   cursor: default;
