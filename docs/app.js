@@ -241,7 +241,7 @@ function restoreStay(stayVal) {
     village.value = "arrange";
     sizeRow.hidden = true;
     size.value = "";
-  } else if (stay === "2" || stay === "4" || stay === "5" || stay === "6") {
+  } else if (stay === "4" || stay === "5" || stay === "6") {
     village.value = "yes";
     sizeRow.hidden = false;
     size.value = stay;

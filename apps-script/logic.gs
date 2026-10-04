@@ -286,7 +286,7 @@ function authenticatedPerson_(people, body, db, deps) {
 }
 
 function sessionView_(person, people) {
-  var stayKeys = ["2", "4", "5", "6", "arrange", ""];
+  var stayKeys = ["4", "5", "6", "arrange", ""];
   var stayCounts = {};
   stayKeys.forEach(function (k) {
     stayCounts[k] = 0;
@@ -324,16 +324,16 @@ function sessionView_(person, people) {
 function feeOwed_(stayVal) {
   var stay = String(stayVal || "");
   if (stay === "arrange") {
-    return 50;
+    return 55;
   }
-  if (stay === "2" || stay === "4" || stay === "5" || stay === "6") {
+  if (stay === "4" || stay === "5" || stay === "6") {
     return 365;
   }
   return null;
 }
 
 function isTent_(stay) {
-  return stay === "2" || stay === "4" || stay === "5" || stay === "6";
+  return stay === "4" || stay === "5" || stay === "6";
 }
 
 function isPreference_(stay) {
@@ -347,7 +347,7 @@ function isPurchase_(size) {
 }
 
 function preferenceError_() {
-  return "Choose 2, 4, 5, or 6 people, or I arrange myself.";
+  return "Choose 4, 5, or 6 people, or I arrange myself.";
 }
 
 function purchaseError_() {
