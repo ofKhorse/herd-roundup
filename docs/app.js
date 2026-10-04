@@ -17,6 +17,7 @@ document.querySelector("#register-form").addEventListener("submit", onRegister);
 document.querySelector("#reset-form").addEventListener("submit", onReset);
 document.querySelector("#profile-form").addEventListener("submit", onSave);
 document.querySelector("#logout").addEventListener("click", logout);
+document.querySelector("#info").addEventListener("toggle", loadInfo);
 document.querySelector("#admin-logout").addEventListener("click", logout);
 document
   .querySelector("#copy-kaptain-phones")
@@ -204,6 +205,7 @@ function showSession(result) {
   }
   clearFieldErrors();
   notice.textContent = "";
+  openInfoOnce(result.person.member_code);
   auth.hidden = true;
   state.directory = result.directory;
   state.companions = result.person.share_with.slice();
@@ -808,6 +810,42 @@ function finishBusy(message) {
 
 function say(message) {
   notice.textContent = message;
+}
+
+var infoDoc =
+  "https://docs.google.com/document/d/1L9-oL4jE1gBBlrhNhMI-OgYSZEpb3gkvfUkylfe1K6k/preview";
+
+function loadInfo() {
+  var info = document.querySelector("#info");
+  if (!info.open) {
+    return;
+  }
+  var frame = document.querySelector("#info-frame");
+  if (!frame.getAttribute("src")) {
+    frame.src = infoDoc;
+  }
+}
+
+function openInfoOnce(memberCode) {
+  var key = "herd-roundup-info-" + memberCode;
+  var seen = false;
+  try {
+    seen = localStorage.getItem(key) === "yes";
+  } catch (error) {
+    seen = false;
+  }
+  if (seen) {
+    return;
+  }
+  var info = document.querySelector("#info");
+  info.open = true;
+  loadInfo();
+  info.scrollIntoView({ block: "start" });
+  try {
+    localStorage.setItem(key, "yes");
+  } catch (error) {
+    return;
+  }
 }
 
 function whatsappProblem(value) {
