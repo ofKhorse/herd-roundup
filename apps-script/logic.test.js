@@ -129,6 +129,21 @@ test("register rejects a duplicate email", function () {
   assert.equal(result.error, "That email is already registered.");
 });
 
+test("a sheet number regains its country code plus", function () {
+  assert.equal(context.restoreWhatsapp_(41791234567), "+41791234567");
+  assert.equal(
+    context.restoreWhatsapp_("'+41 79 000 00 00"),
+    "+41 79 000 00 00",
+  );
+  assert.equal(
+    context.restoreWhatsapp_("+41 79 000 00 00"),
+    "+41 79 000 00 00",
+  );
+  assert.equal(context.restoreWhatsapp_("123"), "123");
+  assert.equal(context.sheetWhatsapp_("+41 79 000 00 00"), "'+41 79 000 00 00");
+  assert.equal(context.sheetWhatsapp_(41791234567), "'+41791234567");
+});
+
 test("register requires a WhatsApp number", function () {
   const db = memoryDb();
   const result = context.handleAction(

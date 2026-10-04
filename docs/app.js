@@ -243,7 +243,7 @@ function showSession(result) {
   form.full_name.value = result.person.full_name;
   restoreStay(result.person.stay);
   form.boomer_id.value = result.person.boomer_id;
-  form.whatsapp.value = result.person.whatsapp || "";
+  form.whatsapp.value = showWhatsapp(result.person.whatsapp);
   form.purchased.checked = result.person.purchased === "yes";
   form.purchased_size.value = result.person.purchased_size;
   form.sale_available.value = result.person.sale_available || "";
@@ -868,6 +868,14 @@ function openInfoOnce(memberCode) {
   } catch (error) {
     return;
   }
+}
+
+function showWhatsapp(value) {
+  var number = String(value || "").trim();
+  if (/^\d{8,15}$/.test(number)) {
+    return "+" + number;
+  }
+  return number;
 }
 
 function whatsappProblem(value) {

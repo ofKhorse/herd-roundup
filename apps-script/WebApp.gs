@@ -131,6 +131,7 @@ function fromSheetPerson_(person) {
   Object.keys(person).forEach(function (key) {
     copy[key] = person[key];
   });
+  copy.whatsapp = restoreWhatsapp_(person.whatsapp);
   copy.share_with = String(person.share_with || "")
     .split(",")
     .map(function (code) {
@@ -150,6 +151,7 @@ function toSheetPerson_(person) {
   if (Array.isArray(person.share_with)) {
     copy.share_with = person.share_with.join(",");
   }
+  copy.whatsapp = sheetWhatsapp_(person.whatsapp);
   return copy;
 }
 
