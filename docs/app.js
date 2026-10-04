@@ -180,9 +180,17 @@ function showSession(result) {
   var feeSummaryEl = document.querySelector("#fee-summary");
   if (feeOwed != null) {
     feeOwedEl.textContent =
-      "You owe " + feeOwed + " EUR. We recorded " + recorded + " EUR. As we have to manually import payment records this can be outdated!";
+      "You owe " +
+      feeOwed +
+      " EUR. We recorded " +
+      recorded +
+      " EUR. As we have to manually import payment records this can be outdated!";
     feeSummaryEl.textContent =
-      "You owe " + feeOwed + " EUR. We recorded " + recorded + " EUR. As we have to manually import payment records this can be outdated!";
+      "You owe " +
+      feeOwed +
+      " EUR. We recorded " +
+      recorded +
+      " EUR. As we have to manually import payment records this can be outdated!";
   } else {
     feeOwedEl.textContent = "Choose whether you kamp with us to see your fee.";
     feeSummaryEl.textContent = "";
