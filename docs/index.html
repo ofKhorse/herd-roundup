@@ -31,8 +31,9 @@
             <label>Email <input name="email" type="email" required /></label>
             <label>
               WhatsApp
-              <input name="whatsapp" type="tel" required />
+              <input name="whatsapp" type="tel" placeholder="+41" required />
             </label>
+            <p class="field-error" data-field="register-whatsapp" hidden></p>
             <button class="solid" type="submit">Register</button>
           </form>
           <form id="reset-form" class="card">
@@ -111,7 +112,7 @@
             <label>Boomer ID <input name="boomer_id" /></label>
             <label>
               WhatsApp
-              <input name="whatsapp" type="tel" required />
+              <input name="whatsapp" type="tel" placeholder="+41" required />
             </label>
             <p class="field-error" data-field="whatsapp" hidden></p>
           </div>
@@ -238,7 +239,7 @@
         <div class="card">
           <h2>Members</h2>
           <div class="table-scroll">
-            <table>
+            <table id="members">
               <thead>
                 <tr>
                   <th>Name</th>
@@ -260,6 +261,43 @@
               <tbody id="member-rows"></tbody>
             </table>
           </div>
+        </div>
+        <div class="card">
+          <div class="card-heading">
+            <h2>Potential kaptains</h2>
+            <button id="copy-kaptain-phones" class="solid" type="button">
+              Copy phone numbers
+            </button>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Kode</th>
+                <th>WhatsApp</th>
+              </tr>
+            </thead>
+            <tbody id="kaptain-rows"></tbody>
+          </table>
+        </div>
+        <div class="card">
+          <div class="card-heading">
+            <h2>Bought tipis</h2>
+            <button id="copy-bought-phones" class="solid" type="button">
+              Copy phone numbers
+            </button>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Kode</th>
+                <th>WhatsApp</th>
+                <th>Tent</th>
+              </tr>
+            </thead>
+            <tbody id="bought-rows"></tbody>
+          </table>
         </div>
         <div class="actions">
           <button id="admin-logout" type="button">Log out</button>
