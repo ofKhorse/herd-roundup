@@ -421,7 +421,7 @@ test("save rejects a tipi choice without the purchase tick", function () {
   assert.equal(stored.purchased_size || "", "");
 });
 
-test("admins receive every payment row", function () {
+test("admins receive every member row", function () {
   const db = memoryDb();
   const owner = register(db, "a@x.test");
   register(db, "b@x.test");
@@ -437,6 +437,11 @@ test("admins receive every payment row", function () {
     payment_ref: "KH-002",
     purchased: "yes",
     purchased_size: "star5",
+    boomer_id: "B-2",
+    stay: "5",
+    sale_available: "yes",
+    kaptain: "yes",
+    share_with: ["KH-001"],
   });
   const result = context.handleAction(
     { action: "login", email: "a@x.test", password: owner.password },
@@ -446,11 +451,21 @@ test("admins receive every payment row", function () {
   assert.equal(result.tipi_by_size.star2, 0);
   assert.equal(result.tipi_by_size.star5, 1);
   assert.equal(result.tipi_by_size.tipi6, 1);
+  const member = result.payments[1];
   assert.equal(result.payments.length, 2);
-  assert.equal(result.payments[1].full_name, "Bea");
-  assert.equal(result.payments[1].camp_fee_paid, "yes");
-  assert.equal(result.payments[1].amount, "65");
-  assert.equal(result.payments[1].whatsapp, "+41 79 000 00 00");
+  assert.equal(member.full_name, "Bea");
+  assert.equal(member.email, "b@x.test");
+  assert.equal(member.camp_fee_paid, "yes");
+  assert.equal(member.amount, "65");
+  assert.equal(member.whatsapp, "+41 79 000 00 00");
+  assert.equal(member.boomer_id, "B-2");
+  assert.equal(member.stay, "5");
+  assert.equal(member.sale_available, "yes");
+  assert.equal(member.kaptain, "yes");
+  assert.equal(member.purchased, "yes");
+  assert.equal(member.purchased_size, "star5");
+  assert.deepEqual(member.share_with, ["KH-001"]);
+  assert.equal(result.payments[0].password, undefined);
 });
 
 test("a stored plaintext password is hashed on the next login", function () {

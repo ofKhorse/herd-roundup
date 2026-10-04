@@ -224,7 +224,7 @@ function showSession(result) {
   renderCompanions();
   renderMatches();
   renderPickedBy();
-  renderPayments(result);
+  renderMembers(result);
   showView();
 }
 
@@ -415,8 +415,8 @@ function renderTipiBySize(counts) {
   });
 }
 
-function renderPayments(result) {
-  var body = document.querySelector("#payment-rows");
+function renderMembers(result) {
+  var body = document.querySelector("#member-rows");
   body.innerHTML = "";
   state.admin = result.person.admin === "yes";
   if (!state.admin) {
@@ -429,22 +429,69 @@ function renderPayments(result) {
   if (result.signup_count != null) {
     renderSignupCounts(result.signup_count, result.stay_counts);
   }
-  result.payments.forEach(function (payment) {
+  (result.payments || []).forEach(function (member) {
     var row = document.createElement("tr");
     [
-      payment.full_name,
-      payment.member_code,
-      payment.amount,
-      payment.payment_ref,
-      payment.camp_fee_paid,
-      payment.whatsapp,
-    ].forEach(function (value) {
+      ["Name", member.full_name],
+      ["Kode", member.member_code],
+      ["Email", member.email],
+      ["WhatsApp", member.whatsapp],
+      ["Boomer ID", member.boomer_id],
+      ["Sleeping", memberStay(member.stay)],
+      ["At the sale", memberYes(member.sale_available)],
+      ["Kaptain", memberYes(member.kaptain)],
+      ["Bought", memberYes(member.purchased)],
+      ["Tent", memberTent(member.purchased_size)],
+      ["Stable mates", memberMates(member.share_with)],
+      ["Amount", member.amount],
+      ["Reference", member.payment_ref],
+      ["Kamp fee", memberYes(member.camp_fee_paid)],
+    ].forEach(function (pair) {
       var cell = document.createElement("td");
-      cell.textContent = value || "";
+      cell.setAttribute("data-label", pair[0]);
+      cell.textContent = pair[1] || "";
       row.appendChild(cell);
     });
     body.appendChild(row);
   });
+}
+
+function memberStay(stay) {
+  var value = String(stay || "");
+  if (value === "arrange") {
+    return "I arrange myself";
+  }
+  if (value === "4" || value === "5" || value === "6") {
+    return value + " people";
+  }
+  return "";
+}
+
+function memberTent(size) {
+  return (
+    {
+      tipi2: "Tipi, up to 2 people",
+      star2: "Star Tent, up to 2 people",
+      star5: "Star Tent, up to 5 people",
+      tipi6: "Tipi, up to 6 people",
+    }[size] || ""
+  );
+}
+
+function memberYes(value) {
+  return value === "yes" ? "Yes" : "";
+}
+
+function memberMates(codes) {
+  return (codes || [])
+    .map(function (code) {
+      if (code === state.memberCode) {
+        var name = document.querySelector("#profile-form").full_name.value;
+        return name ? name + " (" + code + ")" : code;
+      }
+      return labelFor(code);
+    })
+    .join(", ");
 }
 
 function moveButton(text, index, direction) {

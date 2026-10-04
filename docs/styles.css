@@ -32,6 +32,14 @@ main {
   background: rgba(244, 239, 230, 0.4);
 }
 
+main:has(#admin:not([hidden])) {
+  max-width: 72rem;
+}
+
+.table-scroll {
+  overflow-x: auto;
+}
+
 h1,
 h2 {
   font-weight: 600;
@@ -447,33 +455,10 @@ code {
   }
 
   #admin td::before {
+    content: attr(data-label);
     display: block;
     font-size: 0.75rem;
     letter-spacing: 0.06em;
     text-transform: uppercase;
-  }
-
-  #admin td:nth-child(1)::before {
-    content: "Name";
-  }
-
-  #admin td:nth-child(2)::before {
-    content: "Kode";
-  }
-
-  #admin td:nth-child(3)::before {
-    content: "Amount";
-  }
-
-  #admin td:nth-child(4)::before {
-    content: "Reference";
-  }
-
-  #admin td:nth-child(5)::before {
-    content: "Kamp fee";
-  }
-
-  #admin td:nth-child(6)::before {
-    content: "WhatsApp";
   }
 }
