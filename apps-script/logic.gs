@@ -407,10 +407,17 @@ function paymentRows_(people) {
       member_code: other.member_code,
       full_name: other.full_name || "",
       email: normalizeEmail_(other.email),
+      whatsapp: normalizeWhatsapp_(other.whatsapp),
+      boomer_id: other.boomer_id || "",
+      stay: other.stay || "",
+      sale_available: other.sale_available || "",
+      kaptain: other.kaptain || "",
+      purchased: other.purchased || "",
+      purchased_size: other.purchased_size || "",
+      share_with: (other.share_with || []).slice(),
       amount: other.amount || "",
       payment_ref: other.payment_ref || "",
       camp_fee_paid: other.camp_fee_paid || "",
-      whatsapp: normalizeWhatsapp_(other.whatsapp),
     };
   });
 }
