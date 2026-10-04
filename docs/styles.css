@@ -180,12 +180,44 @@ button.solid {
   margin: 0;
 }
 
-.notice.loading {
-  padding: 0.75rem 0.9rem;
-  background: #1f3d32;
-  color: #f4efe6;
-  border-radius: 0.65rem;
-  font-weight: 600;
+.busy {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.busy-card {
+  width: min(22rem, 100%);
+  display: grid;
+  gap: 0.9rem;
+  justify-items: center;
+  padding: 1.25rem;
+  text-align: center;
+  background: rgba(255, 253, 248, 0.96);
+  border-radius: 0.8rem;
+}
+
+.busy-card p {
+  margin: 0;
+}
+
+.spinner {
+  width: 2.4rem;
+  height: 2.4rem;
+  border: 3px solid #ddd4c6;
+  border-top-color: #000;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .pay {

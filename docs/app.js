@@ -52,9 +52,6 @@ function onLogin(event) {
 }
 
 function signIn(credentials, fromCookie) {
-  var button = document.querySelector("#login-form button");
-  button.disabled = true;
-  setLoading("Signing in…");
   var body = { action: "login" };
   if (credentials.token) {
     body.token = credentials.token;
@@ -62,62 +59,54 @@ function signIn(credentials, fromCookie) {
     body.email = credentials.email;
     body.password = credentials.password;
   }
-  post(body)
-    .then(function (result) {
-      setLoading("");
-      if (!result.ok) {
-        if (fromCookie) {
-          clearSession();
-        }
-        say(result.error);
-        return;
+  callServer(body, {
+    pending: "Signing in…",
+    success: fromCookie ? "" : "Signed in.",
+  }).then(function (result) {
+    if (!result.ok) {
+      if (fromCookie) {
+        clearSession();
       }
-      if (result.token) {
-        writeSession({ token: result.token });
-      } else if (!fromCookie) {
-        writeSession({
-          email: credentials.email,
-          password: credentials.password,
-        });
-      }
-      showSession(result);
-    })
-    .catch(fail)
-    .then(function () {
-      button.disabled = false;
-    });
+      return;
+    }
+    if (result.token) {
+      writeSession({ token: result.token });
+    } else if (!fromCookie) {
+      writeSession({
+        email: credentials.email,
+        password: credentials.password,
+      });
+    }
+    showSession(result);
+  });
 }
 
 function onRegister(event) {
   event.preventDefault();
   var data = new FormData(event.target);
-  post({
-    action: "register",
-    email: data.get("email"),
-    whatsapp: data.get("whatsapp"),
-  })
-    .then(function (result) {
-      if (!result.ok) {
-        say(result.error);
-        return;
-      }
-      say("Your password was emailed to you. Then log in.");
-    })
-    .catch(fail);
+  callServer(
+    {
+      action: "register",
+      email: data.get("email"),
+      whatsapp: data.get("whatsapp"),
+    },
+    {
+      pending: "Registering…",
+      success: "Your password was emailed to you. Then log in.",
+    },
+  );
 }
 
 function onReset(event) {
   event.preventDefault();
   var data = new FormData(event.target);
-  post({ action: "reset", email: data.get("email") })
-    .then(function (result) {
-      if (!result.ok) {
-        say(result.error);
-        return;
-      }
-      say("A new password was emailed to you.");
-    })
-    .catch(fail);
+  callServer(
+    { action: "reset", email: data.get("email") },
+    {
+      pending: "Sending a new password…",
+      success: "A new password was emailed to you.",
+    },
+  );
 }
 
 function onSave(event) {
@@ -146,16 +135,14 @@ function onSave(event) {
     body.email = credentials.email;
     body.password = credentials.password;
   }
-  post(body)
-    .then(function (result) {
+  callServer(body, { pending: "Saving…", success: "Saved." }).then(
+    function (result) {
       if (!result.ok) {
-        say(result.error);
         return;
       }
       showSession(result);
-      say("Saved.");
-    })
-    .catch(fail);
+    },
+  );
 }
 
 function showSession(result) {
@@ -512,6 +499,44 @@ function logout() {
   say("Logged out.");
 }
 
+var serverBusy = false;
+
+function callServer(body, options) {
+  if (serverBusy) {
+    return Promise.resolve({ ok: false, skipped: true });
+  }
+  serverBusy = true;
+  options = options || {};
+  showBusy(options.pending || "Working…");
+  return post(body)
+    .then(function (result) {
+      if (!result.ok) {
+        return finishBusy(result.error || "Something went wrong.").then(
+          function () {
+            return result;
+          },
+        );
+      }
+      if (!options.success) {
+        hideBusy();
+        return result;
+      }
+      return finishBusy(options.success).then(function () {
+        return result;
+      });
+    })
+    .catch(function (error) {
+      var message = error.message || "The request failed.";
+      return finishBusy(message).then(function () {
+        return { ok: false, error: message };
+      });
+    })
+    .then(function (result) {
+      serverBusy = false;
+      return result;
+    });
+}
+
 function post(body) {
   if (!SCRIPT_URL) {
     return Promise.reject(new Error("The script URL is not set yet."));
@@ -526,21 +551,36 @@ function post(body) {
   });
 }
 
-function fail(error) {
-  say(error.message);
+function showBusy(message) {
+  document.querySelector("main").inert = true;
+  document.querySelector("#busy-spinner").hidden = false;
+  document.querySelector("#busy-ok").hidden = true;
+  document.querySelector("#busy-message").textContent = message;
+  var busy = document.querySelector("#busy");
+  busy.hidden = false;
+  document.querySelector(".busy-card").focus();
 }
 
-function setLoading(message) {
-  notice.classList.toggle("loading", message !== "");
-  if (message) {
-    notice.textContent = message;
-  }
+function hideBusy() {
+  document.querySelector("#busy").hidden = true;
+  document.querySelector("main").inert = false;
+}
+
+function finishBusy(message) {
+  document.querySelector("#busy-spinner").hidden = true;
+  document.querySelector("#busy-message").textContent = message;
+  var ok = document.querySelector("#busy-ok");
+  ok.hidden = false;
+  ok.focus();
+  return new Promise(function (resolve) {
+    ok.onclick = function () {
+      ok.onclick = null;
+      hideBusy();
+      resolve();
+    };
+  });
 }
 
 function say(message) {
-  notice.classList.remove("loading");
   notice.textContent = message;
-  if (message) {
-    alert(message);
-  }
 }
