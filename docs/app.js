@@ -430,8 +430,7 @@ function renderMembers(result) {
     renderSignupCounts(result.signup_count, result.stay_counts);
   }
   (result.payments || []).forEach(function (member) {
-    var row = document.createElement("tr");
-    [
+    var fields = [
       ["Name", member.full_name],
       ["Kode", member.member_code],
       ["Email", member.email],
@@ -446,14 +445,51 @@ function renderMembers(result) {
       ["Amount", member.amount],
       ["Reference", member.payment_ref],
       ["Kamp fee", memberYes(member.camp_fee_paid)],
-    ].forEach(function (pair) {
+    ];
+    var row = document.createElement("tr");
+    fields.forEach(function (pair) {
       var cell = document.createElement("td");
-      cell.setAttribute("data-label", pair[0]);
       cell.textContent = pair[1] || "";
       row.appendChild(cell);
     });
+    row.addEventListener("click", function () {
+      var next = row.nextElementSibling;
+      var open = next && next.classList.contains("member-detail");
+      closeMemberDetails();
+      if (open) {
+        return;
+      }
+      row.after(memberDetail(fields));
+    });
     body.appendChild(row);
   });
+}
+
+function closeMemberDetails() {
+  document.querySelectorAll(".member-detail").forEach(function (detail) {
+    detail.remove();
+  });
+}
+
+function memberDetail(fields) {
+  var detail = document.createElement("tr");
+  detail.className = "member-detail";
+  var cell = document.createElement("td");
+  cell.colSpan = fields.length;
+  var box = document.createElement("div");
+  box.className = "member-box";
+  fields.forEach(function (pair) {
+    var line = document.createElement("p");
+    var label = document.createElement("span");
+    label.className = "member-label";
+    label.textContent = pair[0];
+    line.appendChild(label);
+    line.appendChild(document.createTextNode(pair[1] || "—"));
+    box.appendChild(line);
+  });
+  cell.appendChild(box);
+  detail.appendChild(cell);
+  return detail;
 }
 
 function memberStay(stay) {
