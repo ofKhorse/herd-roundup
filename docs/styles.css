@@ -403,11 +403,16 @@ td {
   table-layout: fixed;
 }
 
-#admin th,
 #admin td {
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+}
+
+#admin th {
+  white-space: normal;
+  overflow-wrap: normal;
+  vertical-align: bottom;
 }
 
 #admin tbody tr {
