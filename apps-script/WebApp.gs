@@ -4,18 +4,10 @@
  */
 
 function doPost(e) {
-  var body;
-  try {
-    body = JSON.parse(e.postData.contents);
-  } catch (error) {
-    return jsonOutput_({ ok: false, error: error.message });
-  }
-  if (body.action === "info") {
-    return jsonOutput_(infoDoc_());
-  }
   var lock = LockService.getScriptLock();
   lock.waitLock(30000);
   try {
+    var body = JSON.parse(e.postData.contents);
     return jsonOutput_(
       handleAction(body, sheetDatabase_(), {
         now: function () {
@@ -36,22 +28,6 @@ function doPost(e) {
   } finally {
     lock.releaseLock();
   }
-}
-
-var INFO_DOC_ID_ = "1L9-oL4jE1gBBlrhNhMI-OgYSZEpb3gkvfUkylfe1K6k";
-
-function infoDoc_() {
-  var response = UrlFetchApp.fetch(
-    "https://docs.google.com/document/d/" +
-      INFO_DOC_ID_ +
-      "/export?format=html",
-    { muteHttpExceptions: true, followRedirects: true },
-  );
-  var html = response.getContentText();
-  if (response.getResponseCode() !== 200 || html.indexOf("<html") === -1) {
-    return { ok: false, error: "The info doc could not be loaded." };
-  }
-  return { ok: true, html: html };
 }
 
 // Run once from the editor so this account may send password email.
