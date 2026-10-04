@@ -290,6 +290,10 @@ button.solid {
   background: #fff;
 }
 
+#info-status {
+  margin: 0 0 0.5rem;
+}
+
 .info-scroll iframe {
   display: block;
   width: 100%;
