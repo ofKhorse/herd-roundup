@@ -132,11 +132,15 @@ function savePerson_(body, db, deps) {
       ? normalizeWhatsapp_(person.whatsapp)
       : normalizeWhatsapp_(body.whatsapp);
   if (body.whatsapp !== undefined && !isWhatsapp_(whatsapp)) {
-    return { ok: false, error: "Enter a WhatsApp number." };
+    return {
+      ok: false,
+      error: "Enter a WhatsApp number.",
+      field: "whatsapp",
+    };
   }
   var stay = body.stay === undefined ? person.stay || "" : String(body.stay);
   if (stay !== "" && !isPreference_(stay)) {
-    return { ok: false, error: preferenceError_() };
+    return { ok: false, error: preferenceError_(), field: "stay" };
   }
   var shareWith =
     body.share_with === undefined ? person.share_with || [] : body.share_with;
@@ -147,19 +151,32 @@ function savePerson_(body, db, deps) {
   for (var i = 0; i < shareWith.length; i++) {
     var code = String(shareWith[i]);
     if (code === person.member_code) {
-      return { ok: false, error: "You kan't list yourself." };
+      return {
+        ok: false,
+        error: "You kan't list yourself.",
+        field: "share_with",
+      };
     }
     if (seen[code]) {
-      return { ok: false, error: "List each person once." };
+      return {
+        ok: false,
+        error: "List each person once.",
+        field: "share_with",
+      };
     }
     if (code.indexOf(",") !== -1) {
-      return { ok: false, error: "Names kan't contain a comma." };
+      return {
+        ok: false,
+        error: "Names kan't contain a comma.",
+        field: "share_with",
+      };
     }
     seen[code] = true;
   }
   if (shareWith.length > 0 && !isTent_(stay)) {
     return {
       ok: false,
+      field: "share_with",
       error:
         stay === "arrange"
           ? "You kan add people only when you choose a tent or a tipi."
@@ -174,17 +191,29 @@ function savePerson_(body, db, deps) {
     return {
       ok: false,
       error: "Mark the tipi purchase as yes or leave it blank.",
+      field: "purchased",
     };
   }
   var size =
     body.purchased_size === undefined
       ? person.purchased_size || ""
       : String(body.purchased_size);
-  if (purchased === "yes" && !isPurchase_(size)) {
-    return { ok: false, error: purchaseError_() };
+  if (purchased === "yes" && size === "") {
+    return {
+      ok: false,
+      error: "Choose which tent or tipi you bought.",
+      field: "purchased_size",
+    };
   }
-  if (purchased !== "yes") {
-    size = "";
+  if (purchased === "yes" && !isPurchase_(size)) {
+    return { ok: false, error: purchaseError_(), field: "purchased_size" };
+  }
+  if (purchased !== "yes" && size !== "") {
+    return {
+      ok: false,
+      error: "Tick I bought one, or clear which tent or tipi you chose.",
+      field: "purchased",
+    };
   }
   var purchasedAt = person.purchased_at || "";
   if (purchased === "yes" && person.purchased !== "yes") {

@@ -374,6 +374,53 @@ test("save rejects companions who do not fit the rules", function () {
   );
 });
 
+test("save rejects a tipi choice without the purchase tick", function () {
+  const db = memoryDb();
+  const owner = register(db, "a@x.test");
+  const unticked = context.handleAction(
+    {
+      action: "save",
+      email: "a@x.test",
+      password: owner.password,
+      purchased: "",
+      purchased_size: "star5",
+    },
+    db,
+    {
+      now: function () {
+        return "now";
+      },
+    },
+  );
+  const noSize = context.handleAction(
+    {
+      action: "save",
+      email: "a@x.test",
+      password: owner.password,
+      purchased: "yes",
+      purchased_size: "",
+    },
+    db,
+    {
+      now: function () {
+        return "now";
+      },
+    },
+  );
+  const stored = db.listPeople()[0];
+  assert.equal(unticked.ok, false);
+  assert.equal(unticked.field, "purchased");
+  assert.equal(
+    unticked.error,
+    "Tick I bought one, or clear which tent or tipi you chose.",
+  );
+  assert.equal(noSize.ok, false);
+  assert.equal(noSize.field, "purchased_size");
+  assert.equal(noSize.error, "Choose which tent or tipi you bought.");
+  assert.equal(stored.purchased || "", "");
+  assert.equal(stored.purchased_size || "", "");
+});
+
 test("admins receive every payment row", function () {
   const db = memoryDb();
   const owner = register(db, "a@x.test");
