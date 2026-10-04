@@ -812,6 +812,9 @@ function say(message) {
   notice.textContent = message;
 }
 
+var infoDocUrl =
+  "https://docs.google.com/document/d/1L9-oL4jE1gBBlrhNhMI-OgYSZEpb3gkvfUkylfe1K6k/export?format=html";
+
 function loadInfo() {
   var info = document.querySelector("#info");
   if (!info.open || info.dataset.loaded === "yes") {
@@ -822,15 +825,18 @@ function loadInfo() {
   var frame = document.querySelector("#info-frame");
   status.hidden = false;
   status.textContent = "Loading info…";
-  post({ action: "info" })
-    .then(function (result) {
-      if (!result.ok || !result.html) {
-        info.dataset.loaded = "";
-        status.textContent =
-          result.error || "The info doc could not be loaded.";
-        return;
+  fetch(infoDocUrl)
+    .then(function (response) {
+      if (!response.ok) {
+        throw new Error("The info doc could not be loaded.");
       }
-      frame.srcdoc = result.html.replace(
+      return response.text();
+    })
+    .then(function (html) {
+      if (html.indexOf("<html") === -1) {
+        throw new Error("The info doc could not be loaded.");
+      }
+      frame.srcdoc = html.replace(
         "</head>",
         "<style>body{padding:16px !important;max-width:none !important}</style></head>",
       );
