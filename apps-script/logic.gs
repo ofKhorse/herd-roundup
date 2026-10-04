@@ -70,6 +70,17 @@ function normalizeWhatsapp_(value) {
   return String(value || "").trim();
 }
 
+function restoreWhatsapp_(value) {
+  var number = normalizeWhatsapp_(value);
+  if (number.charAt(0) === "'") {
+    number = number.slice(1);
+  }
+  if (/^\d{8,15}$/.test(number)) {
+    return "+" + number;
+  }
+  return number;
+}
+
 function isWhatsapp_(value) {
   return whatsappError_(value) === "";
 }
@@ -418,7 +429,7 @@ function paymentRows_(people) {
       member_code: other.member_code,
       full_name: other.full_name || "",
       email: normalizeEmail_(other.email),
-      whatsapp: normalizeWhatsapp_(other.whatsapp),
+      whatsapp: restoreWhatsapp_(other.whatsapp),
       boomer_id: other.boomer_id || "",
       stay: other.stay || "",
       sale_available: other.sale_available || "",
@@ -448,7 +459,7 @@ function publicPerson_(person) {
     camp_fee_paid: person.camp_fee_paid || "",
     amount: person.amount || "",
     payment_ref: person.payment_ref || "",
-    whatsapp: normalizeWhatsapp_(person.whatsapp),
+    whatsapp: restoreWhatsapp_(person.whatsapp),
     sale_available: person.sale_available || "",
     kaptain: person.kaptain || "",
     fee_owed: feeOwed_(person.stay || ""),

@@ -89,13 +89,17 @@ function readPeople_(sheet) {
 
 function appendPerson_(sheet, person) {
   var headers = headerRow_(sheet);
-  sheet.appendRow(
-    headers.map(function (header) {
-      return person[header] === undefined || person[header] === null
+  var rowNumber = sheet.getLastRow() + 1;
+  headers.forEach(function (header, index) {
+    writeSheetCell_(
+      sheet,
+      rowNumber,
+      index + 1,
+      person[header] === undefined || person[header] === null
         ? ""
-        : person[header];
-    }),
-  );
+        : person[header],
+    );
+  });
 }
 
 function updatePersonRow_(sheet, memberCode, fields) {
@@ -109,7 +113,7 @@ function updatePersonRow_(sheet, memberCode, fields) {
     Object.keys(fields).forEach(function (key) {
       var column = headers.indexOf(key);
       if (column !== -1) {
-        sheet.getRange(row + 1, column + 1).setValue(fields[key]);
+        writeSheetCell_(sheet, row + 1, column + 1, fields[key]);
       }
     });
     return;
@@ -126,11 +130,20 @@ function headerRow_(sheet) {
     });
 }
 
+function writeSheetCell_(sheet, row, column, value) {
+  var range = sheet.getRange(row, column);
+  if (typeof value === "string" && value.charAt(0) === "+") {
+    range.setNumberFormat("@");
+  }
+  range.setValue(value);
+}
+
 function fromSheetPerson_(person) {
   var copy = {};
   Object.keys(person).forEach(function (key) {
     copy[key] = person[key];
   });
+  copy.whatsapp = restoreWhatsapp_(person.whatsapp);
   copy.share_with = String(person.share_with || "")
     .split(",")
     .map(function (code) {
