@@ -81,6 +81,14 @@ function restoreWhatsapp_(value) {
   return number;
 }
 
+function sheetWhatsapp_(value) {
+  var number = restoreWhatsapp_(value);
+  if (number.charAt(0) === "+") {
+    return "'" + number;
+  }
+  return number;
+}
+
 function isWhatsapp_(value) {
   return whatsappError_(value) === "";
 }
