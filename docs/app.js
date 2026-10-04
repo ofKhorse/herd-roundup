@@ -812,18 +812,34 @@ function say(message) {
   notice.textContent = message;
 }
 
-var infoDoc =
-  "https://docs.google.com/document/d/1L9-oL4jE1gBBlrhNhMI-OgYSZEpb3gkvfUkylfe1K6k/preview";
-
 function loadInfo() {
   var info = document.querySelector("#info");
-  if (!info.open) {
+  if (!info.open || info.dataset.loaded === "yes") {
     return;
   }
+  info.dataset.loaded = "yes";
+  var status = document.querySelector("#info-status");
   var frame = document.querySelector("#info-frame");
-  if (!frame.getAttribute("src")) {
-    frame.src = infoDoc;
-  }
+  status.hidden = false;
+  status.textContent = "Loading info…";
+  post({ action: "info" })
+    .then(function (result) {
+      if (!result.ok || !result.html) {
+        info.dataset.loaded = "";
+        status.textContent =
+          result.error || "The info doc could not be loaded.";
+        return;
+      }
+      frame.srcdoc = result.html.replace(
+        "</head>",
+        "<style>body{padding:16px !important;max-width:none !important}</style></head>",
+      );
+      status.hidden = true;
+    })
+    .catch(function (error) {
+      info.dataset.loaded = "";
+      status.textContent = error.message || "The info doc could not be loaded.";
+    });
 }
 
 function openInfoOnce(memberCode) {
