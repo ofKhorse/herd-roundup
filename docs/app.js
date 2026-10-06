@@ -788,9 +788,19 @@ function post(body) {
     redirect: "follow",
     headers: { "Content-Type": "text/plain;charset=utf-8" },
     body: JSON.stringify(body),
-  }).then(function (response) {
-    return response.json();
-  });
+  })
+    .then(function (response) {
+      return response.text();
+    })
+    .then(function (text) {
+      try {
+        return JSON.parse(text);
+      } catch (error) {
+        throw new Error(
+          "The script took too long. Wait a moment and try again.",
+        );
+      }
+    });
 }
 
 function showBusy(message) {

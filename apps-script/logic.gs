@@ -759,7 +759,29 @@ function pbkdf2Sha256_(password, salt, iterations, length) {
   return derived.slice(0, length);
 }
 
+function signedBytes_(bytes) {
+  var signed = [];
+  for (var i = 0; i < bytes.length; i++) {
+    signed.push(bytes[i] > 127 ? bytes[i] - 256 : bytes[i]);
+  }
+  return signed;
+}
+
 function hmacSha256_(key, message) {
+  if (
+    typeof Utilities !== "undefined" &&
+    Utilities.computeHmacSha256Signature
+  ) {
+    var raw = Utilities.computeHmacSha256Signature(
+      signedBytes_(message),
+      signedBytes_(key),
+    );
+    var out = [];
+    for (var i = 0; i < raw.length; i++) {
+      out.push(raw[i] & 255);
+    }
+    return out;
+  }
   var block = 64;
   var normalized = key.slice();
   if (normalized.length > block) {
