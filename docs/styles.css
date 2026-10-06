@@ -190,11 +190,6 @@ button.solid {
   gap: 0.75rem;
 }
 
-.fee-summary {
-  margin: 0;
-  font-weight: 600;
-}
-
 .actions #logout,
 #admin-logout {
   min-height: 44px;
@@ -280,17 +275,15 @@ button.solid {
 
 .pay-media {
   display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  align-items: center;
-  gap: 0.85rem 1.25rem;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.85rem;
   margin: 0.15rem 0.9rem 0.85rem;
 }
 
 .pay-video {
   display: block;
-  flex: 0 0 10.5rem;
-  width: 10.5rem;
+  width: 100%;
   min-width: 0;
   max-width: 100%;
   height: auto;
@@ -380,8 +373,7 @@ button.solid {
 
 .pay .qr {
   display: block;
-  flex: 0 0 auto;
-  width: fit-content;
+  width: 100%;
   min-width: 0;
   max-width: 100%;
   margin: 0;
@@ -392,7 +384,7 @@ button.solid {
 
 .pay .qr img {
   display: block;
-  width: 10.5rem;
+  width: 100%;
   height: auto;
 }
 

@@ -258,7 +258,7 @@ function savePerson_(body, db, deps) {
   if (boomerEmail && !isEmail_(boomerEmail)) {
     return {
       ok: false,
-      error: "Enter a valid Boomer email.",
+      error: "Enter the email you used registering for boom.",
       field: "boomer_email",
     };
   }

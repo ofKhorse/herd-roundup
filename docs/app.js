@@ -272,7 +272,6 @@ function showSession(result) {
   var feeOwed = result.person.fee_owed;
   var recorded = Number(result.person.amount) || 0;
   var feeOwedEl = document.querySelector("#fee-owed");
-  var feeSummaryEl = document.querySelector("#fee-summary");
   if (feeOwed != null) {
     feeOwedEl.textContent =
       "You owe " +
@@ -280,15 +279,8 @@ function showSession(result) {
       " EUR. We recorded " +
       recorded +
       " EUR. As we have to manually import payment records this can be outdated!";
-    feeSummaryEl.textContent =
-      "You owe " +
-      feeOwed +
-      " EUR. We recorded " +
-      recorded +
-      " EUR. As we have to manually import payment records this can be outdated!";
   } else {
     feeOwedEl.textContent = "Choose whether you kamp with us to see your fee.";
-    feeSummaryEl.textContent = "";
   }
   document.querySelector("#tipi-count").textContent =
     result.tipi_count + " tipis marked as bought.";
@@ -526,7 +518,7 @@ function renderMembers(result) {
       ["Kode", member.member_code],
       ["Email", member.email],
       ["WhatsApp", member.whatsapp],
-      ["Boomer email", member.boomer_email],
+      ["Email you used registering for boom", member.boomer_email],
       ["Sleeping", memberStay(member.stay)],
       ["At sale", memberYes(member.sale_available)],
       ["Potential Kaptain", memberYes(member.kaptain)],
