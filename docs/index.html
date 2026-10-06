@@ -39,7 +39,7 @@
           <button class="solid" type="submit">Register</button>
         </form>
         <form id="login-form" class="card">
-          <h2>Log in</h2>
+          <h2>Coming back? LOGIN</h2>
           <label>
             Email
             <input name="email" type="email" autocomplete="username" required />
@@ -67,7 +67,7 @@
           <h2>Your kode</h2>
           <div class="pay">
             <p>Your kode is <code id="member-code"></code>.</p>
-            <details id="pay-guide">
+            <details id="pay-guide" open>
               <summary>How to pay</summary>
               <div class="pay-media">
                 <video
@@ -134,8 +134,6 @@
               </p>
             </details>
           </div>
-          <p id="fee"></p>
-          <p id="fee-owed"></p>
           <p id="tipi-count" hidden></p>
         </div>
 
@@ -144,7 +142,7 @@
             <h2>You</h2>
             <label>Full name <input name="full_name" /></label>
             <label>
-              Boomer email
+              Email you used registering for boom
               <input name="boomer_email" type="email" />
             </label>
             <p class="field-error" data-field="boomer_email" hidden></p>
@@ -269,11 +267,14 @@
             <div id="picked-by"></div>
           </div>
           <div class="actions">
-            <p id="fee-summary" class="fee-summary"></p>
             <button class="solid" type="submit">Save</button>
             <button id="logout" type="button">Log out</button>
           </div>
         </form>
+        <div class="card">
+          <p id="fee"></p>
+          <p id="fee-owed"></p>
+        </div>
       </section>
 
       <section id="admin" class="stack" hidden>
@@ -295,7 +296,7 @@
                   <th>Kode</th>
                   <th>Email</th>
                   <th>WhatsApp</th>
-                  <th>Boomer email</th>
+                  <th>Email you used registering for boom</th>
                   <th>Sleeping</th>
                   <th>At sale</th>
                   <th>Potential Kaptain</th>
