@@ -54,7 +54,6 @@ function emptyPerson_(email, password, memberCode, whatsapp) {
     purchased: "",
     purchased_size: "",
     purchased_at: "",
-    boomer_id: "",
     boomer_email: "",
     share_with: [],
     camp_fee_paid: "",
@@ -280,10 +279,6 @@ function savePerson_(body, db, deps) {
     purchased: purchased,
     purchased_size: size,
     purchased_at: purchasedAt,
-    boomer_id:
-      body.boomer_id === undefined
-        ? person.boomer_id || ""
-        : String(body.boomer_id).trim(),
     boomer_email: boomerEmail,
     whatsapp: whatsapp,
     sale_available: saleAvailable,
@@ -450,7 +445,6 @@ function paymentRows_(people) {
       full_name: other.full_name || "",
       email: normalizeEmail_(other.email),
       whatsapp: restoreWhatsapp_(other.whatsapp),
-      boomer_id: other.boomer_id || "",
       boomer_email: other.boomer_email || "",
       stay: other.stay || "",
       sale_available: other.sale_available || "",
@@ -475,7 +469,6 @@ function publicPerson_(person) {
     purchased: person.purchased || "",
     purchased_size: person.purchased_size || "",
     purchased_at: person.purchased_at || "",
-    boomer_id: person.boomer_id || "",
     boomer_email: person.boomer_email || "",
     share_with: person.share_with || [],
     camp_fee_paid: person.camp_fee_paid || "",

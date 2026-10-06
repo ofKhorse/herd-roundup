@@ -26,6 +26,7 @@ function migrations_() {
     { id: "003_hash_passwords", run: migration003HashPasswords_ },
     { id: "004_add_sale_questions", run: migration004AddSaleQuestions_ },
     { id: "005_add_boomer_email", run: migration005AddBoomerEmail_ },
+    { id: "006_remove_boomer_id", run: migration006RemoveBoomerId_ },
   ];
 }
 
