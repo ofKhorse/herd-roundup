@@ -752,10 +752,11 @@ function writeSession(value) {
     sessionKey +
     "=" +
     encodeURIComponent(JSON.stringify(value)) +
-    "; Max-Age=2592000; Path=/herd-roundup; SameSite=Lax; Secure";
+    "; Max-Age=2592000; Path=/; SameSite=Lax; Secure";
 }
 
 function clearSession() {
+  document.cookie = sessionKey + "=; Max-Age=0; Path=/; SameSite=Lax; Secure";
   document.cookie =
     sessionKey + "=; Max-Age=0; Path=/herd-roundup; SameSite=Lax; Secure";
 }
