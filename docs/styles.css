@@ -278,11 +278,23 @@ button.solid {
   font-weight: 700;
 }
 
+.pay-media {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 0.85rem 1.25rem;
+  margin: 0.15rem 0.9rem 0.85rem;
+}
+
 .pay-video {
   display: block;
+  flex: 0 0 10.5rem;
   width: 10.5rem;
+  min-width: 0;
+  max-width: 100%;
   height: auto;
-  margin: 0.15rem auto 0.85rem;
+  margin: 0;
   border-radius: 0.5rem;
   background: #111;
 }
@@ -368,8 +380,11 @@ button.solid {
 
 .pay .qr {
   display: block;
+  flex: 0 0 auto;
   width: fit-content;
-  margin: 0.15rem auto 0.85rem;
+  min-width: 0;
+  max-width: 100%;
+  margin: 0;
   padding: 0.4rem;
   background: #fff;
   border-radius: 0.5rem;
