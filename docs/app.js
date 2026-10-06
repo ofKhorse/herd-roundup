@@ -86,7 +86,7 @@ function onLogin(event) {
   signIn({ email: data.get("email"), password: data.get("password") }, false);
 }
 
-function signIn(credentials, fromCookie) {
+function signIn(credentials, fromCookie, quiet) {
   var body = { action: "login" };
   if (credentials.token) {
     body.token = credentials.token;
@@ -96,7 +96,7 @@ function signIn(credentials, fromCookie) {
   }
   callServer(body, {
     pending: "Signing in…",
-    success: fromCookie ? "" : "Signed in.",
+    success: fromCookie || quiet ? "" : "Signed in.",
   }).then(function (result) {
     if (!result.ok) {
       if (fromCookie) {
@@ -138,14 +138,23 @@ function onRegister(event) {
       pending: "Registering…",
       success: function (result) {
         return {
-          message: "Write this password down. Then log in.",
+          message: "Write this password down.",
           email: data.get("email"),
           password: result.password,
           warning: "ONLY SHOWN ONCE",
         };
       },
     },
-  );
+  ).then(function (result) {
+    if (!result.ok || !result.password) {
+      return;
+    }
+    signIn(
+      { email: data.get("email"), password: result.password },
+      false,
+      true,
+    );
+  });
 }
 
 function onReset(event) {
