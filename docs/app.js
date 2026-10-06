@@ -88,7 +88,13 @@ companionSearch.addEventListener("focus", function () {
   matchesOpen = true;
   renderMatches();
 });
-companionSearch.addEventListener("input", renderMatches);
+companionSearch.addEventListener("input", function () {
+  syncCompanionAdd();
+  renderMatches();
+});
+document
+  .querySelector("#companion-add")
+  .addEventListener("click", addTypedCompanion);
 companionSearch.addEventListener("blur", function () {
   matchesOpen = false;
   document.querySelector("#companion-matches").innerHTML = "";
@@ -101,7 +107,9 @@ companionSearch.addEventListener("keydown", function (event) {
   var match = document.querySelector("#companion-matches button");
   if (match) {
     match.click();
+    return;
   }
+  addTypedCompanion();
 });
 
 var saved = readSession();
@@ -401,31 +409,45 @@ function renderMatches() {
     button.addEventListener("click", function () {
       state.companions.push(person.member_code);
       companionSearch.value = "";
+      syncCompanionAdd();
       renderCompanions();
       renderMatches();
     });
     box.appendChild(button);
   });
-  if (query && !matches.length && state.companions.indexOf(query) === -1) {
-    var addButton = document.createElement("button");
-    addButton.type = "button";
-    addButton.textContent = 'Add "' + query + '"';
-    addButton.addEventListener("mousedown", function (event) {
-      event.preventDefault();
-    });
-    addButton.addEventListener("click", function () {
-      state.companions.push(query);
-      companionSearch.value = "";
-      renderCompanions();
-      renderMatches();
-    });
-    box.appendChild(addButton);
-  } else if (!query && !matches.length) {
+  if (!matches.length) {
     var empty = document.createElement("p");
     empty.className = "no-match";
     empty.textContent = "No match found";
     box.appendChild(empty);
   }
+}
+
+function addTypedCompanion() {
+  var query = companionSearch.value.trim();
+  if (!query) {
+    return;
+  }
+  var queryLower = query.toLowerCase();
+  var exact = state.directory.filter(function (person) {
+    return (
+      person.member_code.toLowerCase() === queryLower ||
+      String(person.full_name || "").toLowerCase() === queryLower
+    );
+  })[0];
+  var value = exact ? exact.member_code : query;
+  companionSearch.value = "";
+  syncCompanionAdd();
+  if (state.companions.indexOf(value) === -1) {
+    state.companions.push(value);
+    renderCompanions();
+  }
+  renderMatches();
+}
+
+function syncCompanionAdd() {
+  document.querySelector("#companion-add").disabled =
+    !companionSearch.value.trim();
 }
 
 function renderPickedBy() {
