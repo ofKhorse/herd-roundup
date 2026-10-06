@@ -280,7 +280,8 @@ button.solid {
 
 .pay-video {
   display: block;
-  width: min(100%, 28rem);
+  width: 10.5rem;
+  height: auto;
   margin: 0.15rem auto 0.85rem;
   border-radius: 0.5rem;
   background: #111;
