@@ -136,7 +136,13 @@ function onRegister(event) {
     },
     {
       pending: "Registering…",
-      success: "Your password was emailed to you. Then log in.",
+      success: function (result) {
+        return {
+          message: "Write this password down. Then log in.",
+          password: result.password,
+          warning: "ONLY SHOWN ONCE",
+        };
+      },
     },
   );
 }
@@ -748,7 +754,16 @@ function callServer(body, options) {
         hideBusy();
         return result;
       }
-      return finishBusy(options.success).then(function () {
+      var success = options.success;
+      if (typeof success === "function") {
+        success = success(result);
+      }
+      var extra = {};
+      if (success && typeof success === "object") {
+        extra = success;
+        success = success.message;
+      }
+      return finishBusy(success, extra).then(function () {
         return result;
       });
     })
@@ -783,19 +798,40 @@ function showBusy(message) {
   document.querySelector("#busy-spinner").hidden = false;
   document.querySelector("#busy-ok").hidden = true;
   document.querySelector("#busy-message").textContent = message;
+  clearBusySecret();
   var busy = document.querySelector("#busy");
   busy.hidden = false;
   document.querySelector(".busy-card").focus();
 }
 
 function hideBusy() {
+  clearBusySecret();
   document.querySelector("#busy").hidden = true;
   document.querySelector("main").inert = false;
 }
 
-function finishBusy(message) {
+function clearBusySecret() {
+  var password = document.querySelector("#busy-password");
+  var warning = document.querySelector("#busy-warning");
+  password.textContent = "";
+  password.hidden = true;
+  warning.hidden = true;
+}
+
+function finishBusy(message, extra) {
+  extra = extra || {};
   document.querySelector("#busy-spinner").hidden = true;
   document.querySelector("#busy-message").textContent = message;
+  var password = document.querySelector("#busy-password");
+  var warning = document.querySelector("#busy-warning");
+  if (extra.password) {
+    password.textContent = extra.password;
+    password.hidden = false;
+  }
+  if (extra.warning) {
+    warning.textContent = extra.warning;
+    warning.hidden = false;
+  }
   var ok = document.querySelector("#busy-ok");
   ok.hidden = false;
   ok.focus();
