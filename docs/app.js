@@ -883,8 +883,10 @@ function finishBusy(message, extra) {
     text.textContent = extra.password;
     text.hidden = false;
     ok.dataset.email = extra.email || "";
+    ok.type = "submit";
     ok.setAttribute("form", "login-form");
   } else {
+    ok.type = "button";
     ok.removeAttribute("form");
   }
   if (extra.warning) {
@@ -896,31 +898,35 @@ function finishBusy(message, extra) {
     ok.focus();
   }
   return new Promise(function (resolve) {
+    var settled = false;
+    function done() {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      form.onsubmit = null;
+      ok.onclick = null;
+      ok.type = "button";
+      ok.removeAttribute("form");
+      hideBusy();
+      resolve();
+    }
     form.onsubmit = function (event) {
       event.preventDefault();
-      form.onsubmit = null;
       var credential = passwordCredential_(form);
       if (credential && navigator.credentials && navigator.credentials.store) {
         navigator.credentials.store(credential).catch(function () {
           return null;
         });
       }
-      window.setTimeout(function () {
-        ok.removeAttribute("form");
-        hideBusy();
-        resolve();
-      }, 400);
+      window.setTimeout(done, 400);
     };
     ok.onclick = function () {
-      if (ok.getAttribute("form") !== "login-form") {
+      if (ok.getAttribute("form") === "login-form") {
+        window.setTimeout(done, 0);
         return;
       }
-      ok.onclick = null;
-      window.setTimeout(function () {
-        ok.removeAttribute("form");
-        hideBusy();
-        resolve();
-      }, 0);
+      done();
     };
   });
 }
@@ -931,7 +937,7 @@ function notifyLoginField_(input) {
 }
 
 function passwordCredential_(form) {
-  if (!form.password.value || !window.PasswordCredential) {
+  if (!form.password || !form.password.value || !window.PasswordCredential) {
     return null;
   }
   try {
