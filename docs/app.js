@@ -822,12 +822,14 @@ function hideBusy() {
 }
 
 function clearBusySecret() {
-  var form = document.querySelector("#busy-save");
+  var text = document.querySelector("#busy-password-text");
+  var login = document.querySelector("#busy-login");
   var warning = document.querySelector("#busy-warning");
-  form.username.value = "";
-  form.password.value = "";
-  form.username.hidden = true;
-  form.password.hidden = true;
+  text.textContent = "";
+  text.hidden = true;
+  while (login.firstChild) {
+    login.removeChild(login.firstChild);
+  }
   warning.hidden = true;
 }
 
@@ -838,10 +840,23 @@ function finishBusy(message, extra) {
   var form = document.querySelector("#busy-save");
   var warning = document.querySelector("#busy-warning");
   if (extra.password) {
-    form.username.value = extra.email || "";
-    form.password.value = extra.password;
-    form.username.hidden = false;
-    form.password.hidden = false;
+    var text = document.querySelector("#busy-password-text");
+    text.textContent = extra.password;
+    text.hidden = false;
+    var login = document.querySelector("#busy-login");
+    login.appendChild(
+      loginField_("email", "username", "username", extra.email || ""),
+    );
+    var password = loginField_(
+      "password",
+      "password",
+      "current-password",
+      extra.password,
+    );
+    login.appendChild(password);
+    notifyLoginField_(login.querySelector("[name=username]"));
+    notifyLoginField_(password);
+    password.focus();
   }
   if (extra.warning) {
     warning.textContent = extra.warning;
@@ -849,7 +864,9 @@ function finishBusy(message, extra) {
   }
   var ok = document.querySelector("#busy-ok");
   ok.hidden = false;
-  ok.focus();
+  if (!extra.password) {
+    ok.focus();
+  }
   return new Promise(function (resolve) {
     form.onsubmit = function (event) {
       event.preventDefault();
@@ -863,9 +880,24 @@ function finishBusy(message, extra) {
       window.setTimeout(function () {
         hideBusy();
         resolve();
-      }, 50);
+      }, 400);
     };
   });
+}
+
+function loginField_(type, name, autocomplete, value) {
+  var input = document.createElement("input");
+  input.type = type;
+  input.name = name;
+  input.autocomplete = autocomplete;
+  input.value = value;
+  input.required = true;
+  return input;
+}
+
+function notifyLoginField_(input) {
+  input.dispatchEvent(new Event("input", { bubbles: true }));
+  input.dispatchEvent(new Event("change", { bubbles: true }));
 }
 
 function passwordCredential_(form) {
