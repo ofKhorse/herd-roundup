@@ -30,9 +30,18 @@
       <section id="auth" class="stack">
         <form id="login-form" class="card">
           <h2>Log in</h2>
-          <label>Email <input name="email" type="email" required /></label>
           <label>
-            Password <input name="password" type="password" required />
+            Email
+            <input name="email" type="email" autocomplete="username" required />
+          </label>
+          <label>
+            Password
+            <input
+              name="password"
+              type="password"
+              autocomplete="current-password"
+              required
+            />
           </label>
           <button class="solid" type="submit">Log in</button>
         </form>

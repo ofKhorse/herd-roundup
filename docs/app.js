@@ -13,6 +13,23 @@ var auth = document.querySelector("#auth");
 var profile = document.querySelector("#profile");
 
 document.querySelector("#login-form").addEventListener("submit", onLogin);
+document.querySelector("#busy-ok").addEventListener(
+  "click",
+  function () {
+    var username = document.querySelector("#busy-login [name=username]");
+    var password = document.querySelector("#busy-login [name=password]");
+    if (!username || !password || !password.value) {
+      return;
+    }
+    document.querySelector("main").inert = false;
+    var loginForm = document.querySelector("#login-form");
+    loginForm.elements.email.value = username.value;
+    loginForm.elements.password.value = password.value;
+    notifyLoginField_(loginForm.elements.email);
+    notifyLoginField_(loginForm.elements.password);
+  },
+  true,
+);
 document.querySelector("#register-form").addEventListener("submit", onRegister);
 document.querySelector("#reset-form").addEventListener("submit", onReset);
 document.querySelector("#profile-form").addEventListener("submit", onSave);
@@ -848,6 +865,7 @@ function finishBusy(message, extra) {
   document.querySelector("#busy-message").textContent = message;
   var form = document.querySelector("#busy-save");
   var warning = document.querySelector("#busy-warning");
+  var ok = document.querySelector("#busy-ok");
   if (extra.password) {
     var text = document.querySelector("#busy-password-text");
     text.textContent = extra.password;
@@ -866,12 +884,14 @@ function finishBusy(message, extra) {
     notifyLoginField_(login.querySelector("[name=username]"));
     notifyLoginField_(password);
     password.focus();
+    ok.setAttribute("form", "login-form");
+  } else {
+    ok.removeAttribute("form");
   }
   if (extra.warning) {
     warning.textContent = extra.warning;
     warning.hidden = false;
   }
-  var ok = document.querySelector("#busy-ok");
   ok.hidden = false;
   if (!extra.password) {
     ok.focus();
@@ -887,9 +907,21 @@ function finishBusy(message, extra) {
         });
       }
       window.setTimeout(function () {
+        ok.removeAttribute("form");
         hideBusy();
         resolve();
       }, 400);
+    };
+    ok.onclick = function () {
+      if (ok.getAttribute("form") !== "login-form") {
+        return;
+      }
+      ok.onclick = null;
+      window.setTimeout(function () {
+        ok.removeAttribute("form");
+        hideBusy();
+        resolve();
+      }, 0);
     };
   });
 }
