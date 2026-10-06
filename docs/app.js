@@ -998,16 +998,67 @@ function loadInfo() {
       if (html.indexOf("<html") === -1) {
         throw new Error("The info doc could not be loaded.");
       }
-      frame.srcdoc = html.replace(
-        "</head>",
-        "<style>body{padding:16px !important;max-width:none !important}</style></head>",
-      );
+      frame.srcdoc = openableInfoHtml_(html);
       status.hidden = true;
     })
     .catch(function (error) {
       info.dataset.loaded = "";
       status.textContent = error.message || "The info doc could not be loaded.";
     });
+}
+
+function openableInfoHtml_(html) {
+  var styled = html.replace(
+    "</head>",
+    "<style>body{padding:16px !important;max-width:none !important}a[href]{color:#1f3d32 !important;text-decoration:underline !important;cursor:pointer}</style></head>",
+  );
+  return styled.replace(/<a\b([^>]*)>/gi, function (tag, attrs) {
+    var hrefMatch = attrs.match(/href="([^"]*)"/i);
+    if (!hrefMatch) {
+      return tag;
+    }
+    var href = infoLinkHref_(hrefMatch[1]);
+    var next = attrs.replace(
+      /href="[^"]*"/i,
+      'href="' + escapeInfoAttr_(href) + '"',
+    );
+    if (!/\btarget=/i.test(next)) {
+      next += ' target="_blank"';
+    }
+    if (!/\brel=/i.test(next)) {
+      next += ' rel="noopener noreferrer"';
+    }
+    return "<a" + next + ">";
+  });
+}
+
+function infoLinkHref_(value) {
+  var decoded = value
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"');
+  try {
+    var url = new URL(decoded);
+    var target = url.searchParams.get("q");
+    if (
+      url.hostname === "www.google.com" &&
+      url.pathname === "/url" &&
+      target
+    ) {
+      return target;
+    }
+  } catch (error) {
+    return decoded;
+  }
+  return decoded;
+}
+
+function escapeInfoAttr_(value) {
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/"/g, "&quot;")
+    .replace(/</g, "&lt;");
 }
 
 function openInfoOnce(memberCode) {
