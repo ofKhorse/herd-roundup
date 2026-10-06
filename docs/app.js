@@ -35,6 +35,18 @@ document.querySelector("#reset-form").addEventListener("submit", onReset);
 document.querySelector("#profile-form").addEventListener("submit", onSave);
 document.querySelector("#logout").addEventListener("click", logout);
 document.querySelector("#info").addEventListener("toggle", loadInfo);
+var payGuide = document.querySelector("#pay-guide");
+var payVideo = document.querySelector("#pay-video");
+payGuide.addEventListener("toggle", function () {
+  if (!payGuide.open) {
+    payVideo.pause();
+    return;
+  }
+  var play = payVideo.play();
+  if (play && play.catch) {
+    play.catch(function () {});
+  }
+});
 document.querySelector("#admin-logout").addEventListener("click", logout);
 document
   .querySelector("#copy-kaptain-phones")
@@ -199,6 +211,7 @@ function onSave(event) {
     full_name: data.get("full_name"),
     stay: data.get("stay"),
     boomer_id: data.get("boomer_id"),
+    boomer_email: data.get("boomer_email"),
     purchased: data.get("purchased") ? "yes" : "",
     purchased_size: data.get("purchased_size"),
     whatsapp: data.get("whatsapp"),
@@ -276,6 +289,7 @@ function showSession(result) {
   form.full_name.value = result.person.full_name;
   restoreStay(result.person.stay);
   form.boomer_id.value = result.person.boomer_id;
+  form.boomer_email.value = result.person.boomer_email || result.person.email;
   form.whatsapp.value = showWhatsapp(result.person.whatsapp);
   form.purchased.checked = result.person.purchased === "yes";
   form.purchased_size.value = result.person.purchased_size;
@@ -448,8 +462,8 @@ function renderSignupCounts(signupCount, stayCounts) {
   box.appendChild(total);
   [
     ["2", "2 people (Tipi or Star Tent)"],
-    ["4", "4 people (5-person tent)"],
-    ["5", "5 people (Star Tent)"],
+    ["4", "4 people (5-Star Tent)"],
+    ["5", "5 people (5-Star Tent)"],
     ["6", "6 people (Tipi)"],
     ["arrange", "I arrange myself"],
     ["", "No preference yet"],
@@ -467,7 +481,7 @@ function renderTipiBySize(counts) {
   [
     ["tipi2", "Tipi, up to 2 people"],
     ["star2", "Star Tent, up to 2 people"],
-    ["star5", "Star Tent, up to 5 people"],
+    ["star5", "5-Star Tent, up to 5 people"],
     ["tipi6", "Tipi, up to 6 people"],
   ].forEach(function (pair) {
     var line = document.createElement("p");
@@ -501,6 +515,7 @@ function renderMembers(result) {
       ["Email", member.email],
       ["WhatsApp", member.whatsapp],
       ["Boomer ID", member.boomer_id],
+      ["Boomer email", member.boomer_email],
       ["Sleeping", memberStay(member.stay)],
       ["At sale", memberYes(member.sale_available)],
       ["Potential Kaptain", memberYes(member.kaptain)],
@@ -655,7 +670,7 @@ function memberTent(size) {
     {
       tipi2: "Tipi, up to 2 people",
       star2: "Star Tent, up to 2 people",
-      star5: "Star Tent, up to 5 people",
+      star5: "5-Star Tent, up to 5 people",
       tipi6: "Tipi, up to 6 people",
     }[size] || ""
   );

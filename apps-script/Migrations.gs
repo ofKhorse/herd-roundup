@@ -25,6 +25,7 @@ function migrations_() {
     { id: "002_add_whatsapp", run: migration002AddWhatsapp_ },
     { id: "003_hash_passwords", run: migration003HashPasswords_ },
     { id: "004_add_sale_questions", run: migration004AddSaleQuestions_ },
+    { id: "005_add_boomer_email", run: migration005AddBoomerEmail_ },
   ];
 }
 

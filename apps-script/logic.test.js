@@ -274,6 +274,7 @@ test("save stores an ordered companion list and a tipi purchase", function () {
       purchased: "yes",
       purchased_size: "tipi6",
       boomer_id: "B-9",
+      boomer_email: "Boomer@x.test",
       whatsapp: "+41 79 111 22 33",
     },
     db,
@@ -308,6 +309,24 @@ test("save stores an ordered companion list and a tipi purchase", function () {
     },
   );
   assert.equal(again.person.purchased_at, "2026-09-25T00:00:00.000Z");
+  assert.equal(again.person.boomer_email, "boomer@x.test");
+});
+
+test("save rejects an invalid boomer email", function () {
+  const db = memoryDb();
+  const owner = register(db, "a@x.test");
+  const result = context.handleAction(
+    {
+      action: "save",
+      email: "a@x.test",
+      password: owner.password,
+      boomer_email: "not-an-email",
+    },
+    db,
+    {},
+  );
+  assert.equal(result.ok, false);
+  assert.equal(result.field, "boomer_email");
 });
 
 test("save rejects companions who do not fit the rules", function () {
@@ -399,7 +418,7 @@ test("save rejects companions who do not fit the rules", function () {
   assert.equal(missing.ok, true);
   assert.equal(
     size.error,
-    "Choose Tipi, up to 2 people, Star Tent, up to 2 people, Star Tent, up to 5 people, or Tipi, up to 6 people.",
+    "Choose Tipi, up to 2 people, Star Tent, up to 2 people, 5-Star Tent, up to 5 people, or Tipi, up to 6 people.",
   );
 });
 
@@ -467,6 +486,7 @@ test("admins receive every member row", function () {
     purchased: "yes",
     purchased_size: "star5",
     boomer_id: "B-2",
+    boomer_email: "Bea@boom.test",
     stay: "5",
     sale_available: "yes",
     kaptain: "yes",
@@ -488,6 +508,7 @@ test("admins receive every member row", function () {
   assert.equal(member.amount, "65");
   assert.equal(member.whatsapp, "+41 79 000 00 00");
   assert.equal(member.boomer_id, "B-2");
+  assert.equal(member.boomer_email, "Bea@boom.test");
   assert.equal(member.stay, "5");
   assert.equal(member.sale_available, "yes");
   assert.equal(member.kaptain, "yes");
