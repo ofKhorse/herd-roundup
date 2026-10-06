@@ -752,8 +752,11 @@ function utf8Bytes_(text) {
 function pbkdf2Sha256_(password, salt, iterations, length) {
   var blockCount = Math.ceil(length / 32);
   var derived = [];
+  // Older hashes store 10000 rounds. One Utilities call per round misses the
+  // web-app deadline, so those checks stay in JavaScript.
+  var mac = iterations > PASSWORD_ITERATIONS_ ? hmacSha256Js_ : hmacSha256_;
   for (var block = 1; block <= blockCount; block++) {
-    var u = hmacSha256_(
+    var u = mac(
       password,
       salt.concat([
         (block >>> 24) & 255,
@@ -764,7 +767,7 @@ function pbkdf2Sha256_(password, salt, iterations, length) {
     );
     var t = u.slice();
     for (var round = 1; round < iterations; round++) {
-      u = hmacSha256_(password, u);
+      u = mac(password, u);
       for (var byte = 0; byte < t.length; byte++) {
         t[byte] ^= u[byte];
       }
@@ -797,6 +800,10 @@ function hmacSha256_(key, message) {
     }
     return out;
   }
+  return hmacSha256Js_(key, message);
+}
+
+function hmacSha256Js_(key, message) {
   var block = 64;
   var normalized = key.slice();
   if (normalized.length > block) {
