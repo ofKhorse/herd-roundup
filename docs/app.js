@@ -1038,8 +1038,40 @@ function onInfoLinkClick_(event) {
   opener.remove();
 }
 
+function linkBareInfoUrls_(html) {
+  var parts = html.split(/(<[^>]+>)/g);
+  var inAnchor = false;
+  return parts
+    .map(function (part) {
+      if (part.charAt(0) === "<") {
+        if (/^<a\b/i.test(part)) {
+          inAnchor = true;
+        } else if (/^<\/a\b/i.test(part)) {
+          inAnchor = false;
+        }
+        return part;
+      }
+      if (inAnchor) {
+        return part;
+      }
+      return part.replace(/https?:\/\/[^\s<]+/g, function (url) {
+        var clean = url.replace(/[),.;]+$/, "");
+        var trailing = url.slice(clean.length);
+        return (
+          '<a href="' +
+          escapeInfoAttr_(clean) +
+          '">' +
+          clean +
+          "</a>" +
+          trailing
+        );
+      });
+    })
+    .join("");
+}
+
 function openableInfoHtml_(html) {
-  var styled = html.replace(
+  var styled = linkBareInfoUrls_(html).replace(
     "</head>",
     "<style>body{padding:16px !important;max-width:none !important}a[href]{color:#1f3d32 !important;text-decoration:underline !important;cursor:pointer}</style></head>",
   );
