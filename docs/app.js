@@ -990,13 +990,52 @@ function loadInfo() {
       if (html.indexOf("<html") === -1) {
         throw new Error("The info doc could not be loaded.");
       }
+      frame.addEventListener("load", function () {
+        bindInfoLinks_(frame);
+      });
       frame.srcdoc = openableInfoHtml_(html);
+      bindInfoLinks_(frame);
       status.hidden = true;
     })
     .catch(function (error) {
       info.dataset.loaded = "";
       status.textContent = error.message || "The info doc could not be loaded.";
     });
+}
+
+function bindInfoLinks_(frame) {
+  var doc;
+  try {
+    doc = frame.contentDocument;
+  } catch (error) {
+    return;
+  }
+  if (!doc) {
+    return;
+  }
+  var links = doc.querySelectorAll("a[href]");
+  for (var i = 0; i < links.length; i++) {
+    if (links[i].dataset.infoBound === "yes") {
+      continue;
+    }
+    links[i].dataset.infoBound = "yes";
+    links[i].addEventListener("click", onInfoLinkClick_);
+  }
+}
+
+function onInfoLinkClick_(event) {
+  var href = infoLinkHref_(event.currentTarget.getAttribute("href") || "");
+  if (!href || href.charAt(0) === "#") {
+    return;
+  }
+  event.preventDefault();
+  var opener = document.createElement("a");
+  opener.href = href;
+  opener.target = "_blank";
+  opener.rel = "noopener noreferrer";
+  document.body.appendChild(opener);
+  opener.click();
+  opener.remove();
 }
 
 function openableInfoHtml_(html) {
