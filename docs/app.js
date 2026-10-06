@@ -35,7 +35,6 @@ document.querySelector("#reset-form").addEventListener("submit", onReset);
 document.querySelector("#profile-form").addEventListener("submit", onSave);
 document.querySelector("#logout").addEventListener("click", logout);
 document.querySelector("#info").addEventListener("toggle", loadInfo);
-loadInfo();
 var payGuide = document.querySelector("#pay-guide");
 var payVideo = document.querySelector("#pay-video");
 payGuide.addEventListener("toggle", function () {
@@ -1000,6 +999,8 @@ function loadInfo() {
       status.textContent = error.message || "The info doc could not be loaded.";
     });
 }
+
+loadInfo();
 
 function bindInfoLinks_(frame) {
   var doc;
