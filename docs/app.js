@@ -428,18 +428,10 @@ function addTypedCompanion() {
   if (!query) {
     return;
   }
-  var queryLower = query.toLowerCase();
-  var exact = state.directory.filter(function (person) {
-    return (
-      person.member_code.toLowerCase() === queryLower ||
-      String(person.full_name || "").toLowerCase() === queryLower
-    );
-  })[0];
-  var value = exact ? exact.member_code : query;
   companionSearch.value = "";
   syncCompanionAdd();
-  if (state.companions.indexOf(value) === -1) {
-    state.companions.push(value);
+  if (state.companions.indexOf(query) === -1) {
+    state.companions.push(query);
     renderCompanions();
   }
   renderMatches();
