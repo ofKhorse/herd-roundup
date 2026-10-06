@@ -337,7 +337,7 @@ function authenticatedPerson_(people, body, db, deps) {
   if (!passwordMatches_(person.password, password)) {
     return { ok: false, error: "Wrong password." };
   }
-  if (!isHashedPassword_(person.password)) {
+  if (passwordNeedsRefresh_(person.password)) {
     db.updatePerson(person.member_code, { password: hashPassword_(password) });
   }
   return { person: person };
@@ -608,7 +608,7 @@ function generatePassword_() {
   return password;
 }
 
-var PASSWORD_ITERATIONS_ = 10000;
+var PASSWORD_ITERATIONS_ = 100;
 var PASSWORD_ITERATION_LIMIT_ = 200000;
 var BASE64_ALPHABET_ =
   "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
@@ -646,6 +646,13 @@ function hashPassword_(password, saltBytes) {
 
 function isHashedPassword_(stored) {
   return String(stored || "").indexOf("pbkdf2_sha256$") === 0;
+}
+
+function passwordNeedsRefresh_(stored) {
+  if (!isHashedPassword_(stored)) {
+    return true;
+  }
+  return Number(String(stored).split("$")[1]) !== PASSWORD_ITERATIONS_;
 }
 
 function passwordMatches_(stored, password) {
