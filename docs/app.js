@@ -218,7 +218,6 @@ function onSave(event) {
     action: "save",
     full_name: data.get("full_name"),
     stay: data.get("stay"),
-    boomer_id: data.get("boomer_id"),
     boomer_email: data.get("boomer_email"),
     purchased: data.get("purchased") ? "yes" : "",
     purchased_size: data.get("purchased_size"),
@@ -296,7 +295,6 @@ function showSession(result) {
   var form = document.querySelector("#profile-form");
   form.full_name.value = result.person.full_name;
   restoreStay(result.person.stay);
-  form.boomer_id.value = result.person.boomer_id;
   form.boomer_email.value = result.person.boomer_email || result.person.email;
   form.whatsapp.value = showWhatsapp(result.person.whatsapp);
   form.purchased.checked = result.person.purchased === "yes";
@@ -528,7 +526,6 @@ function renderMembers(result) {
       ["Kode", member.member_code],
       ["Email", member.email],
       ["WhatsApp", member.whatsapp],
-      ["Boomer ID", member.boomer_id],
       ["Boomer email", member.boomer_email],
       ["Sleeping", memberStay(member.stay)],
       ["At sale", memberYes(member.sale_available)],

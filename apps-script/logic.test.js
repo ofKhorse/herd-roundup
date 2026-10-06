@@ -273,7 +273,6 @@ test("save stores an ordered companion list and a tipi purchase", function () {
       share_with: ["KH-002", "KH-003", "KH-004", "KH-005"],
       purchased: "yes",
       purchased_size: "tipi6",
-      boomer_id: "B-9",
       boomer_email: "Boomer@x.test",
       whatsapp: "+41 79 111 22 33",
     },
@@ -485,7 +484,6 @@ test("admins receive every member row", function () {
     payment_ref: "KH-002",
     purchased: "yes",
     purchased_size: "star5",
-    boomer_id: "B-2",
     boomer_email: "Bea@boom.test",
     stay: "5",
     sale_available: "yes",
@@ -507,7 +505,6 @@ test("admins receive every member row", function () {
   assert.equal(member.camp_fee_paid, "yes");
   assert.equal(member.amount, "65");
   assert.equal(member.whatsapp, "+41 79 000 00 00");
-  assert.equal(member.boomer_id, "B-2");
   assert.equal(member.boomer_email, "Bea@boom.test");
   assert.equal(member.stay, "5");
   assert.equal(member.sale_available, "yes");
