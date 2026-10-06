@@ -284,6 +284,11 @@ button.solid {
   margin: 0;
 }
 
+.pay-kode {
+  color: #8f1d1d;
+  font-weight: 700;
+}
+
 .info summary {
   cursor: pointer;
   list-style: none;

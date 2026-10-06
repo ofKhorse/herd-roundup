@@ -64,7 +64,7 @@
               <summary>How to pay</summary>
               <a
                 class="qr"
-                href="https://www.leetchi.com/c/ofkhorse--boom-2027-1305346"
+                href="https://www.leetchi.com/en/c/ofkhorse--boom-2027-1305346"
                 target="_blank"
                 rel="noopener"
               >
@@ -78,16 +78,20 @@
               <ol>
                 <li>
                   <a
-                    href="https://www.leetchi.com/c/ofkhorse--boom-2027-1305346"
+                    href="https://www.leetchi.com/en/c/ofkhorse--boom-2027-1305346"
                     target="_blank"
                     rel="noopener"
                     >Open the kamp Leetchi pot (this link or QR code above).</a
                   >
                 </li>
+                <li>
+                  Pay with the same email you used to sign up on this platform.
+                </li>
                 <li>Klick Participate and pay the kamp fee by kard.</li>
                 <li>
-                  On the konfirmation page, leave a message that is only your
-                  kode.
+                  <strong class="pay-kode"
+                    >Leave a message in the pot with your ofKhorse kode.</strong
+                  >
                 </li>
                 <li>
                   If you skip that, open the pot later. Sign in, or kreate a
@@ -122,6 +126,11 @@
             <label>Full name <input name="full_name" /></label>
             <label>Boomer ID <input name="boomer_id" /></label>
             <label>
+              Boomer email
+              <input name="boomer_email" type="email" />
+            </label>
+            <p class="field-error" data-field="boomer_email" hidden></p>
+            <label>
               WhatsApp
               <input name="whatsapp" type="tel" placeholder="+41" required />
             </label>
@@ -149,9 +158,9 @@
                 <select id="size-select">
                   <option value="">Choose later</option>
                   <option value="4">
-                    4 people — underutilized 5-person tent, if available
+                    4 people — underutilized 5-Star Tent, if available
                   </option>
-                  <option value="5">5 people — Star Tent</option>
+                  <option value="5">5 people — 5-Star Tent</option>
                   <option value="6">6 people — rare (Tipi)</option>
                 </select>
               </label>
@@ -166,8 +175,8 @@
           <div class="card">
             <h2>Sale availability</h2>
             <label>
-              Will you be available during the sale on 13 October 2026 at 09:00
-              Portuguese time?
+              Will you be available during the sale on 13 October 2026 at 9 am
+              Portuguese time, 10am CEST?
               <select name="sale_available">
                 <option value="">Choose later</option>
                 <option value="yes">Yes</option>
@@ -184,9 +193,15 @@
                 </select>
               </label>
               <p>
-                A kaptain means you have at least one credit card that allows
-                you to purchase a tipi at the sale. They will be reimbursed
-                later. They should get a 5 or 6 person tipi.
+                This means you kan be online on the sale and will try to
+                purchase a 5-Star Tent or any other 2 person or 6 person tipi
+                you will get the opportunity for!
+              </p>
+              <p>
+                To be a Kaptain you need to have at least one kredit kard that
+                has enough funds to purchase a 5-Star Tent at the sale = 1550
+                EUR. The purchase amount will be reimbursed within a few days
+                from the ofKhorse money pot.
               </p>
             </div>
           </div>
@@ -205,7 +220,7 @@
                 <option value="">Choose one</option>
                 <option value="tipi2">Tipi, up to 2 people</option>
                 <option value="star2">Star Tent, up to 2 people</option>
-                <option value="star5">Star Tent, up to 5 people</option>
+                <option value="star5">5-Star Tent, up to 5 people</option>
                 <option value="tipi6">Tipi, up to 6 people</option>
               </select>
             </label>
@@ -258,6 +273,7 @@
                   <th>Email</th>
                   <th>WhatsApp</th>
                   <th>Boomer ID</th>
+                  <th>Boomer email</th>
                   <th>Sleeping</th>
                   <th>At sale</th>
                   <th>Potential Kaptain</th>

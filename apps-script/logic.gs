@@ -55,6 +55,7 @@ function emptyPerson_(email, password, memberCode, whatsapp) {
     purchased_size: "",
     purchased_at: "",
     boomer_id: "",
+    boomer_email: "",
     share_with: [],
     camp_fee_paid: "",
     amount: "",
@@ -251,6 +252,17 @@ function savePerson_(body, db, deps) {
   if (purchased !== "yes") {
     purchasedAt = "";
   }
+  var boomerEmail =
+    body.boomer_email === undefined
+      ? person.boomer_email || ""
+      : normalizeEmail_(body.boomer_email);
+  if (boomerEmail && !isEmail_(boomerEmail)) {
+    return {
+      ok: false,
+      error: "Enter a valid Boomer email.",
+      field: "boomer_email",
+    };
+  }
   var saleAvailable =
     body.sale_available === undefined
       ? person.sale_available || ""
@@ -272,6 +284,7 @@ function savePerson_(body, db, deps) {
       body.boomer_id === undefined
         ? person.boomer_id || ""
         : String(body.boomer_id).trim(),
+    boomer_email: boomerEmail,
     whatsapp: whatsapp,
     sale_available: saleAvailable,
     kaptain: kaptain,
@@ -409,7 +422,7 @@ function preferenceError_() {
 }
 
 function purchaseError_() {
-  return "Choose Tipi, up to 2 people, Star Tent, up to 2 people, Star Tent, up to 5 people, or Tipi, up to 6 people.";
+  return "Choose Tipi, up to 2 people, Star Tent, up to 2 people, 5-Star Tent, up to 5 people, or Tipi, up to 6 people.";
 }
 
 function tipiBySize_(people) {
@@ -438,6 +451,7 @@ function paymentRows_(people) {
       email: normalizeEmail_(other.email),
       whatsapp: restoreWhatsapp_(other.whatsapp),
       boomer_id: other.boomer_id || "",
+      boomer_email: other.boomer_email || "",
       stay: other.stay || "",
       sale_available: other.sale_available || "",
       kaptain: other.kaptain || "",
@@ -462,6 +476,7 @@ function publicPerson_(person) {
     purchased_size: person.purchased_size || "",
     purchased_at: person.purchased_at || "",
     boomer_id: person.boomer_id || "",
+    boomer_email: person.boomer_email || "",
     share_with: person.share_with || [],
     camp_fee_paid: person.camp_fee_paid || "",
     amount: person.amount || "",
