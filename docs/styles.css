@@ -244,17 +244,6 @@ button.solid {
   letter-spacing: 0.08em;
 }
 
-#busy-login {
-  display: grid;
-  gap: 0.6rem;
-  width: 100%;
-}
-
-#busy-login input {
-  width: 100%;
-  text-align: center;
-}
-
 #busy-warning {
   color: #8f1d1d;
   font-weight: 700;

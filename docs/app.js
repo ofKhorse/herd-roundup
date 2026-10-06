@@ -16,15 +16,15 @@ document.querySelector("#login-form").addEventListener("submit", onLogin);
 document.querySelector("#busy-ok").addEventListener(
   "click",
   function () {
-    var username = document.querySelector("#busy-login [name=username]");
-    var password = document.querySelector("#busy-login [name=password]");
-    if (!username || !password || !password.value) {
+    var text = document.querySelector("#busy-password-text");
+    var email = document.querySelector("#busy-ok").dataset.email;
+    if (!text || text.hidden || !text.textContent || !email) {
       return;
     }
     document.querySelector("main").inert = false;
     var loginForm = document.querySelector("#login-form");
-    loginForm.elements.email.value = username.value;
-    loginForm.elements.password.value = password.value;
+    loginForm.elements.email.value = email;
+    loginForm.elements.password.value = text.textContent;
     notifyLoginField_(loginForm.elements.email);
     notifyLoginField_(loginForm.elements.password);
   },
@@ -849,13 +849,10 @@ function hideBusy() {
 
 function clearBusySecret() {
   var text = document.querySelector("#busy-password-text");
-  var login = document.querySelector("#busy-login");
   var warning = document.querySelector("#busy-warning");
   text.textContent = "";
   text.hidden = true;
-  while (login.firstChild) {
-    login.removeChild(login.firstChild);
-  }
+  delete document.querySelector("#busy-ok").dataset.email;
   warning.hidden = true;
 }
 
@@ -870,20 +867,7 @@ function finishBusy(message, extra) {
     var text = document.querySelector("#busy-password-text");
     text.textContent = extra.password;
     text.hidden = false;
-    var login = document.querySelector("#busy-login");
-    login.appendChild(
-      loginField_("email", "username", "username", extra.email || ""),
-    );
-    var password = loginField_(
-      "password",
-      "password",
-      "current-password",
-      extra.password,
-    );
-    login.appendChild(password);
-    notifyLoginField_(login.querySelector("[name=username]"));
-    notifyLoginField_(password);
-    password.focus();
+    ok.dataset.email = extra.email || "";
     ok.setAttribute("form", "login-form");
   } else {
     ok.removeAttribute("form");
@@ -924,16 +908,6 @@ function finishBusy(message, extra) {
       }, 0);
     };
   });
-}
-
-function loginField_(type, name, autocomplete, value) {
-  var input = document.createElement("input");
-  input.type = type;
-  input.name = name;
-  input.autocomplete = autocomplete;
-  input.value = value;
-  input.required = true;
-  return input;
 }
 
 function notifyLoginField_(input) {
