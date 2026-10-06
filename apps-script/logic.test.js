@@ -522,6 +522,43 @@ test("a stored plaintext password is hashed on the next login", function () {
   assert.equal(db.listPeople()[0].password, stored);
 });
 
+test("an older 10000-round hash is accepted and then stored with 100 rounds", function () {
+  const salt = context.randomBytes_(16);
+  const oldHash = context.pbkdf2Sha256_(
+    context.utf8Bytes_("secret12"),
+    salt,
+    10000,
+    32,
+  );
+  const oldStored =
+    "pbkdf2_sha256$10000$" +
+    context.base64Encode_(salt) +
+    "$" +
+    context.base64Encode_(oldHash);
+  const db = memoryDb([
+    {
+      member_code: "KH-001",
+      email: "a@x.test",
+      password: oldStored,
+      share_with: [],
+    },
+  ]);
+  const result = context.handleAction(
+    { action: "login", email: "a@x.test", password: "secret12" },
+    db,
+  );
+  assert.equal(result.ok, true);
+  const stored = db.listPeople()[0].password;
+  assert.equal(stored.indexOf("pbkdf2_sha256$100$"), 0);
+  assert.equal(context.passwordMatches_(stored, "secret12"), true);
+  const again = context.handleAction(
+    { action: "login", email: "a@x.test", password: "secret12" },
+    db,
+  );
+  assert.equal(again.ok, true);
+  assert.equal(db.listPeople()[0].password, stored);
+});
+
 test("password hashes are salted PBKDF2-SHA256", function () {
   const first = context.hashPassword_("samepass");
   const second = context.hashPassword_("samepass");
