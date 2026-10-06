@@ -325,9 +325,29 @@
       >
         <div id="busy-spinner" class="spinner"></div>
         <p id="busy-message"></p>
-        <p id="busy-password" hidden></p>
-        <p id="busy-warning" hidden></p>
-        <button id="busy-ok" class="solid" type="button" hidden>OK</button>
+        <form
+          id="busy-save"
+          method="post"
+          action="#save-password"
+          autocomplete="on"
+        >
+          <input
+            id="busy-username"
+            name="username"
+            type="email"
+            autocomplete="username"
+            hidden
+          />
+          <input
+            id="busy-password"
+            name="password"
+            type="password"
+            autocomplete="new-password"
+            hidden
+          />
+          <p id="busy-warning" hidden></p>
+          <button id="busy-ok" class="solid" type="submit" hidden>OK</button>
+        </form>
       </div>
     </div>
     <script src="config.js"></script>
