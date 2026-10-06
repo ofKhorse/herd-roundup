@@ -231,10 +231,26 @@ button.solid {
   margin: 0;
 }
 
+#busy-save {
+  display: grid;
+  gap: 0.9rem;
+  justify-items: center;
+  width: 100%;
+}
+
+#busy-username,
+#busy-password {
+  width: 100%;
+  text-align: center;
+  background: transparent;
+  border: 0;
+}
+
 #busy-password {
   font-family: ui-monospace, monospace;
   font-size: 1.4rem;
   letter-spacing: 0.08em;
+  -webkit-text-security: none;
 }
 
 #busy-warning {

@@ -139,6 +139,7 @@ function onRegister(event) {
       success: function (result) {
         return {
           message: "Write this password down. Then log in.",
+          email: data.get("email"),
           password: result.password,
           warning: "ONLY SHOWN ONCE",
         };
@@ -821,10 +822,12 @@ function hideBusy() {
 }
 
 function clearBusySecret() {
-  var password = document.querySelector("#busy-password");
+  var form = document.querySelector("#busy-save");
   var warning = document.querySelector("#busy-warning");
-  password.textContent = "";
-  password.hidden = true;
+  form.username.value = "";
+  form.password.value = "";
+  form.username.hidden = true;
+  form.password.hidden = true;
   warning.hidden = true;
 }
 
@@ -832,11 +835,13 @@ function finishBusy(message, extra) {
   extra = extra || {};
   document.querySelector("#busy-spinner").hidden = true;
   document.querySelector("#busy-message").textContent = message;
-  var password = document.querySelector("#busy-password");
+  var form = document.querySelector("#busy-save");
   var warning = document.querySelector("#busy-warning");
   if (extra.password) {
-    password.textContent = extra.password;
-    password.hidden = false;
+    form.username.value = extra.email || "";
+    form.password.value = extra.password;
+    form.username.hidden = false;
+    form.password.hidden = false;
   }
   if (extra.warning) {
     warning.textContent = extra.warning;
@@ -846,12 +851,32 @@ function finishBusy(message, extra) {
   ok.hidden = false;
   ok.focus();
   return new Promise(function (resolve) {
-    ok.onclick = function () {
-      ok.onclick = null;
-      hideBusy();
-      resolve();
+    form.onsubmit = function (event) {
+      event.preventDefault();
+      form.onsubmit = null;
+      var credential = passwordCredential_(form);
+      if (credential && navigator.credentials && navigator.credentials.store) {
+        navigator.credentials.store(credential).catch(function () {
+          return null;
+        });
+      }
+      window.setTimeout(function () {
+        hideBusy();
+        resolve();
+      }, 50);
     };
   });
+}
+
+function passwordCredential_(form) {
+  if (!form.password.value || !window.PasswordCredential) {
+    return null;
+  }
+  try {
+    return new PasswordCredential(form);
+  } catch (error) {
+    return null;
+  }
 }
 
 function say(message) {
