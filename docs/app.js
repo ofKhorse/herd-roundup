@@ -18,6 +18,18 @@ document.querySelector("#reset-form").addEventListener("submit", onReset);
 document.querySelector("#profile-form").addEventListener("submit", onSave);
 document.querySelector("#logout").addEventListener("click", logout);
 document.querySelector("#info").addEventListener("toggle", loadInfo);
+var payGuide = document.querySelector("#pay-guide");
+var payVideo = document.querySelector("#pay-video");
+payGuide.addEventListener("toggle", function () {
+  if (!payGuide.open) {
+    payVideo.pause();
+    return;
+  }
+  var play = payVideo.play();
+  if (play && play.catch) {
+    play.catch(function () {});
+  }
+});
 document.querySelector("#admin-logout").addEventListener("click", logout);
 document
   .querySelector("#copy-kaptain-phones")
