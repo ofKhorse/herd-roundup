@@ -5,7 +5,12 @@
 
 function doPost(e) {
   var lock = LockService.getScriptLock();
-  lock.waitLock(30000);
+  if (!lock.tryLock(8000)) {
+    return jsonOutput_({
+      ok: false,
+      error: "The sheet is busy. Wait a moment and try again.",
+    });
+  }
   try {
     var body = JSON.parse(e.postData.contents);
     return jsonOutput_(
