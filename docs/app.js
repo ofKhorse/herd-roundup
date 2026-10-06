@@ -1000,6 +1000,8 @@ function loadInfo() {
     });
 }
 
+loadInfo();
+
 function bindInfoLinks_(frame) {
   var doc;
   try {
