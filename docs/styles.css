@@ -231,6 +231,17 @@ button.solid {
   margin: 0;
 }
 
+#busy-password {
+  font-family: ui-monospace, monospace;
+  font-size: 1.4rem;
+  letter-spacing: 0.08em;
+}
+
+#busy-warning {
+  color: #8f1d1d;
+  font-weight: 700;
+}
+
 .spinner {
   width: 2.4rem;
   height: 2.4rem;

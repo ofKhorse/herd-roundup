@@ -19,17 +19,20 @@ vm.runInContext(
 );
 
 function register(db, email) {
-  let password;
+  const sent = [];
   const result = context.handleAction(
     { action: "register", email: email, whatsapp: "+41 79 000 00 00" },
     db,
     {
-      sendPassword: function (_to, value) {
-        password = value;
+      sendPassword: function () {
+        sent.push("emailed");
       },
     },
   );
-  return { ok: result.ok, error: result.error, password: password };
+  if (sent.length !== 0) {
+    throw new Error("register must not email a password");
+  }
+  return { ok: result.ok, error: result.error, password: result.password };
 }
 
 function memoryDb(seed) {
@@ -64,48 +67,33 @@ function memoryDb(seed) {
   };
 }
 
-test("register emails a password and does not return it", function () {
+test("register returns the password and does not email it", function () {
   const db = memoryDb();
   const sent = [];
   const result = context.handleAction(
     { action: "register", email: " A@x.test ", whatsapp: "+41 79 000 00 00" },
     db,
     {
-      sendPassword: function (email, password) {
-        sent.push([email, password]);
+      sendPassword: function () {
+        sent.push("emailed");
       },
     },
   );
   assert.equal(result.ok, true);
-  assert.equal(result.password, undefined);
   assert.equal(result.member_code, undefined);
-  assert.equal(sent.length, 1);
-  assert.equal(sent[0][0], "a@x.test");
-  assert.equal(sent[0][1].length, 8);
+  assert.equal(sent.length, 0);
+  assert.equal(result.password.length, 8);
   const people = db.listPeople();
   assert.equal(people.length, 1);
   assert.equal(people[0].email, "a@x.test");
   assert.equal(people[0].member_code, "KH-001");
   assert.equal(people[0].whatsapp, "+41 79 000 00 00");
-  assert.notEqual(people[0].password, sent[0][1]);
-  assert.equal(context.passwordMatches_(people[0].password, sent[0][1]), true);
+  assert.notEqual(people[0].password, result.password);
+  assert.equal(
+    context.passwordMatches_(people[0].password, result.password),
+    true,
+  );
   assert.equal(people[0].full_name, "");
-});
-
-test("register keeps the sheet unchanged when the email fails", function () {
-  const db = memoryDb();
-  assert.throws(function () {
-    context.handleAction(
-      { action: "register", email: "a@x.test", whatsapp: "+41 79 000 00 00" },
-      db,
-      {
-        sendPassword: function () {
-          throw new Error("Could not send the password email.");
-        },
-      },
-    );
-  }, /Could not send the password email/);
-  assert.equal(db.listPeople().length, 0);
 });
 
 test("register assigns the next member code", function () {

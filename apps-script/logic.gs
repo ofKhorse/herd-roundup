@@ -32,7 +32,6 @@ function registerPerson_(body, db, deps) {
     return { ok: false, error: "That email is already registered." };
   }
   var password = generatePassword_();
-  deps.sendPassword(email, password);
   db.insertPerson(
     emptyPerson_(
       email,
@@ -41,7 +40,7 @@ function registerPerson_(body, db, deps) {
       whatsapp,
     ),
   );
-  return { ok: true };
+  return { ok: true, password: password };
 }
 
 function emptyPerson_(email, password, memberCode, whatsapp) {
