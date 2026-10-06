@@ -13,6 +13,23 @@ var auth = document.querySelector("#auth");
 var profile = document.querySelector("#profile");
 
 document.querySelector("#login-form").addEventListener("submit", onLogin);
+document.querySelector("#busy-ok").addEventListener(
+  "click",
+  function () {
+    var text = document.querySelector("#busy-password-text");
+    var email = document.querySelector("#busy-ok").dataset.email;
+    if (!text || text.hidden || !text.textContent || !email) {
+      return;
+    }
+    document.querySelector("main").inert = false;
+    var loginForm = document.querySelector("#login-form");
+    loginForm.elements.email.value = email;
+    loginForm.elements.password.value = text.textContent;
+    notifyLoginField_(loginForm.elements.email);
+    notifyLoginField_(loginForm.elements.password);
+  },
+  true,
+);
 document.querySelector("#register-form").addEventListener("submit", onRegister);
 document.querySelector("#reset-form").addEventListener("submit", onReset);
 document.querySelector("#profile-form").addEventListener("submit", onSave);
@@ -832,13 +849,10 @@ function hideBusy() {
 
 function clearBusySecret() {
   var text = document.querySelector("#busy-password-text");
-  var login = document.querySelector("#busy-login");
   var warning = document.querySelector("#busy-warning");
   text.textContent = "";
   text.hidden = true;
-  while (login.firstChild) {
-    login.removeChild(login.firstChild);
-  }
+  delete document.querySelector("#busy-ok").dataset.email;
   warning.hidden = true;
 }
 
@@ -848,30 +862,20 @@ function finishBusy(message, extra) {
   document.querySelector("#busy-message").textContent = message;
   var form = document.querySelector("#busy-save");
   var warning = document.querySelector("#busy-warning");
+  var ok = document.querySelector("#busy-ok");
   if (extra.password) {
     var text = document.querySelector("#busy-password-text");
     text.textContent = extra.password;
     text.hidden = false;
-    var login = document.querySelector("#busy-login");
-    login.appendChild(
-      loginField_("email", "username", "username", extra.email || ""),
-    );
-    var password = loginField_(
-      "password",
-      "password",
-      "current-password",
-      extra.password,
-    );
-    login.appendChild(password);
-    notifyLoginField_(login.querySelector("[name=username]"));
-    notifyLoginField_(password);
-    password.focus();
+    ok.dataset.email = extra.email || "";
+    ok.setAttribute("form", "login-form");
+  } else {
+    ok.removeAttribute("form");
   }
   if (extra.warning) {
     warning.textContent = extra.warning;
     warning.hidden = false;
   }
-  var ok = document.querySelector("#busy-ok");
   ok.hidden = false;
   if (!extra.password) {
     ok.focus();
@@ -887,21 +891,23 @@ function finishBusy(message, extra) {
         });
       }
       window.setTimeout(function () {
+        ok.removeAttribute("form");
         hideBusy();
         resolve();
       }, 400);
     };
+    ok.onclick = function () {
+      if (ok.getAttribute("form") !== "login-form") {
+        return;
+      }
+      ok.onclick = null;
+      window.setTimeout(function () {
+        ok.removeAttribute("form");
+        hideBusy();
+        resolve();
+      }, 0);
+    };
   });
-}
-
-function loginField_(type, name, autocomplete, value) {
-  var input = document.createElement("input");
-  input.type = type;
-  input.name = name;
-  input.autocomplete = autocomplete;
-  input.value = value;
-  input.required = true;
-  return input;
 }
 
 function notifyLoginField_(input) {
