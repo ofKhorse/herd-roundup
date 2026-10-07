@@ -386,7 +386,13 @@ function renderMatches() {
     if (!query) {
       return true;
     }
-    var haystack = (person.full_name + " " + person.member_code).toLowerCase();
+    var haystack = (
+      person.full_name +
+      " " +
+      person.member_code +
+      " " +
+      (person.email || "")
+    ).toLowerCase();
     return haystack.indexOf(queryLower) !== -1;
   });
   matches.forEach(function (person) {
@@ -439,7 +445,7 @@ function renderPickedBy() {
       return (person.share_with || []).indexOf(state.memberCode) !== -1;
     })
     .map(function (person) {
-      return person.full_name || person.member_code;
+      return person.full_name || labelFor(person.member_code);
     });
   box.textContent = names.length ? names.join(", ") : "Nobody yet.";
 }
@@ -727,8 +733,11 @@ function labelFor(code) {
   var person = state.directory.filter(function (row) {
     return row.member_code === code;
   })[0];
-  if (!person || !person.full_name) {
+  if (!person) {
     return code;
+  }
+  if (!person.full_name) {
+    return person.email ? code + " (" + person.email + ")" : code;
   }
   return person.full_name + " (" + code + ")";
 }

@@ -200,6 +200,26 @@ test("login returns the camper without the password", function () {
   assert.equal(result.payments.length, 0);
 });
 
+test("a nameless stable mate is listed with their email", function () {
+  const db = memoryDb();
+  const owner = register(db, "a@x.test");
+  register(db, "Bea@x.test");
+  const unnamed = context.handleAction(
+    { action: "login", email: "a@x.test", password: owner.password },
+    db,
+  );
+  assert.equal(unnamed.directory.length, 1);
+  assert.equal(unnamed.directory[0].full_name, "");
+  assert.equal(unnamed.directory[0].email, "bea@x.test");
+  db.updatePerson("KH-002", { full_name: "Bea" });
+  const named = context.handleAction(
+    { action: "login", email: "a@x.test", password: owner.password },
+    db,
+  );
+  assert.equal(named.directory[0].full_name, "Bea");
+  assert.equal(named.directory[0].email, "");
+});
+
 test("login rejects an unknown email and a wrong password", function () {
   const db = memoryDb();
   const registered = register(db, "a@x.test");
