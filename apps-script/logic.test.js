@@ -132,6 +132,17 @@ test("a sheet number regains its country code plus", function () {
   assert.equal(context.sheetWhatsapp_(41791234567), "'+41791234567");
 });
 
+test("a leading equals sign is stored as text", function () {
+  assert.equal(context.sheetText_("=C2"), "'=C2");
+  assert.equal(context.sheetText_("Ada"), "'Ada");
+  assert.equal(context.sheetText_(""), "");
+  assert.equal(context.sheetText_("'+41"), "'+41");
+  assert.equal(context.sheetText_(4179), 4179);
+  assert.equal(context.plainText_("'=C2"), "=C2");
+  assert.equal(context.plainText_("Ada"), "Ada");
+  assert.equal(context.plainText_(4179), 4179);
+});
+
 test("register requires a WhatsApp number", function () {
   const db = memoryDb();
   const result = context.handleAction(
