@@ -374,6 +374,7 @@ function sessionView_(person, people) {
         return {
           member_code: other.member_code,
           full_name: other.full_name || "",
+          email: other.full_name ? "" : normalizeEmail_(other.email),
           share_with: other.share_with || [],
         };
       }),
