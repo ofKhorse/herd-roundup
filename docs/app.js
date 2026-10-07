@@ -1169,6 +1169,7 @@ function loadInfo() {
       }
       frame.addEventListener("load", function () {
         bindInfoLinks_(frame);
+        fitInfoFrame_(frame);
       });
       frame.srcdoc = openableInfoHtml_(html);
       bindInfoLinks_(frame);
@@ -1181,6 +1182,58 @@ function loadInfo() {
 }
 
 loadInfo();
+
+function fitInfoFrame_(frame) {
+  var doc = frame.contentDocument;
+  var root = doc && doc.documentElement;
+  if (!root) {
+    return;
+  }
+  frame.style.height = root.scrollHeight + "px";
+  var box = frame.parentNode;
+  box.style.overflow = "hidden";
+  void box.offsetHeight;
+  box.style.overflow = "auto";
+  if (root.dataset.infoScrollBound === "yes") {
+    return;
+  }
+  root.dataset.infoScrollBound = "yes";
+  var refit = function () {
+    frame.style.height = root.scrollHeight + "px";
+  };
+  var images = doc.images;
+  for (var i = 0; i < images.length; i++) {
+    if (!images[i].complete) {
+      images[i].addEventListener("load", refit);
+    }
+  }
+  doc.addEventListener(
+    "wheel",
+    function (event) {
+      if (event.ctrlKey || event.metaKey) {
+        return;
+      }
+      var max = box.scrollHeight - box.clientHeight;
+      if (max <= 0) {
+        return;
+      }
+      var atTop = box.scrollTop <= 0 && event.deltaY < 0;
+      var atBottom = box.scrollTop >= max && event.deltaY > 0;
+      if (atTop || atBottom) {
+        return;
+      }
+      var step = event.deltaY;
+      if (event.deltaMode === 1) {
+        step *= 16;
+      } else if (event.deltaMode === 2) {
+        step *= box.clientHeight;
+      }
+      box.scrollTop += step;
+      event.preventDefault();
+    },
+    { passive: false },
+  );
+}
 
 function bindInfoLinks_(frame) {
   var doc;
@@ -1252,7 +1305,7 @@ function linkBareInfoUrls_(html) {
 function openableInfoHtml_(html) {
   var styled = linkBareInfoUrls_(html).replace(
     "</head>",
-    "<style>body{padding:16px !important;max-width:none !important}a[href]{color:#1f3d32 !important;text-decoration:underline !important;cursor:pointer}</style></head>",
+    "<style>html,body{height:auto !important;overflow:visible !important}body{padding:16px !important;max-width:none !important}a[href]{color:#1f3d32 !important;text-decoration:underline !important;cursor:pointer}</style></head>",
   );
   return styled.replace(/<a\b([^>]*)>/gi, function (tag, attrs) {
     var hrefMatch = attrs.match(/href="([^"]*)"/i);
