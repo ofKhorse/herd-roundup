@@ -852,45 +852,46 @@ function callServer(body, options) {
     var cancelBtn = document.querySelector("#busy-cancel");
     var countdown = document.querySelector("#busy-countdown");
     var message = options.pending || "Working…";
-    var detail = "Waiting for an answer.";
+    var detail = "";
+    var crowd = "A lot of people are using the app right now.";
     if (cancel) {
-      message = "Cancelling.";
-      detail =
-        seconds > 0
-          ? "This try finishes in " + seconds + "s."
-          : "Waiting for this try to finish.";
+      message = "Stopping after this try.";
+      detail = seconds > 0 ? seconds + "s left." : "Still waiting. " + crowd;
       cancelBtn.disabled = true;
     } else if (attempt >= RETRY_LIMIT) {
-      message = "Currently busy. Retrying.";
+      message = "The sheet is busy.";
       detail =
         seconds > 0
           ? "Last try. " + seconds + "s left."
-          : "Last try. Waiting for an answer.";
+          : "Last try. Still waiting. " + crowd;
       cancelBtn.disabled = false;
-    } else if (attempt > 1 || seconds === 0) {
-      message = "Currently busy. Retrying.";
+    } else if (attempt > 1) {
+      message = "The sheet is busy.";
       detail =
         seconds > 0
-          ? "Next try in " +
+          ? "Trying again. " +
+            attempt +
+            " of " +
+            RETRY_LIMIT +
+            ". " +
             seconds +
-            "s. Try " +
+            "s left."
+          : "Still waiting. Try " +
             attempt +
             " of " +
             RETRY_LIMIT +
-            "."
-          : "Waiting for an answer. Try " +
-            attempt +
-            " of " +
-            RETRY_LIMIT +
-            ".";
+            ". " +
+            crowd;
+      cancelBtn.disabled = false;
+    } else if (seconds === 0) {
+      detail = "Still waiting. " + crowd;
       cancelBtn.disabled = false;
     } else {
-      detail = "Next try in " + seconds + "s.";
       cancelBtn.disabled = false;
     }
     document.querySelector("#busy-message").textContent = message;
     countdown.textContent = detail;
-    countdown.hidden = false;
+    countdown.hidden = detail === "";
     cancelBtn.hidden = false;
   }
 
