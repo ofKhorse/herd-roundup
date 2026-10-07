@@ -88,6 +88,20 @@ function sheetWhatsapp_(value) {
   return number;
 }
 
+function sheetText_(value) {
+  if (typeof value !== "string" || value === "" || value.charAt(0) === "'") {
+    return value;
+  }
+  return "'" + value;
+}
+
+function plainText_(value) {
+  if (typeof value !== "string" || value.charAt(0) !== "'") {
+    return value;
+  }
+  return value.slice(1);
+}
+
 function isWhatsapp_(value) {
   return whatsappError_(value) === "";
 }

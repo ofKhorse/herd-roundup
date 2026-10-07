@@ -80,8 +80,8 @@ function readPeople_(sheet) {
     var blank = true;
     var person = {};
     for (var column = 0; column < headers.length; column++) {
-      person[headers[column]] = values[row][column];
-      if (values[row][column] !== "") {
+      person[headers[column]] = plainText_(values[row][column]);
+      if (person[headers[column]] !== "") {
         blank = false;
       }
     }
@@ -98,7 +98,7 @@ function appendPerson_(sheet, person) {
     headers.map(function (header) {
       return person[header] === undefined || person[header] === null
         ? ""
-        : person[header];
+        : sheetText_(person[header]);
     }),
   );
 }
@@ -108,13 +108,13 @@ function updatePersonRow_(sheet, memberCode, fields) {
   var codeColumn = headers.indexOf("member_code");
   var values = sheet.getDataRange().getValues();
   for (var row = 1; row < values.length; row++) {
-    if (String(values[row][codeColumn]) !== String(memberCode)) {
+    if (String(plainText_(values[row][codeColumn])) !== String(memberCode)) {
       continue;
     }
     Object.keys(fields).forEach(function (key) {
       var column = headers.indexOf(key);
       if (column !== -1) {
-        sheet.getRange(row + 1, column + 1).setValue(fields[key]);
+        sheet.getRange(row + 1, column + 1).setValue(sheetText_(fields[key]));
       }
     });
     return;
