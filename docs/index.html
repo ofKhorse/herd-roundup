@@ -254,12 +254,46 @@
                   quickly as I kan.</span
                 >
               </label>
-              <div id="ticket-name-row" hidden>
+              <div id="ticket-fields" hidden>
                 <label>
                   Name
                   <input name="ticket_name" />
                 </label>
                 <p class="field-error" data-field="ticket_name" hidden></p>
+                <label>
+                  Email
+                  <input name="ticket_email" type="email" />
+                </label>
+                <p class="field-error" data-field="ticket_email" hidden></p>
+                <label>
+                  Date of birth
+                  <input name="ticket_birth" type="date" />
+                </label>
+                <p class="field-error" data-field="ticket_birth" hidden></p>
+                <label>
+                  Gender
+                  <select name="ticket_gender">
+                    <option value="">Choose one</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="other">Other</option>
+                  </select>
+                </label>
+                <p class="field-error" data-field="ticket_gender" hidden></p>
+                <label>
+                  Nationality
+                  <input name="ticket_nationality" />
+                </label>
+                <p
+                  class="field-error"
+                  data-field="ticket_nationality"
+                  hidden
+                ></p>
+                <label>
+                  Residency
+                  <input name="ticket_residency" />
+                </label>
+                <p class="field-error" data-field="ticket_residency" hidden></p>
               </div>
             </div>
           </div>
@@ -319,6 +353,11 @@
                   <th>At sale</th>
                   <th>Potential Kaptain</th>
                   <th>Ticket name</th>
+                  <th>Ticket email</th>
+                  <th>Date of birth</th>
+                  <th>Gender</th>
+                  <th>Nationality</th>
+                  <th>Residency</th>
                   <th>Bought</th>
                   <th>Tent</th>
                   <th>Stable mates</th>
@@ -356,17 +395,24 @@
               Copy phone numbers
             </button>
           </div>
-          <table>
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Kode</th>
-                <th>WhatsApp</th>
-                <th>Ticket name</th>
-              </tr>
-            </thead>
-            <tbody id="ticket-rows"></tbody>
-          </table>
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Kode</th>
+                  <th>WhatsApp</th>
+                  <th>Ticket name</th>
+                  <th>Email</th>
+                  <th>Date of birth</th>
+                  <th>Gender</th>
+                  <th>Nationality</th>
+                  <th>Residency</th>
+                </tr>
+              </thead>
+              <tbody id="ticket-rows"></tbody>
+            </table>
+          </div>
         </div>
         <div class="card">
           <div class="card-heading">

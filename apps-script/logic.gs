@@ -64,6 +64,11 @@ function emptyPerson_(email, password, memberCode, whatsapp) {
     kaptain: "",
     needs_ticket: "",
     ticket_name: "",
+    ticket_email: "",
+    ticket_birth: "",
+    ticket_gender: "",
+    ticket_nationality: "",
+    ticket_residency: "",
   };
 }
 
@@ -284,25 +289,10 @@ function savePerson_(body, db, deps) {
       : body.sale_available,
   );
   var kaptain = saleAvailable === "yes" && body.kaptain === "yes" ? "yes" : "";
-  var needsTicket = "";
-  var ticketName = "";
-  if (saleAvailable === "no") {
-    needsTicket =
-      (body.needs_ticket === undefined
-        ? person.needs_ticket
-        : body.needs_ticket) === "yes"
-        ? "yes"
-        : "";
-    if (needsTicket === "yes") {
-      ticketName = String(
-        body.ticket_name === undefined
-          ? person.ticket_name || ""
-          : body.ticket_name || "",
-      ).trim();
-      if (!ticketName) {
-        return { ok: false, error: "Enter the name.", field: "ticket_name" };
-      }
-    }
+  var ticket =
+    saleAvailable === "no" ? ticketAnswer_(body, person) : blankTicket_();
+  if (ticket.error) {
+    return ticket;
   }
   db.updatePerson(person.member_code, {
     full_name:
@@ -318,8 +308,13 @@ function savePerson_(body, db, deps) {
     whatsapp: whatsapp,
     sale_available: saleAvailable,
     kaptain: kaptain,
-    needs_ticket: needsTicket,
-    ticket_name: ticketName,
+    needs_ticket: ticket.needs_ticket,
+    ticket_name: ticket.ticket_name,
+    ticket_email: ticket.ticket_email,
+    ticket_birth: ticket.ticket_birth,
+    ticket_gender: ticket.ticket_gender,
+    ticket_nationality: ticket.ticket_nationality,
+    ticket_residency: ticket.ticket_residency,
   });
   var updatedPeople = db.listPeople();
   return sessionView_(
@@ -454,6 +449,104 @@ function saleChoice_(value) {
   return value === "yes" || value === "no" ? value : "";
 }
 
+function blankTicket_() {
+  return {
+    needs_ticket: "",
+    ticket_name: "",
+    ticket_email: "",
+    ticket_birth: "",
+    ticket_gender: "",
+    ticket_nationality: "",
+    ticket_residency: "",
+  };
+}
+
+function ticketText_(body, person, key) {
+  var value = body[key] === undefined ? person[key] : body[key];
+  return String(value || "").trim();
+}
+
+function ticketGender_(value) {
+  return value === "male" || value === "female" || value === "other"
+    ? value
+    : "";
+}
+
+function isBirthDate_(value) {
+  var match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (!match) {
+    return false;
+  }
+  var year = Number(match[1]);
+  var month = Number(match[2]);
+  var day = Number(match[3]);
+  var date = new Date(Date.UTC(year, month - 1, day));
+  return (
+    date.getUTCFullYear() === year &&
+    date.getUTCMonth() === month - 1 &&
+    date.getUTCDate() === day
+  );
+}
+
+function ticketAnswer_(body, person) {
+  var needs =
+    (body.needs_ticket === undefined
+      ? person.needs_ticket
+      : body.needs_ticket) === "yes";
+  if (!needs) {
+    return blankTicket_();
+  }
+  var name = ticketText_(body, person, "ticket_name");
+  if (!name) {
+    return { ok: false, error: "Enter the name.", field: "ticket_name" };
+  }
+  var email = normalizeEmail_(ticketText_(body, person, "ticket_email"));
+  if (!isEmail_(email)) {
+    return { ok: false, error: "Enter an email.", field: "ticket_email" };
+  }
+  var birth = ticketText_(body, person, "ticket_birth");
+  if (!isBirthDate_(birth)) {
+    return {
+      ok: false,
+      error: "Enter a date of birth.",
+      field: "ticket_birth",
+    };
+  }
+  var gender = ticketGender_(ticketText_(body, person, "ticket_gender"));
+  if (!gender) {
+    return {
+      ok: false,
+      error: "Choose male, female, or other.",
+      field: "ticket_gender",
+    };
+  }
+  var nationality = ticketText_(body, person, "ticket_nationality");
+  if (!nationality) {
+    return {
+      ok: false,
+      error: "Enter a nationality.",
+      field: "ticket_nationality",
+    };
+  }
+  var residency = ticketText_(body, person, "ticket_residency");
+  if (!residency) {
+    return {
+      ok: false,
+      error: "Enter a residency.",
+      field: "ticket_residency",
+    };
+  }
+  return {
+    needs_ticket: "yes",
+    ticket_name: name,
+    ticket_email: email,
+    ticket_birth: birth,
+    ticket_gender: gender,
+    ticket_nationality: nationality,
+    ticket_residency: residency,
+  };
+}
+
 function preferenceError_() {
   return "Choose 4, 5, or 6 people, or I arrange myself.";
 }
@@ -493,6 +586,11 @@ function paymentRows_(people) {
       kaptain: other.kaptain || "",
       needs_ticket: other.needs_ticket === "yes" ? "yes" : "",
       ticket_name: other.ticket_name || "",
+      ticket_email: normalizeEmail_(other.ticket_email),
+      ticket_birth: other.ticket_birth || "",
+      ticket_gender: ticketGender_(other.ticket_gender),
+      ticket_nationality: other.ticket_nationality || "",
+      ticket_residency: other.ticket_residency || "",
       purchased: other.purchased || "",
       purchased_size: other.purchased_size || "",
       share_with: (other.share_with || []).slice(),
@@ -523,6 +621,11 @@ function publicPerson_(person) {
     kaptain: person.kaptain || "",
     needs_ticket: person.needs_ticket === "yes" ? "yes" : "",
     ticket_name: person.ticket_name || "",
+    ticket_email: normalizeEmail_(person.ticket_email),
+    ticket_birth: person.ticket_birth || "",
+    ticket_gender: ticketGender_(person.ticket_gender),
+    ticket_nationality: person.ticket_nationality || "",
+    ticket_residency: person.ticket_residency || "",
     fee_owed: feeOwed_(person.stay || ""),
   };
 }

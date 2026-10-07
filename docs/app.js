@@ -3,6 +3,7 @@ var state = {
   directory: [],
   companions: [],
   memberCode: "",
+  email: "",
   admin: false,
   kaptains: [],
   tickets: [],
@@ -98,14 +99,28 @@ document
 document
   .querySelector("[name=needs_ticket]")
   .addEventListener("change", function () {
-    clearFieldError("ticket_name");
-    syncTicketName();
+    clearTicketErrors();
+    syncTicketForm();
   });
-document
-  .querySelector("[name=ticket_name]")
-  .addEventListener("input", function () {
-    clearFieldError("ticket_name");
-  });
+[
+  "ticket_name",
+  "ticket_email",
+  "ticket_nationality",
+  "ticket_residency",
+].forEach(function (name) {
+  document
+    .querySelector("[name=" + name + "]")
+    .addEventListener("input", function () {
+      clearFieldError(name);
+    });
+});
+["ticket_birth", "ticket_gender"].forEach(function (name) {
+  document
+    .querySelector("[name=" + name + "]")
+    .addEventListener("change", function () {
+      clearFieldError(name);
+    });
+});
 
 var companionSearch = document.querySelector("#companion-search");
 var matchesOpen = false;
@@ -257,15 +272,11 @@ function onSave(event) {
         ? data.get("sale_available")
         : "",
     kaptain: data.get("kaptain") === "yes" ? "yes" : "",
-    needs_ticket:
-      data.get("sale_available") === "no" && data.get("needs_ticket")
-        ? "yes"
-        : "",
-    ticket_name:
-      data.get("sale_available") === "no" && data.get("needs_ticket")
-        ? String(data.get("ticket_name") || "").trim()
-        : "",
   };
+  var ticket = ticketPayload(data);
+  Object.keys(ticket).forEach(function (key) {
+    body[key] = ticket[key];
+  });
   if (credentials.token) {
     body.token = credentials.token;
   } else {
@@ -305,6 +316,7 @@ function showSession(result) {
   state.directory = result.directory;
   state.companions = result.person.share_with.slice();
   state.memberCode = result.person.member_code;
+  state.email = result.person.email || "";
   showHello(result.person);
   document.querySelector("#member-code").textContent =
     result.person.member_code;
@@ -338,6 +350,11 @@ function showSession(result) {
   form.kaptain.value = result.person.kaptain || "";
   form.needs_ticket.checked = result.person.needs_ticket === "yes";
   form.ticket_name.value = result.person.ticket_name || "";
+  form.ticket_email.value = result.person.ticket_email || "";
+  form.ticket_birth.value = result.person.ticket_birth || "";
+  form.ticket_gender.value = result.person.ticket_gender || "";
+  form.ticket_nationality.value = result.person.ticket_nationality || "";
+  form.ticket_residency.value = result.person.ticket_residency || "";
   syncSale();
   renderCompanions();
   renderMatches();
@@ -357,21 +374,61 @@ function syncSale() {
   if (!asking) {
     document.querySelector("[name=needs_ticket]").checked = false;
   }
-  syncTicketName();
+  syncTicketForm();
 }
 
-function syncTicketName() {
+function syncTicketForm() {
   var available = document.querySelector("[name=sale_available]").value;
   var needsTicket = document.querySelector("[name=needs_ticket]").checked;
   var show = available === "no" && needsTicket;
-  document.querySelector("#ticket-name-row").hidden = !show;
+  document.querySelector("#ticket-fields").hidden = !show;
   if (!show) {
     return;
   }
-  var name = document.querySelector("[name=ticket_name]");
-  if (!name.value.trim()) {
-    name.value = document.querySelector("[name=full_name]").value.trim();
+  var form = document.querySelector("#profile-form");
+  if (!form.ticket_name.value.trim()) {
+    form.ticket_name.value = form.full_name.value.trim();
   }
+  if (!form.ticket_email.value.trim()) {
+    form.ticket_email.value =
+      form.boomer_email.value.trim() || state.email || "";
+  }
+}
+
+function ticketPayload(data) {
+  var blank = {
+    needs_ticket: "",
+    ticket_name: "",
+    ticket_email: "",
+    ticket_birth: "",
+    ticket_gender: "",
+    ticket_nationality: "",
+    ticket_residency: "",
+  };
+  if (data.get("sale_available") !== "no" || !data.get("needs_ticket")) {
+    return blank;
+  }
+  blank.needs_ticket = "yes";
+  blank.ticket_name = String(data.get("ticket_name") || "").trim();
+  blank.ticket_email = String(data.get("ticket_email") || "").trim();
+  blank.ticket_birth = String(data.get("ticket_birth") || "").trim();
+  blank.ticket_gender = String(data.get("ticket_gender") || "").trim();
+  blank.ticket_nationality = String(
+    data.get("ticket_nationality") || "",
+  ).trim();
+  blank.ticket_residency = String(data.get("ticket_residency") || "").trim();
+  return blank;
+}
+
+function clearTicketErrors() {
+  [
+    "ticket_name",
+    "ticket_email",
+    "ticket_birth",
+    "ticket_gender",
+    "ticket_nationality",
+    "ticket_residency",
+  ].forEach(clearFieldError);
 }
 
 function syncStay() {
@@ -572,7 +629,7 @@ function renderMembers(result) {
   state.tickets = [];
   state.bought = [];
   renderPeopleRows("#kaptain-rows", [], 3);
-  renderPeopleRows("#ticket-rows", [], 4);
+  renderPeopleRows("#ticket-rows", [], 9);
   renderPeopleRows("#bought-rows", [], 4);
   state.admin = result.person.admin === "yes";
   if (!state.admin) {
@@ -595,7 +652,12 @@ function renderMembers(result) {
       ["Sleeping", memberStay(member.stay)],
       ["At sale", memberSale(member.sale_available)],
       ["Potential Kaptain", memberYes(member.kaptain)],
-      ["Ticket name", member.needs_ticket === "yes" ? member.ticket_name : ""],
+      ["Ticket name", ticketCell(member, member.ticket_name)],
+      ["Ticket email", ticketCell(member, member.ticket_email)],
+      ["Date of birth", ticketCell(member, member.ticket_birth)],
+      ["Gender", ticketCell(member, memberGender(member.ticket_gender))],
+      ["Nationality", ticketCell(member, member.ticket_nationality)],
+      ["Residency", ticketCell(member, member.ticket_residency)],
       ["Bought", memberYes(member.purchased)],
       ["Tent", memberTent(member.purchased_size)],
       ["Stable mates", memberMates(member.share_with)],
@@ -633,12 +695,17 @@ function renderMembers(result) {
   renderPeopleRows("#kaptain-rows", state.kaptains, 3, function (member) {
     return [member.full_name, member.member_code, member.whatsapp];
   });
-  renderPeopleRows("#ticket-rows", state.tickets, 4, function (member) {
+  renderPeopleRows("#ticket-rows", state.tickets, 9, function (member) {
     return [
       member.full_name,
       member.member_code,
       member.whatsapp,
       member.ticket_name,
+      member.ticket_email,
+      member.ticket_birth,
+      memberGender(member.ticket_gender),
+      member.ticket_nationality,
+      member.ticket_residency,
     ];
   });
   renderPeopleRows("#bought-rows", state.bought, 4, function (member) {
@@ -778,6 +845,14 @@ function memberSale(value) {
   return "";
 }
 
+function memberGender(value) {
+  return { male: "Male", female: "Female", other: "Other" }[value] || "";
+}
+
+function ticketCell(member, value) {
+  return member.needs_ticket === "yes" ? value || "" : "";
+}
+
 function memberMates(codes) {
   return (codes || [])
     .map(function (code) {
@@ -866,6 +941,7 @@ function clearSession() {
 function logout() {
   clearSession();
   state.memberCode = "";
+  state.email = "";
   state.admin = false;
   if (location.hash) {
     history.replaceState(null, "", location.pathname + location.search);
@@ -1499,12 +1575,41 @@ function profileProblems() {
       error: "Choose which tent or tipi you bought.",
     });
   }
-  if (
-    form.sale_available.value === "no" &&
-    form.needs_ticket.checked &&
-    !form.ticket_name.value.trim()
-  ) {
-    problems.push({ field: "ticket_name", error: "Enter the name." });
+  if (form.sale_available.value === "no" && form.needs_ticket.checked) {
+    if (!form.ticket_name.value.trim()) {
+      problems.push({ field: "ticket_name", error: "Enter the name." });
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.ticket_email.value.trim())) {
+      problems.push({ field: "ticket_email", error: "Enter an email." });
+    }
+    if (!form.ticket_birth.value) {
+      problems.push({
+        field: "ticket_birth",
+        error: "Enter a date of birth.",
+      });
+    }
+    if (
+      form.ticket_gender.value !== "male" &&
+      form.ticket_gender.value !== "female" &&
+      form.ticket_gender.value !== "other"
+    ) {
+      problems.push({
+        field: "ticket_gender",
+        error: "Choose male, female, or other.",
+      });
+    }
+    if (!form.ticket_nationality.value.trim()) {
+      problems.push({
+        field: "ticket_nationality",
+        error: "Enter a nationality.",
+      });
+    }
+    if (!form.ticket_residency.value.trim()) {
+      problems.push({
+        field: "ticket_residency",
+        error: "Enter a residency.",
+      });
+    }
   }
   if (!bought && boughtSize) {
     problems.push({

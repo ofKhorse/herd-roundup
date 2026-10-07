@@ -513,7 +513,7 @@ button.solid {
 #size-row,
 #kaptain-row,
 #ticket-row,
-#ticket-name-row {
+#ticket-fields {
   display: grid;
   gap: 0.5rem;
 }

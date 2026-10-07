@@ -342,19 +342,29 @@ test("save stores an ordered companion list and a tipi purchase", function () {
   assert.equal(again.person.boomer_email, "boomer@x.test");
 });
 
-test("save keeps a no for the sale and the ticket name", function () {
+test("save keeps a no for the sale and the ticket details", function () {
   const db = memoryDb();
   const owner = register(db, "a@x.test");
+  const ticket = {
+    sale_available: "no",
+    needs_ticket: "yes",
+    ticket_name: "  Ada Lovelace  ",
+    ticket_email: " Ada@Boom.test ",
+    ticket_birth: "1990-04-05",
+    ticket_gender: "female",
+    ticket_nationality: " Swiss ",
+    ticket_residency: " Portugal ",
+  };
   const saved = context.handleAction(
-    {
-      action: "save",
-      email: "a@x.test",
-      password: owner.password,
-      full_name: "Ada Lovelace",
-      sale_available: "no",
-      needs_ticket: "yes",
-      ticket_name: "  Ada Lovelace  ",
-    },
+    Object.assign(
+      {
+        action: "save",
+        email: "a@x.test",
+        password: owner.password,
+        full_name: "Ada Lovelace",
+      },
+      ticket,
+    ),
     db,
     {},
   );
@@ -363,6 +373,11 @@ test("save keeps a no for the sale and the ticket name", function () {
   assert.equal(saved.person.kaptain, "");
   assert.equal(saved.person.needs_ticket, "yes");
   assert.equal(saved.person.ticket_name, "Ada Lovelace");
+  assert.equal(saved.person.ticket_email, "ada@boom.test");
+  assert.equal(saved.person.ticket_birth, "1990-04-05");
+  assert.equal(saved.person.ticket_gender, "female");
+  assert.equal(saved.person.ticket_nationality, "Swiss");
+  assert.equal(saved.person.ticket_residency, "Portugal");
   const missing = context.handleAction(
     {
       action: "save",
@@ -379,6 +394,30 @@ test("save keeps a no for the sale and the ticket name", function () {
   assert.equal(missing.field, "ticket_name");
   assert.equal(missing.error, "Enter the name.");
   assert.equal(db.listPeople()[0].ticket_name, "Ada Lovelace");
+  const badEmail = context.handleAction(
+    Object.assign({}, ticket, {
+      action: "save",
+      email: "a@x.test",
+      password: owner.password,
+      ticket_email: "not-an-email",
+    }),
+    db,
+    {},
+  );
+  assert.equal(badEmail.ok, false);
+  assert.equal(badEmail.field, "ticket_email");
+  const badBirth = context.handleAction(
+    Object.assign({}, ticket, {
+      action: "save",
+      email: "a@x.test",
+      password: owner.password,
+      ticket_birth: "1990-02-31",
+    }),
+    db,
+    {},
+  );
+  assert.equal(badBirth.ok, false);
+  assert.equal(badBirth.field, "ticket_birth");
   const kept = context.handleAction(
     {
       action: "save",
@@ -392,16 +431,16 @@ test("save keeps a no for the sale and the ticket name", function () {
   assert.equal(kept.person.sale_available, "no");
   assert.equal(kept.person.needs_ticket, "yes");
   assert.equal(kept.person.ticket_name, "Ada Lovelace");
+  assert.equal(kept.person.ticket_email, "ada@boom.test");
+  assert.equal(kept.person.ticket_gender, "female");
   const cleared = context.handleAction(
-    {
+    Object.assign({}, ticket, {
       action: "save",
       email: "a@x.test",
       password: owner.password,
       sale_available: "yes",
       kaptain: "yes",
-      needs_ticket: "yes",
-      ticket_name: "Ada Lovelace",
-    },
+    }),
     db,
     {},
   );
@@ -409,6 +448,11 @@ test("save keeps a no for the sale and the ticket name", function () {
   assert.equal(cleared.person.kaptain, "yes");
   assert.equal(cleared.person.needs_ticket, "");
   assert.equal(cleared.person.ticket_name, "");
+  assert.equal(cleared.person.ticket_email, "");
+  assert.equal(cleared.person.ticket_birth, "");
+  assert.equal(cleared.person.ticket_gender, "");
+  assert.equal(cleared.person.ticket_nationality, "");
+  assert.equal(cleared.person.ticket_residency, "");
 });
 
 test("save rejects an invalid boomer email", function () {
@@ -611,6 +655,11 @@ test("admins receive every member row", function () {
   assert.equal(member.kaptain, "yes");
   assert.equal(member.needs_ticket, "");
   assert.equal(member.ticket_name, "");
+  assert.equal(member.ticket_email, "");
+  assert.equal(member.ticket_birth, "");
+  assert.equal(member.ticket_gender, "");
+  assert.equal(member.ticket_nationality, "");
+  assert.equal(member.ticket_residency, "");
   assert.equal(member.purchased, "yes");
   assert.equal(member.purchased_size, "star5");
   assert.deepEqual(member.share_with, ["KH-001"]);
