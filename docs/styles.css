@@ -225,6 +225,43 @@ button.solid {
   margin: 0;
 }
 
+#busy-countdown {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+#busy-cancel.solid {
+  justify-self: stretch;
+  width: 100%;
+  background: transparent;
+  color: #1c1915;
+  border: 1px solid #1c1915;
+}
+
+#busy-cancel.solid:disabled {
+  opacity: 0.55;
+}
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 1.25rem;
+  z-index: 30;
+  transform: translateX(-50%);
+  max-width: min(22rem, calc(100% - 2rem));
+  margin: 0;
+  padding: 0.75rem 1rem;
+  background: #1f3d32;
+  color: #f4efe6;
+  border-radius: 0.6rem;
+  text-align: center;
+  box-shadow: 0 0.4rem 1.2rem rgba(0, 0, 0, 0.25);
+}
+
+.toast.failed {
+  background: #8f1d1d;
+}
+
 #busy-save {
   display: grid;
   gap: 0.9rem;

@@ -13,6 +13,9 @@ var auth = document.querySelector("#auth");
 var profile = document.querySelector("#profile");
 
 document.querySelector("#login-form").addEventListener("submit", onLogin);
+document.querySelector("#busy-cancel").addEventListener("click", function () {
+  requestBusyCancel();
+});
 document.querySelector("#busy-ok").addEventListener(
   "click",
   function () {
@@ -134,6 +137,7 @@ function signIn(credentials, fromCookie, quiet) {
   callServer(body, {
     pending: "Signing in…",
     success: fromCookie || quiet ? "" : "Signed in.",
+    failed: "Sign-in failed.",
   }).then(function (result) {
     if (!result.ok) {
       if (fromCookie) {
@@ -173,6 +177,7 @@ function onRegister(event) {
     },
     {
       pending: "Registering…",
+      failed: "Registration failed.",
       success: function (result) {
         return {
           message: "Write this password down.",
@@ -202,6 +207,7 @@ function onReset(event) {
     {
       pending: "Sending a new password…",
       success: "A new password was emailed to you.",
+      failed: "Could not send a new password.",
     },
   );
 }
@@ -238,17 +244,19 @@ function onSave(event) {
     return;
   }
   clearFieldErrors();
-  callServer(body, { pending: "Saving…", success: "Saved." }).then(
-    function (result) {
-      if (!result.ok) {
-        if (result.field) {
-          showFieldErrors([{ field: result.field, error: result.error }]);
-        }
-        return;
+  callServer(body, {
+    pending: "Saving…",
+    success: "Saved.",
+    failed: "Saving failed.",
+  }).then(function (result) {
+    if (!result.ok) {
+      if (result.field) {
+        showFieldErrors([{ field: result.field, error: result.error }]);
       }
-      showSession(result);
-    },
-  );
+      return;
+    }
+    showSession(result);
+  });
 }
 
 function showSession(result) {
@@ -789,6 +797,28 @@ function logout() {
 }
 
 var serverBusy = false;
+var requestBusyCancel = function () {};
+var toastTimer = null;
+var RETRY_LIMIT = 5;
+var RETRY_SECONDS = 8;
+
+function retryableError(message) {
+  return (
+    message === "The sheet is busy. Wait a moment and try again." ||
+    message === "The script took too long. Wait a moment and try again."
+  );
+}
+
+function toast(message, failed) {
+  var el = document.querySelector("#toast");
+  el.textContent = message;
+  el.classList.toggle("failed", !!failed);
+  el.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function () {
+    el.hidden = true;
+  }, 4500);
+}
 
 function callServer(body, options) {
   if (serverBusy) {
@@ -796,43 +826,172 @@ function callServer(body, options) {
   }
   serverBusy = true;
   options = options || {};
-  showBusy(options.pending || "Working…");
-  return post(body)
-    .then(function (result) {
-      if (!result.ok) {
-        return finishBusy(result.error || "Something went wrong.").then(
-          function () {
-            return result;
-          },
-        );
+  var attempt = 1;
+  var cancel = false;
+  var seconds = RETRY_SECONDS;
+  var timer = null;
+
+  function stopTimer() {
+    if (timer) {
+      clearInterval(timer);
+      timer = null;
+    }
+  }
+
+  function renderWait() {
+    var cancelBtn = document.querySelector("#busy-cancel");
+    var countdown = document.querySelector("#busy-countdown");
+    var message = options.pending || "Working…";
+    var detail = "Waiting for an answer.";
+    if (cancel) {
+      message = "Cancelling.";
+      detail =
+        seconds > 0
+          ? "This try finishes in " + seconds + "s."
+          : "Waiting for this try to finish.";
+      cancelBtn.disabled = true;
+    } else if (attempt >= RETRY_LIMIT) {
+      message = "Currently busy. Retrying.";
+      detail =
+        seconds > 0
+          ? "Last try. " + seconds + "s left."
+          : "Last try. Waiting for an answer.";
+      cancelBtn.disabled = false;
+    } else if (attempt > 1 || seconds === 0) {
+      message = "Currently busy. Retrying.";
+      detail =
+        seconds > 0
+          ? "Next try in " +
+            seconds +
+            "s. Try " +
+            attempt +
+            " of " +
+            RETRY_LIMIT +
+            "."
+          : "Waiting for an answer. Try " +
+            attempt +
+            " of " +
+            RETRY_LIMIT +
+            ".";
+      cancelBtn.disabled = false;
+    } else {
+      detail = "Next try in " + seconds + "s.";
+      cancelBtn.disabled = false;
+    }
+    document.querySelector("#busy-message").textContent = message;
+    countdown.textContent = detail;
+    countdown.hidden = false;
+    cancelBtn.hidden = false;
+  }
+
+  function arm() {
+    seconds = RETRY_SECONDS;
+    stopTimer();
+    renderWait();
+    timer = setInterval(function () {
+      if (seconds > 0) {
+        seconds -= 1;
       }
-      if (!options.success) {
-        hideBusy();
-        return result;
-      }
-      var success = options.success;
-      if (typeof success === "function") {
-        success = success(result);
-      }
-      var extra = {};
-      if (success && typeof success === "object") {
-        extra = success;
-        success = success.message;
-      }
+      renderWait();
+    }, 1000);
+  }
+
+  requestBusyCancel = function () {
+    if (cancel) {
+      return;
+    }
+    cancel = true;
+    renderWait();
+  };
+
+  function succeed(result) {
+    stopTimer();
+    var success = options.success;
+    if (!success) {
+      hideBusy();
+      return Promise.resolve(result);
+    }
+    if (typeof success === "function") {
+      success = success(result);
+    }
+    var extra = {};
+    if (success && typeof success === "object") {
+      extra = success;
+      success = success.message;
+    }
+    if (extra.password) {
       return finishBusy(success, extra).then(function () {
         return result;
       });
-    })
-    .catch(function (error) {
+    }
+    hideBusy();
+    if (success) {
+      toast(success, false);
+    }
+    return Promise.resolve(result);
+  }
+
+  function giveUpBusy() {
+    stopTimer();
+    hideBusy();
+    toast(options.failed || "Saving failed.", true);
+    return Promise.resolve({
+      ok: false,
+      error: options.failed || "Saving failed.",
+      cancelled: cancel,
+    });
+  }
+
+  function giveUpError(result) {
+    stopTimer();
+    return finishBusy(result.error || "Something went wrong.").then(
+      function () {
+        return result;
+      },
+    );
+  }
+
+  function once() {
+    arm();
+    return post(body).then(function (result) {
+      if (result.ok) {
+        return succeed(result);
+      }
+      if (retryableError(result.error) && !cancel && attempt < RETRY_LIMIT) {
+        attempt += 1;
+        return once();
+      }
+      if (retryableError(result.error)) {
+        return giveUpBusy();
+      }
+      return giveUpError(result);
+    });
+  }
+
+  function run() {
+    return once().catch(function (error) {
       var message = error.message || "The request failed.";
+      if (retryableError(message) && !cancel && attempt < RETRY_LIMIT) {
+        attempt += 1;
+        return run();
+      }
+      if (retryableError(message)) {
+        return giveUpBusy();
+      }
+      stopTimer();
       return finishBusy(message).then(function () {
         return { ok: false, error: message };
       });
-    })
-    .then(function (result) {
-      serverBusy = false;
-      return result;
     });
+  }
+
+  showBusy(options.pending || "Working…");
+  return run().then(function (result) {
+    stopTimer();
+    requestBusyCancel = function () {};
+    serverBusy = false;
+    return result;
+  });
 }
 
 function post(body) {
@@ -863,6 +1022,12 @@ function showBusy(message) {
   document.querySelector("main").inert = true;
   document.querySelector("#busy-spinner").hidden = false;
   document.querySelector("#busy-ok").hidden = true;
+  document.querySelector("#busy-cancel").hidden = true;
+  document.querySelector("#busy-cancel").disabled = false;
+  document.querySelector("#busy-countdown").hidden = true;
+  document.querySelector("#busy-countdown").textContent = "";
+  document.querySelector("#toast").hidden = true;
+  clearTimeout(toastTimer);
   document.querySelector("#busy-message").textContent = message;
   clearBusySecret();
   var busy = document.querySelector("#busy");
@@ -888,6 +1053,8 @@ function clearBusySecret() {
 function finishBusy(message, extra) {
   extra = extra || {};
   document.querySelector("#busy-spinner").hidden = true;
+  document.querySelector("#busy-cancel").hidden = true;
+  document.querySelector("#busy-countdown").hidden = true;
   document.querySelector("#busy-message").textContent = message;
   var form = document.querySelector("#busy-save");
   var warning = document.querySelector("#busy-warning");
