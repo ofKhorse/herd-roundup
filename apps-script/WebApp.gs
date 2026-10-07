@@ -31,7 +31,11 @@ function doPost(e) {
   } catch (error) {
     return jsonOutput_({ ok: false, error: error.message });
   } finally {
-    lock.releaseLock();
+    try {
+      SpreadsheetApp.flush();
+    } finally {
+      lock.releaseLock();
+    }
   }
 }
 
