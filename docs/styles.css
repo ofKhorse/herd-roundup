@@ -51,6 +51,15 @@ h1 {
   font-size: 2.4rem;
 }
 
+h1:has(+ .hello:not([hidden])) {
+  margin-bottom: 0.35rem;
+}
+
+.hello {
+  margin: 0 0 1.25rem;
+  font-size: 1.2rem;
+}
+
 h2 {
   margin: 0;
   font-size: 1.35rem;

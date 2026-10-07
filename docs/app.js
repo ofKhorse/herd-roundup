@@ -276,6 +276,7 @@ function showSession(result) {
   state.directory = result.directory;
   state.companions = result.person.share_with.slice();
   state.memberCode = result.person.member_code;
+  showHello(result.person);
   document.querySelector("#member-code").textContent =
     result.person.member_code;
   document.querySelector("#fee").textContent =
@@ -798,7 +799,17 @@ function logout() {
   document.querySelector("#admin").hidden = true;
   document.querySelector("#nav").hidden = true;
   auth.hidden = false;
+  var hello = document.querySelector("#hello");
+  hello.textContent = "";
+  hello.hidden = true;
   say("Logged out.");
+}
+
+function showHello(person) {
+  var name = String(person.full_name || "").trim();
+  var hello = document.querySelector("#hello");
+  hello.textContent = "Hi " + (name || person.email);
+  hello.hidden = false;
 }
 
 function retryableError(message) {
