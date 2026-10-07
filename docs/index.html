@@ -244,6 +244,22 @@
                 from the ofKhorse money pot.
               </p>
             </div>
+            <div id="ticket-row" hidden>
+              <label class="row ticket-ask">
+                <input name="needs_ticket" type="checkbox" />
+                <span
+                  >I need someone to buy a ticket for me. I konfirm that I will
+                  pay them back as quickly as I kan.</span
+                >
+              </label>
+              <div id="ticket-name-row" hidden>
+                <label>
+                  Name
+                  <input name="ticket_name" />
+                </label>
+                <p class="field-error" data-field="ticket_name" hidden></p>
+              </div>
+            </div>
           </div>
 
           <h2 class="section-label">During sale information</h2>
@@ -300,6 +316,7 @@
                   <th>Sleeping</th>
                   <th>At sale</th>
                   <th>Potential Kaptain</th>
+                  <th>Ticket name</th>
                   <th>Bought</th>
                   <th>Tent</th>
                   <th>Stable mates</th>
@@ -328,6 +345,25 @@
               </tr>
             </thead>
             <tbody id="kaptain-rows"></tbody>
+          </table>
+        </div>
+        <div class="card">
+          <div class="card-heading">
+            <h2>Needs a ticket</h2>
+            <button id="copy-ticket-phones" class="solid" type="button">
+              Copy phone numbers
+            </button>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Kode</th>
+                <th>WhatsApp</th>
+                <th>Ticket name</th>
+              </tr>
+            </thead>
+            <tbody id="ticket-rows"></tbody>
           </table>
         </div>
         <div class="card">

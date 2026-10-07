@@ -5,6 +5,7 @@ var state = {
   memberCode: "",
   admin: false,
   kaptains: [],
+  tickets: [],
   bought: [],
 };
 
@@ -62,6 +63,11 @@ document
     copyPhones(state.kaptains, event.currentTarget);
   });
 document
+  .querySelector("#copy-ticket-phones")
+  .addEventListener("click", function (event) {
+    copyPhones(state.tickets, event.currentTarget);
+  });
+document
   .querySelector("#copy-bought-phones")
   .addEventListener("click", function (event) {
     copyPhones(state.bought, event.currentTarget);
@@ -88,7 +94,18 @@ document
   });
 document
   .querySelector("[name=sale_available]")
-  .addEventListener("change", syncKaptain);
+  .addEventListener("change", syncSale);
+document
+  .querySelector("[name=needs_ticket]")
+  .addEventListener("change", function () {
+    clearFieldError("ticket_name");
+    syncTicketName();
+  });
+document
+  .querySelector("[name=ticket_name]")
+  .addEventListener("input", function () {
+    clearFieldError("ticket_name");
+  });
 
 var companionSearch = document.querySelector("#companion-search");
 var matchesOpen = false;
@@ -234,8 +251,20 @@ function onSave(event) {
     purchased_size: data.get("purchased_size"),
     whatsapp: data.get("whatsapp"),
     share_with: state.companions,
-    sale_available: data.get("sale_available") === "yes" ? "yes" : "",
+    sale_available:
+      data.get("sale_available") === "yes" ||
+      data.get("sale_available") === "no"
+        ? data.get("sale_available")
+        : "",
     kaptain: data.get("kaptain") === "yes" ? "yes" : "",
+    needs_ticket:
+      data.get("sale_available") === "no" && data.get("needs_ticket")
+        ? "yes"
+        : "",
+    ticket_name:
+      data.get("sale_available") === "no" && data.get("needs_ticket")
+        ? String(data.get("ticket_name") || "").trim()
+        : "",
   };
   if (credentials.token) {
     body.token = credentials.token;
@@ -307,7 +336,9 @@ function showSession(result) {
   form.purchased_size.value = result.person.purchased_size;
   form.sale_available.value = result.person.sale_available || "";
   form.kaptain.value = result.person.kaptain || "";
-  syncKaptain();
+  form.needs_ticket.checked = result.person.needs_ticket === "yes";
+  form.ticket_name.value = result.person.ticket_name || "";
+  syncSale();
   renderCompanions();
   renderMatches();
   renderPickedBy();
@@ -315,11 +346,31 @@ function showSession(result) {
   showView();
 }
 
-function syncKaptain() {
+function syncSale() {
   var available = document.querySelector("[name=sale_available]").value;
   document.querySelector("#kaptain-row").hidden = available !== "yes";
   if (available !== "yes") {
     document.querySelector("[name=kaptain]").value = "";
+  }
+  var asking = available === "no";
+  document.querySelector("#ticket-row").hidden = !asking;
+  if (!asking) {
+    document.querySelector("[name=needs_ticket]").checked = false;
+  }
+  syncTicketName();
+}
+
+function syncTicketName() {
+  var available = document.querySelector("[name=sale_available]").value;
+  var needsTicket = document.querySelector("[name=needs_ticket]").checked;
+  var show = available === "no" && needsTicket;
+  document.querySelector("#ticket-name-row").hidden = !show;
+  if (!show) {
+    return;
+  }
+  var name = document.querySelector("[name=ticket_name]");
+  if (!name.value.trim()) {
+    name.value = document.querySelector("[name=full_name]").value.trim();
   }
 }
 
@@ -518,8 +569,10 @@ function renderMembers(result) {
   var body = document.querySelector("#member-rows");
   body.innerHTML = "";
   state.kaptains = [];
+  state.tickets = [];
   state.bought = [];
   renderPeopleRows("#kaptain-rows", [], 3);
+  renderPeopleRows("#ticket-rows", [], 4);
   renderPeopleRows("#bought-rows", [], 4);
   state.admin = result.person.admin === "yes";
   if (!state.admin) {
@@ -540,8 +593,9 @@ function renderMembers(result) {
       ["WhatsApp", member.whatsapp],
       ["Email you used registering for boom", member.boomer_email],
       ["Sleeping", memberStay(member.stay)],
-      ["At sale", memberYes(member.sale_available)],
+      ["At sale", memberSale(member.sale_available)],
       ["Potential Kaptain", memberYes(member.kaptain)],
+      ["Ticket name", member.needs_ticket === "yes" ? member.ticket_name : ""],
       ["Bought", memberYes(member.purchased)],
       ["Tent", memberTent(member.purchased_size)],
       ["Stable mates", memberMates(member.share_with)],
@@ -570,11 +624,22 @@ function renderMembers(result) {
   state.kaptains = people.filter(function (member) {
     return member.kaptain === "yes";
   });
+  state.tickets = people.filter(function (member) {
+    return member.needs_ticket === "yes";
+  });
   state.bought = people.filter(function (member) {
     return member.purchased === "yes";
   });
   renderPeopleRows("#kaptain-rows", state.kaptains, 3, function (member) {
     return [member.full_name, member.member_code, member.whatsapp];
+  });
+  renderPeopleRows("#ticket-rows", state.tickets, 4, function (member) {
+    return [
+      member.full_name,
+      member.member_code,
+      member.whatsapp,
+      member.ticket_name,
+    ];
   });
   renderPeopleRows("#bought-rows", state.bought, 4, function (member) {
     return [
@@ -701,6 +766,16 @@ function memberTent(size) {
 
 function memberYes(value) {
   return value === "yes" ? "Yes" : "";
+}
+
+function memberSale(value) {
+  if (value === "yes") {
+    return "Yes";
+  }
+  if (value === "no") {
+    return "No";
+  }
+  return "";
 }
 
 function memberMates(codes) {
@@ -1423,6 +1498,13 @@ function profileProblems() {
       field: "purchased_size",
       error: "Choose which tent or tipi you bought.",
     });
+  }
+  if (
+    form.sale_available.value === "no" &&
+    form.needs_ticket.checked &&
+    !form.ticket_name.value.trim()
+  ) {
+    problems.push({ field: "ticket_name", error: "Enter the name." });
   }
   if (!bought && boughtSize) {
     problems.push({

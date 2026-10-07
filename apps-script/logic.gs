@@ -62,6 +62,8 @@ function emptyPerson_(email, password, memberCode, whatsapp) {
     whatsapp: whatsapp || "",
     sale_available: "",
     kaptain: "",
+    needs_ticket: "",
+    ticket_name: "",
   };
 }
 
@@ -276,13 +278,32 @@ function savePerson_(body, db, deps) {
       field: "boomer_email",
     };
   }
-  var saleAvailable =
+  var saleAvailable = saleChoice_(
     body.sale_available === undefined
-      ? person.sale_available || ""
-      : body.sale_available === "yes"
+      ? person.sale_available
+      : body.sale_available,
+  );
+  var kaptain = saleAvailable === "yes" && body.kaptain === "yes" ? "yes" : "";
+  var needsTicket = "";
+  var ticketName = "";
+  if (saleAvailable === "no") {
+    needsTicket =
+      (body.needs_ticket === undefined
+        ? person.needs_ticket
+        : body.needs_ticket) === "yes"
         ? "yes"
         : "";
-  var kaptain = saleAvailable === "yes" && body.kaptain === "yes" ? "yes" : "";
+    if (needsTicket === "yes") {
+      ticketName = String(
+        body.ticket_name === undefined
+          ? person.ticket_name || ""
+          : body.ticket_name || "",
+      ).trim();
+      if (!ticketName) {
+        return { ok: false, error: "Enter the name.", field: "ticket_name" };
+      }
+    }
+  }
   db.updatePerson(person.member_code, {
     full_name:
       body.full_name === undefined
@@ -297,6 +318,8 @@ function savePerson_(body, db, deps) {
     whatsapp: whatsapp,
     sale_available: saleAvailable,
     kaptain: kaptain,
+    needs_ticket: needsTicket,
+    ticket_name: ticketName,
   });
   var updatedPeople = db.listPeople();
   return sessionView_(
@@ -427,6 +450,10 @@ function isPurchase_(size) {
   );
 }
 
+function saleChoice_(value) {
+  return value === "yes" || value === "no" ? value : "";
+}
+
 function preferenceError_() {
   return "Choose 4, 5, or 6 people, or I arrange myself.";
 }
@@ -462,8 +489,10 @@ function paymentRows_(people) {
       whatsapp: restoreWhatsapp_(other.whatsapp),
       boomer_email: other.boomer_email || "",
       stay: other.stay || "",
-      sale_available: other.sale_available || "",
+      sale_available: saleChoice_(other.sale_available),
       kaptain: other.kaptain || "",
+      needs_ticket: other.needs_ticket === "yes" ? "yes" : "",
+      ticket_name: other.ticket_name || "",
       purchased: other.purchased || "",
       purchased_size: other.purchased_size || "",
       share_with: (other.share_with || []).slice(),
@@ -490,8 +519,10 @@ function publicPerson_(person) {
     amount: person.amount || "",
     payment_ref: person.payment_ref || "",
     whatsapp: restoreWhatsapp_(person.whatsapp),
-    sale_available: person.sale_available || "",
+    sale_available: saleChoice_(person.sale_available),
     kaptain: person.kaptain || "",
+    needs_ticket: person.needs_ticket === "yes" ? "yes" : "",
+    ticket_name: person.ticket_name || "",
     fee_owed: feeOwed_(person.stay || ""),
   };
 }

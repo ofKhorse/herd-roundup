@@ -342,6 +342,75 @@ test("save stores an ordered companion list and a tipi purchase", function () {
   assert.equal(again.person.boomer_email, "boomer@x.test");
 });
 
+test("save keeps a no for the sale and the ticket name", function () {
+  const db = memoryDb();
+  const owner = register(db, "a@x.test");
+  const saved = context.handleAction(
+    {
+      action: "save",
+      email: "a@x.test",
+      password: owner.password,
+      full_name: "Ada Lovelace",
+      sale_available: "no",
+      needs_ticket: "yes",
+      ticket_name: "  Ada Lovelace  ",
+    },
+    db,
+    {},
+  );
+  assert.equal(saved.ok, true);
+  assert.equal(saved.person.sale_available, "no");
+  assert.equal(saved.person.kaptain, "");
+  assert.equal(saved.person.needs_ticket, "yes");
+  assert.equal(saved.person.ticket_name, "Ada Lovelace");
+  const missing = context.handleAction(
+    {
+      action: "save",
+      email: "a@x.test",
+      password: owner.password,
+      sale_available: "no",
+      needs_ticket: "yes",
+      ticket_name: "   ",
+    },
+    db,
+    {},
+  );
+  assert.equal(missing.ok, false);
+  assert.equal(missing.field, "ticket_name");
+  assert.equal(missing.error, "Enter the name.");
+  assert.equal(db.listPeople()[0].ticket_name, "Ada Lovelace");
+  const kept = context.handleAction(
+    {
+      action: "save",
+      email: "a@x.test",
+      password: owner.password,
+      full_name: "Ada Lovelace",
+    },
+    db,
+    {},
+  );
+  assert.equal(kept.person.sale_available, "no");
+  assert.equal(kept.person.needs_ticket, "yes");
+  assert.equal(kept.person.ticket_name, "Ada Lovelace");
+  const cleared = context.handleAction(
+    {
+      action: "save",
+      email: "a@x.test",
+      password: owner.password,
+      sale_available: "yes",
+      kaptain: "yes",
+      needs_ticket: "yes",
+      ticket_name: "Ada Lovelace",
+    },
+    db,
+    {},
+  );
+  assert.equal(cleared.person.sale_available, "yes");
+  assert.equal(cleared.person.kaptain, "yes");
+  assert.equal(cleared.person.needs_ticket, "");
+  assert.equal(cleared.person.ticket_name, "");
+});
+
 test("save rejects an invalid boomer email", function () {
   const db = memoryDb();
   const owner = register(db, "a@x.test");
@@ -540,6 +609,8 @@ test("admins receive every member row", function () {
   assert.equal(member.stay, "5");
   assert.equal(member.sale_available, "yes");
   assert.equal(member.kaptain, "yes");
+  assert.equal(member.needs_ticket, "");
+  assert.equal(member.ticket_name, "");
   assert.equal(member.purchased, "yes");
   assert.equal(member.purchased_size, "star5");
   assert.deepEqual(member.share_with, ["KH-001"]);
