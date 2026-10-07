@@ -244,6 +244,58 @@
                 from the ofKhorse money pot.
               </p>
             </div>
+            <div id="ticket-row" hidden>
+              <label class="row ticket-ask">
+                <input name="needs_ticket" type="checkbox" />
+                <span
+                  >I need someone to buy a ticket for me because I ABSOLUTELY
+                  kan't make it to the sale. I understand that this is asking
+                  for a huge favor. I konfirm that I will pay them back as
+                  quickly as I kan.</span
+                >
+              </label>
+              <div id="ticket-fields" hidden>
+                <label>
+                  Name
+                  <input name="ticket_name" />
+                </label>
+                <p class="field-error" data-field="ticket_name" hidden></p>
+                <label>
+                  Email
+                  <input name="ticket_email" type="email" />
+                </label>
+                <p class="field-error" data-field="ticket_email" hidden></p>
+                <label>
+                  Date of birth
+                  <input name="ticket_birth" type="date" />
+                </label>
+                <p class="field-error" data-field="ticket_birth" hidden></p>
+                <label>
+                  Gender
+                  <select name="ticket_gender">
+                    <option value="">Choose one</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="other">Other</option>
+                  </select>
+                </label>
+                <p class="field-error" data-field="ticket_gender" hidden></p>
+                <label>
+                  Nationality
+                  <input name="ticket_nationality" />
+                </label>
+                <p
+                  class="field-error"
+                  data-field="ticket_nationality"
+                  hidden
+                ></p>
+                <label>
+                  Residency
+                  <input name="ticket_residency" />
+                </label>
+                <p class="field-error" data-field="ticket_residency" hidden></p>
+              </div>
+            </div>
           </div>
 
           <h2 class="section-label">During sale information</h2>
@@ -300,6 +352,12 @@
                   <th>Sleeping</th>
                   <th>At sale</th>
                   <th>Potential Kaptain</th>
+                  <th>Ticket name</th>
+                  <th>Ticket email</th>
+                  <th>Date of birth</th>
+                  <th>Gender</th>
+                  <th>Nationality</th>
+                  <th>Residency</th>
                   <th>Bought</th>
                   <th>Tent</th>
                   <th>Stable mates</th>
@@ -329,6 +387,32 @@
             </thead>
             <tbody id="kaptain-rows"></tbody>
           </table>
+        </div>
+        <div class="card">
+          <div class="card-heading">
+            <h2>Needs a ticket</h2>
+            <button id="copy-ticket-phones" class="solid" type="button">
+              Copy phone numbers
+            </button>
+          </div>
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Kode</th>
+                  <th>WhatsApp</th>
+                  <th>Ticket name</th>
+                  <th>Email</th>
+                  <th>Date of birth</th>
+                  <th>Gender</th>
+                  <th>Nationality</th>
+                  <th>Residency</th>
+                </tr>
+              </thead>
+              <tbody id="ticket-rows"></tbody>
+            </table>
+          </div>
         </div>
         <div class="card">
           <div class="card-heading">

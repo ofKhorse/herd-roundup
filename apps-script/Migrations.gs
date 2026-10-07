@@ -28,6 +28,8 @@ function migrations_() {
     { id: "005_add_boomer_email", run: migration005AddBoomerEmail_ },
     { id: "006_remove_boomer_id", run: migration006RemoveBoomerId_ },
     { id: "007_force_sheet_text", run: migration007ForceSheetText_ },
+    { id: "008_add_ticket_name", run: migration008AddTicketName_ },
+    { id: "009_add_ticket_details", run: migration009AddTicketDetails_ },
   ];
 }
 

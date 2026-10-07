@@ -511,9 +511,19 @@ button.solid {
 }
 
 #size-row,
-#kaptain-row {
+#kaptain-row,
+#ticket-row,
+#ticket-fields {
   display: grid;
   gap: 0.5rem;
+}
+
+.ticket-ask {
+  align-items: flex-start;
+}
+
+.ticket-ask span {
+  flex: 1;
 }
 
 .companion-add {
