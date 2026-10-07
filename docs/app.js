@@ -11,6 +11,11 @@ var state = {
 var notice = document.querySelector("#notice");
 var auth = document.querySelector("#auth");
 var profile = document.querySelector("#profile");
+var serverBusy = false;
+var requestBusyCancel = function () {};
+var toastTimer = null;
+var RETRY_LIMIT = 5;
+var RETRY_SECONDS = 8;
 
 document.querySelector("#login-form").addEventListener("submit", onLogin);
 document.querySelector("#busy-cancel").addEventListener("click", function () {
@@ -795,12 +800,6 @@ function logout() {
   auth.hidden = false;
   say("Logged out.");
 }
-
-var serverBusy = false;
-var requestBusyCancel = function () {};
-var toastTimer = null;
-var RETRY_LIMIT = 5;
-var RETRY_SECONDS = 8;
 
 function retryableError(message) {
   return (
