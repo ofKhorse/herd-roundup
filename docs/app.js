@@ -736,10 +736,11 @@ function labelFor(code) {
   if (!person) {
     return code;
   }
-  if (!person.full_name) {
-    return person.email ? code + " (" + person.email + ")" : code;
+  var who = person.full_name || person.email;
+  if (!who) {
+    return code;
   }
-  return person.full_name + " (" + code + ")";
+  return who + " - (" + code + ")";
 }
 
 function readSession() {
