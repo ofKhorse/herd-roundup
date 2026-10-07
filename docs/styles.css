@@ -185,15 +185,14 @@ button.solid {
   text-align: center;
 }
 
+#logout.solid,
+#admin-logout.solid {
+  background: #8f1d1d;
+}
+
 .actions {
   display: grid;
   gap: 0.75rem;
-}
-
-.actions #logout,
-#admin-logout {
-  min-height: 44px;
-  text-align: center;
 }
 
 .notice {
@@ -598,10 +597,5 @@ code {
 
   button.solid {
     justify-self: start;
-  }
-
-  .actions #logout,
-  #admin-logout {
-    text-align: left;
   }
 }
