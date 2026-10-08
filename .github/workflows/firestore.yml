@@ -9,6 +9,7 @@ on:
       - .firebaserc
       - package.json
       - package-lock.json
+      - scripts/deploy-rules.mjs
       - .github/workflows/firestore.yml
   push:
     branches: [main]
@@ -19,6 +20,7 @@ on:
       - .firebaserc
       - package.json
       - package-lock.json
+      - scripts/deploy-rules.mjs
       - .github/workflows/firestore.yml
 
 jobs:
@@ -55,4 +57,5 @@ jobs:
       - name: Deploy rules
         env:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/sa.json
-        run: npx firebase-tools deploy --only firestore:rules --project herd-roundup-e7f31 --non-interactive
+          METADATA_SERVER_DETECTION: none
+        run: node scripts/deploy-rules.mjs
