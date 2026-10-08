@@ -1,0 +1,54 @@
+name: Firestore rules
+
+on:
+  pull_request:
+    paths:
+      - firestore.rules
+      - firestore/**
+      - firebase.json
+      - .firebaserc
+      - package.json
+      - package-lock.json
+      - .github/workflows/firestore.yml
+  push:
+    branches: [main]
+    paths:
+      - firestore.rules
+      - firestore/**
+      - firebase.json
+      - .firebaserc
+      - package.json
+      - package-lock.json
+      - .github/workflows/firestore.yml
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run test:rules
+
+  deploy:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Write the deploy credentials
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: echo "$FIREBASE_SERVICE_ACCOUNT" > "$RUNNER_TEMP/sa.json"
+      - name: Deploy rules
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/sa.json
+        run: npx firebase-tools deploy --only firestore:rules --project herd-roundup-e7f31 --non-interactive
