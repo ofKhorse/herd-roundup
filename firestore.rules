@@ -1,0 +1,199 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return signedIn()
+        && get(/databases/$(database)/documents/people/$(request.auth.uid)).data.admin == true;
+    }
+
+    function memberCode(n) {
+      return n < 10
+        ? "KH-00" + string(n)
+        : (n < 100 ? "KH-0" + string(n) : "KH-" + string(n));
+    }
+
+    function emailOk(value) {
+      return value is string && value.matches("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$");
+    }
+
+    function codeOk(value) {
+      return value is string && value.matches("^KH-[0-9]{3,}$");
+    }
+
+    function matesOk(codes, self) {
+      return codes is list
+        && codes.size() <= 12
+        && codes.size() == codes.toSet().size()
+        && !codes.hasAny([self])
+        && (codes.size() < 1 || codeOk(codes[0]))
+        && (codes.size() < 2 || codeOk(codes[1]))
+        && (codes.size() < 3 || codeOk(codes[2]))
+        && (codes.size() < 4 || codeOk(codes[3]))
+        && (codes.size() < 5 || codeOk(codes[4]))
+        && (codes.size() < 6 || codeOk(codes[5]))
+        && (codes.size() < 7 || codeOk(codes[6]))
+        && (codes.size() < 8 || codeOk(codes[7]))
+        && (codes.size() < 9 || codeOk(codes[8]))
+        && (codes.size() < 10 || codeOk(codes[9]))
+        && (codes.size() < 11 || codeOk(codes[10]))
+        && (codes.size() < 12 || codeOk(codes[11]));
+    }
+
+    function ticketBlank(data) {
+      return data.needs_ticket == ""
+        && data.ticket_name == ""
+        && data.ticket_email == ""
+        && data.ticket_birth == ""
+        && data.ticket_gender == ""
+        && data.ticket_nationality == ""
+        && data.ticket_residency == "";
+    }
+
+    function ticketFilled(data) {
+      return data.needs_ticket == "yes"
+        && data.ticket_name is string
+        && data.ticket_name.size() > 0
+        && data.ticket_name.size() < 200
+        && emailOk(data.ticket_email)
+        && data.ticket_birth is string
+        && data.ticket_birth.matches("^\\d{4}-\\d{2}-\\d{2}$")
+        && data.ticket_gender in ["male", "female", "other"]
+        && data.ticket_nationality is string
+        && data.ticket_nationality.size() > 0
+        && data.ticket_nationality.size() < 100
+        && data.ticket_residency is string
+        && data.ticket_residency.size() > 0
+        && data.ticket_residency.size() < 100;
+    }
+
+    function profileOk(data) {
+      return data.keys().hasOnly([
+          "member_code",
+          "email",
+          "admin",
+          "full_name",
+          "stay",
+          "purchased",
+          "purchased_size",
+          "purchased_at",
+          "boomer_email",
+          "share_with",
+          "camp_fee_paid",
+          "amount",
+          "payment_ref",
+          "whatsapp",
+          "sale_available",
+          "kaptain",
+          "needs_ticket",
+          "ticket_name",
+          "ticket_email",
+          "ticket_birth",
+          "ticket_gender",
+          "ticket_nationality",
+          "ticket_residency",
+        ])
+        && data.member_code is string
+        && emailOk(data.email)
+        && data.admin is bool
+        && data.full_name is string
+        && data.full_name.size() < 200
+        && data.stay in ["", "4", "5", "6", "arrange"]
+        && data.whatsapp is string
+        && data.whatsapp.matches("^\\+[0-9]{8,15}$")
+        && data.boomer_email is string
+        && (data.boomer_email == "" || emailOk(data.boomer_email))
+        && matesOk(data.share_with, data.member_code)
+        && (data.share_with.size() == 0 || data.stay in ["4", "5", "6"])
+        && data.purchased in ["", "yes"]
+        && data.purchased_size in ["", "tipi2", "star2", "star5", "tipi6"]
+        && data.purchased_at is string
+        && data.purchased_at.size() < 40
+        && (
+          (data.purchased == "yes" && data.purchased_size != "" && data.purchased_at.size() > 0)
+          || (data.purchased == "" && data.purchased_size == "" && data.purchased_at == "")
+        )
+        && data.camp_fee_paid is string
+        && data.amount is string
+        && data.payment_ref is string
+        && data.sale_available in ["", "yes", "no"]
+        && (
+          (data.sale_available == "yes" && data.kaptain in ["", "yes"])
+          || (data.sale_available != "yes" && data.kaptain == "")
+        )
+        && (
+          (data.sale_available == "no" && (ticketBlank(data) || ticketFilled(data)))
+          || (data.sale_available != "no" && ticketBlank(data))
+        );
+    }
+
+    match /counters/{name} {
+      allow read: if signedIn() && name == "member";
+      allow create: if false;
+      allow update: if signedIn()
+        && name == "member"
+        && request.resource.data.keys().hasOnly(["next"])
+        && request.resource.data.next is int
+        && request.resource.data.next == resource.data.next + 1;
+      allow delete: if false;
+    }
+
+    match /people/{uid} {
+      allow get: if signedIn() && (request.auth.uid == uid || isAdmin());
+      allow list: if isAdmin();
+      allow create: if signedIn()
+        && request.auth.uid == uid
+        && profileOk(request.resource.data)
+        && request.resource.data.admin == false
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.camp_fee_paid == ""
+        && request.resource.data.amount == ""
+        && request.resource.data.payment_ref == ""
+        && request.resource.data.member_code
+          == memberCode(get(/databases/$(database)/documents/counters/member).data.next);
+      allow update: if signedIn()
+        && request.auth.uid == uid
+        && profileOk(request.resource.data)
+        && request.resource.data.member_code == resource.data.member_code
+        && request.resource.data.email == resource.data.email
+        && request.resource.data.admin == resource.data.admin
+        && request.resource.data.camp_fee_paid == resource.data.camp_fee_paid
+        && request.resource.data.amount == resource.data.amount
+        && request.resource.data.payment_ref == resource.data.payment_ref;
+      allow delete: if false;
+    }
+
+    match /directory/{uid} {
+      allow read: if signedIn();
+      allow create, update: if signedIn()
+        && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly([
+          "member_code",
+          "full_name",
+          "email",
+          "share_with",
+        ])
+        && request.resource.data.member_code
+          == get(/databases/$(database)/documents/people/$(uid)).data.member_code
+        && request.resource.data.full_name
+          == get(/databases/$(database)/documents/people/$(uid)).data.full_name
+        && request.resource.data.share_with
+          == get(/databases/$(database)/documents/people/$(uid)).data.share_with
+        && (
+          (
+            get(/databases/$(database)/documents/people/$(uid)).data.full_name != ""
+            && request.resource.data.email == ""
+          )
+          || (
+            get(/databases/$(database)/documents/people/$(uid)).data.full_name == ""
+            && request.resource.data.email
+              == get(/databases/$(database)/documents/people/$(uid)).data.email
+          )
+        );
+      allow delete: if false;
+    }
+  }
+}
