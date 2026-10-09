@@ -813,6 +813,62 @@ function copyWithFallback(text) {
   area.remove();
 }
 
+bindAdminSort();
+
+function bindAdminSort() {
+  document.querySelectorAll("#admin table").forEach(function (table) {
+    Array.prototype.forEach.call(
+      table.tHead.rows[0].cells,
+      function (header, index) {
+        header.addEventListener("click", function () {
+          sortAdminTable(table, index);
+        });
+      },
+    );
+  });
+}
+
+function sortAdminTable(table, index) {
+  var nextDir = "asc";
+  if (
+    table.dataset.sortIndex === String(index) &&
+    table.dataset.sortDir === "asc"
+  ) {
+    nextDir = "desc";
+  }
+  table.dataset.sortIndex = String(index);
+  table.dataset.sortDir = nextDir;
+  Array.prototype.forEach.call(
+    table.tHead.rows[0].cells,
+    function (header, headerIndex) {
+      if (headerIndex === index) {
+        header.setAttribute(
+          "aria-sort",
+          nextDir === "asc" ? "ascending" : "descending",
+        );
+        return;
+      }
+      header.removeAttribute("aria-sort");
+    },
+  );
+  closeMemberDetails();
+  var body = table.tBodies[0];
+  var rows = Array.prototype.filter.call(body.rows, function (row) {
+    return row.cells.length > 1;
+  });
+  rows.sort(function (a, b) {
+    var result = (a.cells[index].textContent || "").localeCompare(
+      b.cells[index].textContent || "",
+      undefined,
+      { numeric: true, sensitivity: "base" },
+    );
+    return nextDir === "asc" ? result : -result;
+  });
+  rows.forEach(function (row) {
+    body.appendChild(row);
+  });
+}
+
 function closeMemberDetails() {
   document.querySelectorAll(".member-detail").forEach(function (detail) {
     detail.remove();
