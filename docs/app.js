@@ -70,8 +70,20 @@ document
 document
   .querySelector("#copy-member-emails")
   .addEventListener("click", function (event) {
-    copyEmails(state.members, event.currentTarget);
+    copyValues(
+      visibleMemberRows().map(function (row) {
+        return String(row.cells[2].textContent || "").trim();
+      }),
+      event.currentTarget,
+      "No email addresses",
+    );
   });
+document
+  .querySelector("#member-filter")
+  .addEventListener("input", applyMemberFilter);
+document
+  .querySelector("#member-filter-nameless")
+  .addEventListener("change", applyMemberFilter);
 document
   .querySelector("#copy-kaptain-phones")
   .addEventListener("click", function (event) {
@@ -775,6 +787,7 @@ function renderMembers(result) {
       memberTent(member.purchased_size),
     ];
   });
+  applyMemberFilter();
 }
 
 function renderPeopleRows(selector, people, columns, values) {
@@ -808,15 +821,11 @@ function exportMembersCsv(button) {
       return cell.textContent.trim();
     },
   );
-  var rows = Array.prototype.filter
-    .call(table.tBodies[0].rows, function (row) {
-      return row.cells.length > 1;
-    })
-    .map(function (row) {
-      return Array.prototype.map.call(row.cells, function (cell) {
-        return cell.textContent || "";
-      });
+  var rows = visibleMemberRows().map(function (row) {
+    return Array.prototype.map.call(row.cells, function (cell) {
+      return cell.textContent || "";
     });
+  });
   var previous = button.textContent;
   if (!rows.length) {
     button.textContent = "No members";
@@ -836,6 +845,56 @@ function exportMembersCsv(button) {
   window.setTimeout(function () {
     button.textContent = previous;
   }, 1500);
+}
+
+function visibleMemberRows() {
+  return Array.prototype.filter.call(
+    document.querySelector("#member-rows").rows,
+    function (row) {
+      return row.cells.length > 1 && !row.hidden;
+    },
+  );
+}
+
+function applyMemberFilter() {
+  var query = document
+    .querySelector("#member-filter")
+    .value.trim()
+    .toLowerCase();
+  var nameless = document.querySelector("#member-filter-nameless").checked;
+  var body = document.querySelector("#member-rows");
+  closeMemberDetails();
+  var shown = 0;
+  Array.prototype.forEach.call(body.rows, function (row) {
+    if (row.classList.contains("member-filter-empty") || row.cells.length < 2) {
+      return;
+    }
+    var name = (row.cells[0].textContent || "").trim();
+    var matchesQuery =
+      !query || row.textContent.toLowerCase().indexOf(query) !== -1;
+    var matchesName = !nameless || !name;
+    row.hidden = !(matchesQuery && matchesName);
+    if (!row.hidden) {
+      shown += 1;
+    }
+  });
+  var empty = body.querySelector(".member-filter-empty");
+  if (empty) {
+    empty.remove();
+  }
+  var dataRows = Array.prototype.filter.call(body.rows, function (row) {
+    return row.cells.length > 1;
+  });
+  if (!dataRows.length || shown > 0) {
+    return;
+  }
+  var message = document.createElement("tr");
+  message.className = "member-filter-empty";
+  var cell = document.createElement("td");
+  cell.colSpan = document.querySelector("#members").tHead.rows[0].cells.length;
+  cell.textContent = "Nobody matches.";
+  message.appendChild(cell);
+  body.appendChild(message);
 }
 
 function csvCell(value) {
