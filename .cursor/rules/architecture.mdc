@@ -1,16 +1,20 @@
 ---
-description: Call direction and data boundaries for the camp page
+description: Live camp page uses Firebase; Apps Script is leftover
 alwaysApply: true
 ---
 
 # Architecture
 
-The page calls only the Apps Script web app URL. The script calls the private sheet and, later, Wise. The Wise token stays in Script properties, never in git or in the page.
+The live page is `docs/` on GitHub Pages (`herd.ofk.horse`). `USE_FIREBASE` in `docs/config.js` is true. The page talks to Firebase Auth and Firestore in `europe-west1` (project `herd-roundup-e7f31`). There are no Cloud Functions. The plan is Spark.
 
-Sheet columns are append-only. Add a column. Do not rename or reuse one.
+Camp data is `people/{uid}`, `directory/{uid}`, and `counters/member`. Passwords stay in Firebase Auth, never in Firestore. The client computes the kamp fee (55 or 365). Save checks live in `docs/profile-write.js` and `firestore.rules`. Rules publish through `scripts/deploy-rules.mjs` and the Rules API. Do not deploy them with the Firebase CLI.
 
-Each script action is one function: `register`, `login`, `reset`, `save`. Return the same JSON shape from each. Validation lives in plain JavaScript. The page renders that JSON and does not repeat the rules.
+Plain HTML, CSS, and JavaScript. Copy a block twice before adding a helper. Keep a file under about 300 lines.
 
-Copy a block twice before adding a helper. Stay on plain HTML, CSS, and JavaScript until a page needs a framework.
+## Why `apps-script/` is still here
 
-Keep a file under about 300 lines. Split by action.
+It was the backend. The page posted to a public Apps Script web app, which wrote the people spreadsheet and sent mail. Sign-in, save, and reset no longer go there. The campers were imported into Firebase.
+
+Leave the Apps Script project and the people spreadsheet. Archive the public web app only after another camper has signed in with their existing password. Do not delete `apps-script/` while that web app might still be deployed. Sheet columns stay append-only.
+
+The next Apps Script job, not started, is a small background copy of the separate payment sheet when an admin signs in. Do not invent a column parser. Do not route auth or profiles back through Apps Script.
