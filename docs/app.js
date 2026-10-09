@@ -40,6 +40,12 @@ document.querySelector("#busy-ok").addEventListener(
   },
   true,
 );
+document
+  .querySelector("#register-form")
+  .addEventListener("submit", rememberRegisterLogin_, true);
+document
+  .querySelector("#register-form button")
+  .addEventListener("pointerdown", rememberRegisterLogin_, true);
 document.querySelector("#register-form").addEventListener("submit", onRegister);
 document.querySelector("#reset-form").addEventListener("submit", onReset);
 document.querySelector("#profile-form").addEventListener("submit", onSave);
@@ -200,6 +206,23 @@ function signIn(credentials, fromCookie, quiet) {
   });
 }
 
+function rememberRegisterLogin_() {
+  if (!useFirebase_()) {
+    return;
+  }
+  var form = document.querySelector("#register-form");
+  var password = form.elements.password.value;
+  var again = form.elements.password_again.value;
+  if (password.length < 8 || password !== again) {
+    return;
+  }
+  var loginForm = document.querySelector("#login-form");
+  loginForm.elements.email.value = form.elements.email.value;
+  loginForm.elements.password.value = password;
+  notifyLoginField_(loginForm.elements.email);
+  notifyLoginField_(loginForm.elements.password);
+}
+
 function onRegister(event) {
   event.preventDefault();
   if (useFirebase_()) {
@@ -336,8 +359,16 @@ function showSession(result) {
   state.memberCode = result.person.member_code;
   state.email = result.person.email || "";
   showHello(result.person);
-  document.querySelector("#member-code").textContent =
-    result.person.member_code;
+  var hasCode = !!result.person.member_code;
+  document.querySelector("#member-code-line").hidden = !hasCode;
+  document.querySelector("#member-code-pending").hidden = hasCode;
+  if (hasCode) {
+    document.querySelector("#member-code").textContent =
+      result.person.member_code;
+  } else {
+    document.querySelector("#info").open = false;
+    document.querySelector("#pay-guide").open = false;
+  }
   document.querySelector("#fee").textContent =
     result.person.camp_fee_paid === "yes"
       ? "Kamp fee marked paid."
@@ -600,7 +631,7 @@ function showView() {
     state.admin &&
     (location.hash === "#admin" || location.hash === "#payments");
   document.querySelector("#nav").hidden = !state.admin;
-  profile.hidden = !state.memberCode || onAdmin;
+  profile.hidden = onAdmin || (!state.memberCode && !state.email);
   document.querySelector("#admin").hidden = !onAdmin;
   document.querySelector("#show-camp").removeAttribute("aria-current");
   document.querySelector("#show-admin").removeAttribute("aria-current");

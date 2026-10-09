@@ -32,7 +32,10 @@
       <section id="auth" class="stack">
         <form id="register-form" class="card">
           <h2>First time here? REGISTER</h2>
-          <label>Email <input name="email" type="email" required /></label>
+          <label
+            >Email
+            <input name="email" type="email" autocomplete="username" required
+          /></label>
           <label id="register-whatsapp">
             WhatsApp
             <input name="whatsapp" type="tel" placeholder="+41" required />
@@ -45,6 +48,7 @@
               type="password"
               autocomplete="new-password"
               minlength="8"
+              data-lpignore="true"
             />
           </label>
           <label id="register-password-again" hidden>
@@ -54,6 +58,7 @@
               type="password"
               autocomplete="new-password"
               minlength="8"
+              data-lpignore="true"
             />
           </label>
           <p class="field-error" data-field="register-password" hidden></p>
@@ -89,7 +94,12 @@
         <div class="card">
           <h2>Your kode</h2>
           <div class="pay">
-            <p>Your kode is <code id="member-code"></code>.</p>
+            <p id="member-code-line">
+              Your kode is <code id="member-code"></code>.
+            </p>
+            <p id="member-code-pending" hidden>
+              Save your profile to get your kode.
+            </p>
             <details id="pay-guide" open>
               <summary>How to pay</summary>
               <div class="pay-media">
