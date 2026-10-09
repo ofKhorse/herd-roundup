@@ -33,11 +33,30 @@
         <form id="register-form" class="card">
           <h2>First time here? REGISTER</h2>
           <label>Email <input name="email" type="email" required /></label>
-          <label>
+          <label id="register-whatsapp">
             WhatsApp
             <input name="whatsapp" type="tel" placeholder="+41" required />
           </label>
           <p class="field-error" data-field="register-whatsapp" hidden></p>
+          <label id="register-password" hidden>
+            Password
+            <input
+              name="password"
+              type="password"
+              autocomplete="new-password"
+              minlength="8"
+            />
+          </label>
+          <label id="register-password-again" hidden>
+            Password again
+            <input
+              name="password_again"
+              type="password"
+              autocomplete="new-password"
+              minlength="8"
+            />
+          </label>
+          <p class="field-error" data-field="register-password" hidden></p>
           <button class="solid" type="submit">Register</button>
         </form>
         <form id="login-form" class="card">
@@ -60,7 +79,9 @@
         <form id="reset-form" class="card">
           <h2>Forgot password</h2>
           <label>Email <input name="email" type="email" required /></label>
-          <button class="solid" type="submit">Email me a password</button>
+          <button id="reset-submit" class="solid" type="submit">
+            Email me a password
+          </button>
         </form>
       </section>
 
@@ -319,7 +340,7 @@
             <p class="field-error" data-field="purchased_size" hidden></p>
           </div>
           <div class="actions">
-            <button class="solid" type="submit">Save</button>
+            <button id="save-profile" class="solid" type="submit">Save</button>
             <button id="logout" class="solid" type="button">Log out</button>
           </div>
         </form>

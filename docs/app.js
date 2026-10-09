@@ -153,13 +153,19 @@ companionSearch.addEventListener("keydown", function (event) {
 });
 
 var saved = readSession();
-if (saved && (saved.token || (saved.email && saved.password))) {
+if (useFirebase_()) {
+  startFirebase();
+} else if (saved && (saved.token || (saved.email && saved.password))) {
   signIn(saved, true);
 }
 
 function onLogin(event) {
   event.preventDefault();
   var data = new FormData(event.target);
+  if (useFirebase_()) {
+    signInWithFirebase(data.get("email"), data.get("password"));
+    return;
+  }
   signIn({ email: data.get("email"), password: data.get("password") }, false);
 }
 
@@ -196,6 +202,10 @@ function signIn(credentials, fromCookie, quiet) {
 
 function onRegister(event) {
   event.preventDefault();
+  if (useFirebase_()) {
+    registerWithFirebase(event.target);
+    return;
+  }
   var data = new FormData(event.target);
   var whatsappError = whatsappProblem(data.get("whatsapp"));
   var error = event.target.querySelector(".field-error");
@@ -239,6 +249,10 @@ function onRegister(event) {
 function onReset(event) {
   event.preventDefault();
   var data = new FormData(event.target);
+  if (useFirebase_()) {
+    resetWithFirebase(data.get("email"));
+    return;
+  }
   callServer(
     { action: "reset", email: data.get("email") },
     {
@@ -251,6 +265,10 @@ function onReset(event) {
 
 function onSave(event) {
   event.preventDefault();
+  if (useFirebase_()) {
+    say("Saving on Firebase is not switched on yet.");
+    return;
+  }
   var credentials = readSession();
   if (!credentials || (!credentials.token && !credentials.password)) {
     say("Log in again.");
@@ -337,8 +355,13 @@ function showSession(result) {
   } else {
     feeOwedEl.textContent = "Choose whether you kamp with us to see your fee.";
   }
-  document.querySelector("#tipi-count").textContent =
-    result.tipi_count + " tipis marked as bought.";
+  var tipiCount = document.querySelector("#tipi-count");
+  if (result.tipi_count == null) {
+    tipiCount.hidden = true;
+  } else {
+    tipiCount.hidden = false;
+    tipiCount.textContent = result.tipi_count + " tipis marked as bought.";
+  }
   var form = document.querySelector("#profile-form");
   form.full_name.value = result.person.full_name;
   restoreStay(result.person.stay);
@@ -939,6 +962,9 @@ function clearSession() {
 }
 
 function logout() {
+  if (useFirebase_() && window.firebase && firebase.auth) {
+    firebase.auth().signOut();
+  }
   clearSession();
   state.memberCode = "";
   state.email = "";
@@ -1696,4 +1722,286 @@ function showFieldErrors(problems) {
   if (first && first.scrollIntoView) {
     first.scrollIntoView({ block: "center" });
   }
+}
+
+var firebaseAnnounce = "";
+
+function useFirebase_() {
+  return typeof USE_FIREBASE !== "undefined" && USE_FIREBASE;
+}
+
+function startFirebase() {
+  var registerForm = document.querySelector("#register-form");
+  document.querySelector("#register-whatsapp").hidden = true;
+  registerForm.elements.whatsapp.required = false;
+  document.querySelector("#register-password").hidden = false;
+  document.querySelector("#register-password-again").hidden = false;
+  registerForm.elements.password.required = true;
+  registerForm.elements.password_again.required = true;
+  document.querySelector("#reset-submit").textContent = "Email me a reset link";
+  document.querySelector("#save-profile").hidden = true;
+  loadFirebaseScripts()
+    .then(function () {
+      firebase.initializeApp(FIREBASE_CONFIG);
+      firebase.auth().onAuthStateChanged(onFirebaseUser);
+    })
+    .catch(function () {
+      say("Could not load Firebase.");
+    });
+}
+
+function loadFirebaseScripts() {
+  var version = "12.19.0";
+  var base = "https://www.gstatic.com/firebasejs/" + version + "/";
+  return loadScript(base + "firebase-app-compat.js").then(function () {
+    return Promise.all([
+      loadScript(base + "firebase-auth-compat.js"),
+      loadScript(base + "firebase-firestore-compat.js"),
+    ]);
+  });
+}
+
+function loadScript(src) {
+  return new Promise(function (resolve, reject) {
+    var script = document.createElement("script");
+    script.src = src;
+    script.onload = resolve;
+    script.onerror = reject;
+    document.head.appendChild(script);
+  });
+}
+
+function signInWithFirebase(email, password) {
+  if (!window.firebase || !firebase.auth) {
+    say("Still loading.");
+    return;
+  }
+  firebaseAnnounce = "signed-in";
+  showBusy("Signing in…");
+  firebase
+    .auth()
+    .signInWithEmailAndPassword(String(email || "").trim(), password)
+    .catch(function (error) {
+      firebaseAnnounce = "";
+      hideBusy();
+      toast(firebaseProblem(error, "Sign-in failed."), true);
+    });
+}
+
+function registerWithFirebase(form) {
+  if (!window.firebase || !firebase.auth) {
+    say("Still loading.");
+    return;
+  }
+  var data = new FormData(form);
+  var password = String(data.get("password") || "");
+  var again = String(data.get("password_again") || "");
+  var error = form.querySelector('[data-field="register-password"]');
+  if (password.length < 8) {
+    error.hidden = false;
+    error.textContent = "Use at least 8 characters.";
+    return;
+  }
+  if (password !== again) {
+    error.hidden = false;
+    error.textContent = "Those passwords don't match.";
+    return;
+  }
+  error.hidden = true;
+  error.textContent = "";
+  firebaseAnnounce = "registered";
+  showBusy("Registering…");
+  firebase
+    .auth()
+    .createUserWithEmailAndPassword(
+      String(data.get("email") || "").trim(),
+      password,
+    )
+    .catch(function (error) {
+      firebaseAnnounce = "";
+      hideBusy();
+      toast(firebaseProblem(error, "Registration failed."), true);
+    });
+}
+
+function resetWithFirebase(email) {
+  if (!window.firebase || !firebase.auth) {
+    say("Still loading.");
+    return;
+  }
+  showBusy("Sending a reset link…");
+  firebase
+    .auth()
+    .sendPasswordResetEmail(String(email || "").trim())
+    .then(function () {
+      hideBusy();
+      toast("If that email is registered, a reset link is on its way.");
+    })
+    .catch(function (error) {
+      hideBusy();
+      toast(firebaseProblem(error, "Could not send a reset link."), true);
+    });
+}
+
+function onFirebaseUser(user) {
+  if (!user) {
+    return;
+  }
+  var announce = firebaseAnnounce;
+  firebaseAnnounce = "";
+  showBusy(announce === "registered" ? "Registering…" : "Signing in…");
+  loadFirebaseProfile(user)
+    .then(function (result) {
+      hideBusy();
+      if (!result.ok) {
+        say(result.error);
+        if (announce === "registered") {
+          toast("Registered.");
+        }
+        return;
+      }
+      showSession(result);
+      if (announce === "registered") {
+        toast("Registered.");
+      } else if (announce === "signed-in") {
+        toast("Signed in.");
+      }
+    })
+    .catch(function () {
+      hideBusy();
+      toast("Sign-in failed.", true);
+    });
+}
+
+function loadFirebaseProfile(user) {
+  var db = firebase.firestore();
+  return db
+    .collection("people")
+    .doc(user.uid)
+    .get()
+    .then(function (snap) {
+      if (!snap.exists) {
+        return {
+          ok: false,
+          error: "There is no camp profile for this account yet.",
+        };
+      }
+      return db
+        .collection("directory")
+        .get()
+        .then(function (directorySnap) {
+          var person = campPerson_(snap.data(), user.email);
+          var directory = [];
+          directorySnap.forEach(function (doc) {
+            var data = doc.data();
+            directory.push({
+              member_code: data.member_code || "",
+              full_name: data.full_name || "",
+              email: data.email || "",
+              share_with: data.share_with || [],
+            });
+          });
+          var result = {
+            ok: true,
+            person: person,
+            directory: directory,
+            tipi_count: null,
+          };
+          if (person.admin !== "yes") {
+            return result;
+          }
+          return db
+            .collection("people")
+            .get()
+            .then(function (peopleSnap) {
+              var people = [];
+              peopleSnap.forEach(function (doc) {
+                people.push(campPerson_(doc.data(), ""));
+              });
+              result.payments = people;
+              result.signup_count = people.length;
+              result.stay_counts = {};
+              result.tipi_by_size = {};
+              result.tipi_count = 0;
+              people.forEach(function (member) {
+                var stay = member.stay || "";
+                result.stay_counts[stay] = (result.stay_counts[stay] || 0) + 1;
+                if (member.purchased === "yes") {
+                  result.tipi_count += 1;
+                  if (member.purchased_size) {
+                    result.tipi_by_size[member.purchased_size] =
+                      (result.tipi_by_size[member.purchased_size] || 0) + 1;
+                  }
+                }
+              });
+              return result;
+            });
+        });
+    });
+}
+
+function campPerson_(data, email) {
+  var person = data || {};
+  var stay = person.stay || "";
+  return {
+    member_code: person.member_code || "",
+    email: person.email || email || "",
+    full_name: person.full_name || "",
+    admin: person.admin === true || person.admin === "yes" ? "yes" : "",
+    stay: stay,
+    purchased: person.purchased || "",
+    purchased_size: person.purchased_size || "",
+    purchased_at: person.purchased_at || "",
+    boomer_email: person.boomer_email || "",
+    share_with: person.share_with || [],
+    camp_fee_paid: person.camp_fee_paid || "",
+    amount: person.amount || "",
+    payment_ref: person.payment_ref || "",
+    whatsapp: person.whatsapp || "",
+    sale_available: person.sale_available || "",
+    kaptain: person.kaptain || "",
+    needs_ticket: person.needs_ticket || "",
+    ticket_name: person.ticket_name || "",
+    ticket_email: person.ticket_email || "",
+    ticket_birth: person.ticket_birth || "",
+    ticket_gender: person.ticket_gender || "",
+    ticket_nationality: person.ticket_nationality || "",
+    ticket_residency: person.ticket_residency || "",
+    fee_owed: feeFromStay_(stay),
+  };
+}
+
+function feeFromStay_(stay) {
+  if (stay === "arrange") {
+    return 55;
+  }
+  if (stay === "4" || stay === "5" || stay === "6") {
+    return 365;
+  }
+  return null;
+}
+
+function firebaseProblem(error, fallback) {
+  var code = error && error.code;
+  if (
+    code === "auth/invalid-credential" ||
+    code === "auth/wrong-password" ||
+    code === "auth/user-not-found" ||
+    code === "auth/invalid-login-credentials"
+  ) {
+    return "Wrong email or password.";
+  }
+  if (code === "auth/email-already-in-use") {
+    return "That email is already registered.";
+  }
+  if (code === "auth/weak-password" || code === "auth/invalid-password") {
+    return "Use at least 8 characters.";
+  }
+  if (code === "auth/invalid-email") {
+    return "Enter an email.";
+  }
+  if (code === "auth/too-many-requests") {
+    return "Too many tries. Wait a moment and try again.";
+  }
+  return fallback;
 }
