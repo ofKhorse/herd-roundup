@@ -592,6 +592,16 @@ td {
 
 #admin th {
   white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+}
+
+#admin th[aria-sort="ascending"]::after {
+  content: " \2191";
+}
+
+#admin th[aria-sort="descending"]::after {
+  content: " \2193";
 }
 
 #members tbody tr {
