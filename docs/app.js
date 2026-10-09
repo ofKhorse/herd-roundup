@@ -369,13 +369,6 @@ function showSession(result) {
   } else {
     feeOwedEl.textContent = "Choose whether you kamp with us to see your fee.";
   }
-  var tipiCount = document.querySelector("#tipi-count");
-  if (result.tipi_count == null) {
-    tipiCount.hidden = true;
-  } else {
-    tipiCount.hidden = false;
-    tipiCount.textContent = result.tipi_count + " tipis marked as bought.";
-  }
   var form = document.querySelector("#profile-form");
   form.full_name.value = result.person.full_name;
   restoreStay(result.person.stay);
@@ -2011,7 +2004,6 @@ function loadFirebaseProfile(user) {
               ok: true,
               person: campPerson_({ email: user.email }, user.email),
               directory: readDirectory_(directorySnap),
-              tipi_count: null,
             };
           });
       }
@@ -2025,7 +2017,6 @@ function loadFirebaseProfile(user) {
             ok: true,
             person: person,
             directory: directory,
-            tipi_count: null,
           };
           if (person.admin !== "yes") {
             return result;
@@ -2042,16 +2033,12 @@ function loadFirebaseProfile(user) {
               result.signup_count = people.length;
               result.stay_counts = {};
               result.tipi_by_size = {};
-              result.tipi_count = 0;
               people.forEach(function (member) {
                 var stay = member.stay || "";
                 result.stay_counts[stay] = (result.stay_counts[stay] || 0) + 1;
-                if (member.purchased === "yes") {
-                  result.tipi_count += 1;
-                  if (member.purchased_size) {
-                    result.tipi_by_size[member.purchased_size] =
-                      (result.tipi_by_size[member.purchased_size] || 0) + 1;
-                  }
+                if (member.purchased === "yes" && member.purchased_size) {
+                  result.tipi_by_size[member.purchased_size] =
+                    (result.tipi_by_size[member.purchased_size] || 0) + 1;
                 }
               });
               return result;
