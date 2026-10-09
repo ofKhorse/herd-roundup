@@ -63,6 +63,11 @@ payGuide.addEventListener("toggle", function () {
 });
 document.querySelector("#admin-logout").addEventListener("click", logout);
 document
+  .querySelector("#export-members")
+  .addEventListener("click", function (event) {
+    exportMembersCsv(event.currentTarget);
+  });
+document
   .querySelector("#copy-member-emails")
   .addEventListener("click", function (event) {
     copyEmails(state.members, event.currentTarget);
@@ -793,6 +798,67 @@ function renderPeopleRows(selector, people, columns, values) {
     });
     body.appendChild(row);
   });
+}
+
+function exportMembersCsv(button) {
+  var table = document.querySelector("#members");
+  var headers = Array.prototype.map.call(
+    table.tHead.rows[0].cells,
+    function (cell) {
+      return cell.textContent.trim();
+    },
+  );
+  var rows = Array.prototype.filter
+    .call(table.tBodies[0].rows, function (row) {
+      return row.cells.length > 1;
+    })
+    .map(function (row) {
+      return Array.prototype.map.call(row.cells, function (cell) {
+        return cell.textContent || "";
+      });
+    });
+  var previous = button.textContent;
+  if (!rows.length) {
+    button.textContent = "No members";
+    window.setTimeout(function () {
+      button.textContent = previous;
+    }, 1500);
+    return;
+  }
+  var csv = [headers]
+    .concat(rows)
+    .map(function (cells) {
+      return cells.map(csvCell).join(",");
+    })
+    .join("\n");
+  downloadText("herd-members.csv", csv + "\n");
+  button.textContent = "Exported";
+  window.setTimeout(function () {
+    button.textContent = previous;
+  }, 1500);
+}
+
+function csvCell(value) {
+  var text = String(value || "");
+  if (/^[=+\-@]/.test(text)) {
+    text = "'" + text;
+  }
+  if (/[",\r\n]/.test(text)) {
+    return '"' + text.replace(/"/g, '""') + '"';
+  }
+  return text;
+}
+
+function downloadText(name, text) {
+  var blob = new Blob([text], { type: "text/csv;charset=utf-8" });
+  var url = URL.createObjectURL(blob);
+  var link = document.createElement("a");
+  link.href = url;
+  link.download = name;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
 }
 
 function copyPhones(people, button) {
