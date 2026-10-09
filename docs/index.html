@@ -388,7 +388,31 @@
           <div id="tipi-by-size"></div>
         </div>
         <div class="card">
-          <h2>Members</h2>
+          <div class="card-heading">
+            <h2>Members</h2>
+            <div class="heading-actions">
+              <button id="export-members" class="solid" type="button">
+                Export CSV
+              </button>
+              <button id="copy-member-emails" class="solid" type="button">
+                Copy email addresses
+              </button>
+            </div>
+          </div>
+          <div class="member-filters">
+            <label>
+              Filter
+              <input
+                id="member-filter"
+                type="search"
+                placeholder="Name, kode, email…"
+              />
+            </label>
+            <label class="row">
+              <input id="member-filter-nameless" type="checkbox" />
+              Name not given
+            </label>
+          </div>
           <div class="table-scroll">
             <table id="members">
               <thead>
@@ -422,9 +446,14 @@
         <div class="card">
           <div class="card-heading">
             <h2>Potential kaptains</h2>
-            <button id="copy-kaptain-phones" class="solid" type="button">
-              Copy phone numbers
-            </button>
+            <div class="heading-actions">
+              <button id="copy-kaptain-emails" class="solid" type="button">
+                Copy email addresses
+              </button>
+              <button id="copy-kaptain-phones" class="solid" type="button">
+                Copy phone numbers
+              </button>
+            </div>
           </div>
           <div class="table-scroll">
             <table>
@@ -442,9 +471,14 @@
         <div class="card">
           <div class="card-heading">
             <h2>Needs a ticket</h2>
-            <button id="copy-ticket-phones" class="solid" type="button">
-              Copy phone numbers
-            </button>
+            <div class="heading-actions">
+              <button id="copy-ticket-emails" class="solid" type="button">
+                Copy email addresses
+              </button>
+              <button id="copy-ticket-phones" class="solid" type="button">
+                Copy phone numbers
+              </button>
+            </div>
           </div>
           <div class="table-scroll">
             <table>
@@ -468,9 +502,14 @@
         <div class="card">
           <div class="card-heading">
             <h2>Bought tipis</h2>
-            <button id="copy-bought-phones" class="solid" type="button">
-              Copy phone numbers
-            </button>
+            <div class="heading-actions">
+              <button id="copy-bought-emails" class="solid" type="button">
+                Copy email addresses
+              </button>
+              <button id="copy-bought-phones" class="solid" type="button">
+                Copy phone numbers
+              </button>
+            </div>
           </div>
           <div class="table-scroll">
             <table>

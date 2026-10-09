@@ -147,6 +147,24 @@ h2.section-label {
   justify-self: start;
 }
 
+.heading-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.member-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.25rem;
+  align-items: end;
+}
+
+.member-filters label:first-child {
+  flex: 1 1 16rem;
+  min-width: 12rem;
+}
+
 .field-error {
   color: #8f1d1d;
   font-weight: 600;
@@ -612,8 +630,14 @@ td {
   background: rgba(0, 0, 0, 0.08);
 }
 
-#members tr.member-detail:hover td {
+#members tr.member-detail:hover td,
+#members tr.member-filter-empty:hover td {
   background: transparent;
+}
+
+#members tr.member-filter-empty,
+#members tr.member-filter-empty td {
+  cursor: default;
 }
 
 #members tr.member-detail,
