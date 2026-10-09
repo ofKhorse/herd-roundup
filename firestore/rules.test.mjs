@@ -105,7 +105,10 @@ test("companions require a tent and cannot include yourself", async function () 
     updateDoc(doc(ada, "people/ada"), { share_with: ["KH-001"] }),
   );
   await assertSucceeds(
-    updateDoc(doc(ada, "people/ada"), { share_with: ["KH-002"] }),
+    updateDoc(doc(ada, "people/ada"), {
+      share_with: ["Ada Lovelace"],
+      whatsapp: "",
+    }),
   );
 });
 

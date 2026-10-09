@@ -18,13 +18,6 @@ const COLUMNS = [
   "boomer_email",
   "sale_available",
   "kaptain",
-  "needs_ticket",
-  "ticket_name",
-  "ticket_email",
-  "ticket_birth",
-  "ticket_gender",
-  "ticket_nationality",
-  "ticket_residency",
 ];
 
 const PROFILE_KEYS = [
@@ -273,7 +266,7 @@ function passwordParts(stored) {
 
 function whatsapp(value) {
   const text = cell(value);
-  if (!text) return { error: "Enter a WhatsApp number." };
+  if (!text) return { value: "" };
   const digits = text.replace(/\D/g, "");
   if (digits.length < 8 || digits.length > 15) {
     return { error: "Enter a WhatsApp number." };
@@ -291,9 +284,7 @@ function companions(value, self, stay) {
   for (const code of codes) {
     if (code === self) return { error: "A camper cannot list themself." };
     if (seen.has(code)) return { error: "List each companion once." };
-    if (!/^KH-[0-9]{3,}$/.test(code)) {
-      return { error: `${code} is not a member kode.` };
-    }
+    if (code.length >= 80) return { error: `${code} is too long.` };
     seen.add(code);
   }
   if (codes.length > 0 && !["4", "5", "6"].includes(stay)) {
