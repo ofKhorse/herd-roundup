@@ -40,6 +40,7 @@ if (!args.write) {
 
 process.env.METADATA_SERVER_DETECTION =
   process.env.METADATA_SERVER_DETECTION || "none";
+process.env.GOOGLE_CLOUD_QUOTA_PROJECT = project;
 if (args.credentials)
   process.env.GOOGLE_APPLICATION_CREDENTIALS = args.credentials;
 
@@ -61,11 +62,8 @@ async function api(options) {
   try {
     return await client.request(options);
   } catch (error) {
-    const grant =
-      error &&
-      error.response &&
-      error.response.data &&
-      error.response.data.error;
+    const data = error && error.response && error.response.data;
+    const grant = data && data.error;
     if (grant === "invalid_grant") {
       console.error(
         "Google rejected the saved login. Sign in as the account that owns the Firebase project, then run this command again:",
@@ -73,7 +71,14 @@ async function api(options) {
       console.error("  gcloud auth application-default login");
       process.exit(1);
     }
-    throw error;
+    const message =
+      (data && (data.error_description || data.error?.message || data.error)) ||
+      (error && error.message) ||
+      "The request failed.";
+    console.error(
+      typeof message === "string" ? message : JSON.stringify(message),
+    );
+    process.exit(1);
   }
 }
 
