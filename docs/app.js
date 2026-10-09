@@ -33,10 +33,13 @@ document.querySelector("#busy-ok").addEventListener(
     }
     document.querySelector("main").inert = false;
     var loginForm = document.querySelector("#login-form");
+    var loginSecret = document.querySelector("#login-secret");
     loginForm.elements.email.value = email;
-    loginForm.elements.password.value = text.textContent;
+    loginSecret.type = "password";
+    loginSecret.name = "password";
+    loginSecret.value = text.textContent;
     notifyLoginField_(loginForm.elements.email);
-    notifyLoginField_(loginForm.elements.password);
+    notifyLoginField_(loginSecret);
   },
   true,
 );
@@ -163,7 +166,10 @@ function onLogin(event) {
   event.preventDefault();
   var data = new FormData(event.target);
   if (useFirebase_()) {
-    signInWithFirebase(data.get("email"), data.get("password"));
+    signInWithFirebase(
+      data.get("email"),
+      fieldSecret(document.querySelector("#login-secret")),
+    );
     return;
   }
   signIn({ email: data.get("email"), password: data.get("password") }, false);
@@ -1741,39 +1747,91 @@ function useFirebase_() {
   return typeof USE_FIREBASE !== "undefined" && USE_FIREBASE;
 }
 
+function fieldSecret(input) {
+  if (!input) {
+    return "";
+  }
+  if (input.type === "password") {
+    return input.value;
+  }
+  return input.dataset.held || "";
+}
+
+function bindHeldSecret(input) {
+  input.addEventListener("input", function () {
+    if (input.type === "password") {
+      input.dataset.held = input.value;
+      return;
+    }
+    var shown = input.value;
+    var held = input.dataset.held || "";
+    if (/^•*$/.test(shown)) {
+      input.dataset.held = held.slice(0, shown.length);
+    } else {
+      var lead = 0;
+      while (lead < shown.length && shown.charAt(lead) === "•") {
+        lead += 1;
+      }
+      var trail = 0;
+      while (
+        trail < shown.length - lead &&
+        shown.charAt(shown.length - 1 - trail) === "•"
+      ) {
+        trail += 1;
+      }
+      var middle = shown.slice(lead, shown.length - trail).replace(/•/g, "");
+      var tail = trail ? held.slice(held.length - trail) : "";
+      input.dataset.held = held.slice(0, lead) + middle + tail;
+    }
+    var masked = (input.dataset.held || "").replace(/./g, "•");
+    if (input.value !== masked) {
+      input.value = masked;
+    }
+  });
+}
+
 function singlePasswordField_(which) {
   setSecretField_(
-    document.querySelector("#register-form").elements.password,
+    document.querySelector("#register-secret"),
     which === "register",
     "new-password",
   );
   setSecretField_(
-    document.querySelector("#login-form").elements.password,
+    document.querySelector("#login-secret"),
     which === "login",
     "current-password",
   );
 }
 
 function setSecretField_(input, real, autocomplete) {
+  var held = input.type === "password" ? input.value : input.dataset.held || "";
+  input.dataset.held = held;
   if (real) {
     input.type = "password";
+    input.name = "password";
     input.setAttribute("autocomplete", autocomplete);
-    input.classList.remove("mask-secret");
+    input.value = held;
     return;
   }
   input.type = "text";
+  input.name = "unused";
   input.setAttribute("autocomplete", "off");
-  input.classList.add("mask-secret");
+  input.value = held.replace(/./g, "•");
 }
 
 function startFirebase() {
   var registerForm = document.querySelector("#register-form");
+  var registerSecret = document.querySelector("#register-secret");
+  var registerAgain = document.querySelector("#register-again");
   document.querySelector("#register-whatsapp").hidden = true;
   registerForm.elements.whatsapp.required = false;
   document.querySelector("#register-password").hidden = false;
   document.querySelector("#register-password-again").hidden = false;
-  registerForm.elements.password.required = true;
-  registerForm.elements.password_again.required = true;
+  registerSecret.required = true;
+  registerAgain.required = true;
+  bindHeldSecret(registerSecret);
+  bindHeldSecret(registerAgain);
+  bindHeldSecret(document.querySelector("#login-secret"));
   registerForm.addEventListener("focusin", function () {
     singlePasswordField_("register");
   });
@@ -1837,9 +1895,8 @@ function registerWithFirebase(form) {
     say("Still loading.");
     return;
   }
-  var data = new FormData(form);
-  var password = String(data.get("password") || "");
-  var again = String(data.get("password_again") || "");
+  var password = fieldSecret(document.querySelector("#register-secret"));
+  var again = fieldSecret(document.querySelector("#register-again"));
   var error = form.querySelector('[data-field="register-password"]');
   if (password.length < 8) {
     error.hidden = false;
@@ -1858,7 +1915,7 @@ function registerWithFirebase(form) {
   firebase
     .auth()
     .createUserWithEmailAndPassword(
-      String(data.get("email") || "").trim(),
+      String(form.elements.email.value || "").trim(),
       password,
     )
     .catch(function (error) {
