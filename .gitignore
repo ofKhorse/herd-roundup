@@ -1,6 +1,7 @@
 node_modules/
 .DS_Store
 assignment.csv
+people.csv
 credentials.json
 firebase-debug.log
 firestore-debug.log

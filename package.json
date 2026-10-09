@@ -4,7 +4,7 @@
   "scripts": {
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "test": "node --test apps-script/logic.test.js assign/tipis.test.js assign/cli.test.js",
+    "test": "node --test apps-script/logic.test.js assign/tipis.test.js assign/cli.test.js scripts/people-import.test.mjs",
     "test:rules": "METADATA_SERVER_DETECTION=none firebase emulators:exec --only firestore --project demo-herd-rules \"node --test --test-concurrency=1 firestore/rules.test.mjs\"",
     "assign": "node assign/cli.js"
   },
