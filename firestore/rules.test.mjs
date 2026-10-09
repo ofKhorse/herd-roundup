@@ -63,22 +63,73 @@ async function reset(next) {
   });
 }
 
+function code(number) {
+  return number < 10
+    ? "KH-00" + number
+    : number < 100
+      ? "KH-0" + number
+      : "KH-" + number;
+}
+
 function db(uid, email) {
-  return testEnv.authenticatedContext(uid, { email: email }).firestore();
+  return testEnv
+    .authenticatedContext(uid, { email: email, email_verified: true })
+    .firestore();
+}
+
+async function claim(uid, email) {
+  const firestore = db(uid, email);
+  const counterRef = doc(firestore, "counters/member");
+  let number = 0;
+  await assertSucceeds(
+    runTransaction(firestore, async function (tx) {
+      const counter = await tx.get(counterRef);
+      const claims = Object.assign({}, counter.data().claims || {});
+      if (typeof claims[uid] === "number") {
+        number = claims[uid];
+        return;
+      }
+      number = counter.data().next;
+      claims[uid] = number;
+      tx.update(counterRef, { next: number + 1, claims: claims });
+    }),
+  );
+  return number;
+}
+
+async function signUp(uid, email, overrides) {
+  const number = await claim(uid, email);
+  const data = person(
+    Object.assign(
+      {
+        member_code: code(number),
+        email: email,
+      },
+      overrides,
+    ),
+  );
+  await assertSucceeds(setDoc(doc(db(uid, email), "people/" + uid), data));
+  return data;
 }
 
 test("a camper can change their name", async function () {
   await reset(1);
+  await signUp("ada", "ada@x.test");
   const ada = db("ada", "ada@x.test");
-  await assertSucceeds(setDoc(doc(ada, "people/ada"), person()));
   await assertSucceeds(updateDoc(doc(ada, "people/ada"), { full_name: "Ada" }));
 });
 
-test("a camper claims the next kode and cannot pick another", async function () {
+test("a camper claims one kode and cannot take another", async function () {
   await reset(1);
+  await signUp("ada", "ada@x.test");
   const ada = db("ada", "ada@x.test");
-  await assertSucceeds(setDoc(doc(ada, "people/ada"), person()));
-  await assertSucceeds(updateDoc(doc(ada, "counters/member"), { next: 2 }));
+  await assertFails(updateDoc(doc(ada, "counters/member"), { next: 3 }));
+  await assertFails(
+    updateDoc(doc(ada, "counters/member"), {
+      next: 3,
+      claims: { ada: 2 },
+    }),
+  );
   await assertFails(
     setDoc(doc(ada, "people/ada-other"), person({ email: "ada@x.test" })),
   );
@@ -86,10 +137,8 @@ test("a camper claims the next kode and cannot pick another", async function () 
 
 test("a camper cannot change the kode, admin, or amount", async function () {
   await reset(4);
+  await signUp("ada", "ada@x.test");
   const ada = db("ada", "ada@x.test");
-  await assertSucceeds(
-    setDoc(doc(ada, "people/ada"), person({ member_code: "KH-004" })),
-  );
   await assertFails(
     updateDoc(doc(ada, "people/ada"), { member_code: "KH-999" }),
   );
@@ -99,8 +148,8 @@ test("a camper cannot change the kode, admin, or amount", async function () {
 
 test("companions require a tent and cannot include yourself", async function () {
   await reset(1);
+  await signUp("ada", "ada@x.test");
   const ada = db("ada", "ada@x.test");
-  await assertSucceeds(setDoc(doc(ada, "people/ada"), person()));
   await assertFails(
     updateDoc(doc(ada, "people/ada"), {
       stay: "arrange",
@@ -120,8 +169,8 @@ test("companions require a tent and cannot include yourself", async function () 
 
 test("a ticket request stores the details only when the sale answer is no", async function () {
   await reset(1);
+  await signUp("ada", "ada@x.test");
   const ada = db("ada", "ada@x.test");
-  await assertSucceeds(setDoc(doc(ada, "people/ada"), person()));
   await assertFails(
     updateDoc(doc(ada, "people/ada"), {
       sale_available: "yes",
@@ -153,10 +202,8 @@ test("a ticket request stores the details only when the sale answer is no", asyn
 
 test("another camper reads the directory and not the profile", async function () {
   await reset(1);
+  await signUp("ada", "ada@x.test", { full_name: "Ada Lovelace" });
   const ada = db("ada", "ada@x.test");
-  await assertSucceeds(
-    setDoc(doc(ada, "people/ada"), person({ full_name: "Ada Lovelace" })),
-  );
   await assertSucceeds(
     setDoc(doc(ada, "directory/ada"), {
       member_code: "KH-001",
@@ -190,37 +237,21 @@ test("an admin reads another camper", async function () {
       }),
     );
   });
-  const ada = db("ada", "ada@x.test");
-  await assertSucceeds(setDoc(doc(ada, "people/ada"), person()));
+  await signUp("ada", "ada@x.test");
   const admin = db("admin", "admin@x.test");
   await assertSucceeds(getDoc(doc(admin, "people/ada")));
 });
 
 test("a new camper takes the next kode and then writes the directory", async function () {
   await reset(45);
+  const created = await signUp("ada", "ada@x.test", {
+    full_name: "",
+    stay: "",
+    share_with: [],
+    whatsapp: "+41791234567",
+  });
+  assert.equal(created.member_code, "KH-045");
   const ada = db("ada", "ada@x.test");
-  const personRef = doc(ada, "people/ada");
-  const counterRef = doc(ada, "counters/member");
-  await assertSucceeds(
-    runTransaction(ada, async function (tx) {
-      const existing = await tx.get(personRef);
-      assert.equal(existing.exists(), false);
-      const counter = await tx.get(counterRef);
-      const number = counter.data().next;
-      tx.set(
-        personRef,
-        person({
-          member_code: "KH-0" + number,
-          email: "ada@x.test",
-          full_name: "",
-          stay: "",
-          share_with: [],
-          whatsapp: "+41791234567",
-        }),
-      );
-      tx.update(counterRef, { next: number + 1 });
-    }),
-  );
   await assertSucceeds(
     setDoc(doc(ada, "directory/ada"), {
       member_code: "KH-045",
@@ -232,5 +263,50 @@ test("a new camper takes the next kode and then writes the directory", async fun
   await testEnv.withSecurityRulesDisabled(async function (context) {
     const snap = await getDoc(doc(context.firestore(), "counters/member"));
     assert.equal(snap.data().next, 46);
+    assert.equal(snap.data().claims.ada, 45);
   });
+});
+
+test("two campers cannot take the same kode", async function () {
+  await reset(5);
+  const adaNumber = await claim("ada", "ada@x.test");
+  const beaNumber = await claim("bea", "bea@x.test");
+  assert.notEqual(adaNumber, beaNumber);
+  await assertSucceeds(
+    setDoc(
+      doc(db("ada", "ada@x.test"), "people/ada"),
+      person({ member_code: code(adaNumber), email: "ada@x.test" }),
+    ),
+  );
+  await assertFails(
+    setDoc(
+      doc(db("bea", "bea@x.test"), "people/bea"),
+      person({ member_code: code(adaNumber), email: "bea@x.test" }),
+    ),
+  );
+  await assertSucceeds(
+    setDoc(
+      doc(db("bea", "bea@x.test"), "people/bea"),
+      person({ member_code: code(beaNumber), email: "bea@x.test" }),
+    ),
+  );
+});
+
+test("an unconfirmed email cannot read or write camp data", async function () {
+  await reset(1);
+  await signUp("ada", "ada@x.test");
+  const stranger = testEnv
+    .authenticatedContext("bea", {
+      email: "bea@x.test",
+      email_verified: false,
+    })
+    .firestore();
+  await assertFails(getDoc(doc(stranger, "directory/ada")));
+  await assertFails(getDoc(doc(stranger, "counters/member")));
+  await assertFails(
+    setDoc(
+      doc(stranger, "people/bea"),
+      person({ email: "bea@x.test", member_code: "KH-002" }),
+    ),
+  );
 });

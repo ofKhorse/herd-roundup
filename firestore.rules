@@ -5,9 +5,21 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    function verified() {
+      return signedIn() && request.auth.token.email_verified == true;
+    }
+
     function isAdmin() {
-      return signedIn()
+      return verified()
         && get(/databases/$(database)/documents/people/$(request.auth.uid)).data.admin == true;
+    }
+
+    function oldClaims() {
+      return resource.data.keys().hasAll(["claims"]) ? resource.data.claims : {};
+    }
+
+    function claimedNumber() {
+      return get(/databases/$(database)/documents/counters/member).data.claims[request.auth.uid];
     }
 
     function memberCode(n) {
@@ -135,20 +147,25 @@ service cloud.firestore {
     }
 
     match /counters/{name} {
-      allow read: if signedIn() && name == "member";
+      allow read: if verified() && name == "member";
       allow create: if false;
-      allow update: if signedIn()
+      allow update: if verified()
         && name == "member"
-        && request.resource.data.keys().hasOnly(["next"])
+        && request.resource.data.keys().hasOnly(["next", "claims"])
         && request.resource.data.next is int
-        && request.resource.data.next == resource.data.next + 1;
+        && request.resource.data.claims is map
+        && request.resource.data.next == resource.data.next + 1
+        && request.resource.data.claims[request.auth.uid] == resource.data.next
+        && request.resource.data.claims.diff(oldClaims()).addedKeys().hasOnly([request.auth.uid])
+        && request.resource.data.claims.diff(oldClaims()).changedKeys().size() == 0
+        && request.resource.data.claims.diff(oldClaims()).removedKeys().size() == 0;
       allow delete: if false;
     }
 
     match /people/{uid} {
-      allow get: if signedIn() && (request.auth.uid == uid || isAdmin());
+      allow get: if verified() && (request.auth.uid == uid || isAdmin());
       allow list: if isAdmin();
-      allow create: if signedIn()
+      allow create: if verified()
         && request.auth.uid == uid
         && profileOk(request.resource.data)
         && request.resource.data.admin == false
@@ -156,9 +173,9 @@ service cloud.firestore {
         && request.resource.data.camp_fee_paid == ""
         && request.resource.data.amount == ""
         && request.resource.data.payment_ref == ""
-        && request.resource.data.member_code
-          == memberCode(get(/databases/$(database)/documents/counters/member).data.next);
-      allow update: if signedIn()
+        && claimedNumber() is int
+        && request.resource.data.member_code == memberCode(claimedNumber());
+      allow update: if verified()
         && request.auth.uid == uid
         && profileOk(request.resource.data)
         && request.resource.data.member_code == resource.data.member_code
@@ -171,8 +188,8 @@ service cloud.firestore {
     }
 
     match /directory/{uid} {
-      allow read: if signedIn();
-      allow create, update: if signedIn()
+      allow read: if verified();
+      allow create, update: if verified()
         && request.auth.uid == uid
         && request.resource.data.keys().hasOnly([
           "member_code",
