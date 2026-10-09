@@ -6,7 +6,13 @@ import {
   assertSucceeds,
   initializeTestEnvironment,
 } from "@firebase/rules-unit-testing";
-import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
+import {
+  doc,
+  getDoc,
+  runTransaction,
+  setDoc,
+  updateDoc,
+} from "firebase/firestore";
 
 const testEnv = await initializeTestEnvironment({
   projectId: "demo-herd-rules",
@@ -188,4 +194,43 @@ test("an admin reads another camper", async function () {
   await assertSucceeds(setDoc(doc(ada, "people/ada"), person()));
   const admin = db("admin", "admin@x.test");
   await assertSucceeds(getDoc(doc(admin, "people/ada")));
+});
+
+test("a new camper takes the next kode and then writes the directory", async function () {
+  await reset(45);
+  const ada = db("ada", "ada@x.test");
+  const personRef = doc(ada, "people/ada");
+  const counterRef = doc(ada, "counters/member");
+  await assertSucceeds(
+    runTransaction(ada, async function (tx) {
+      const existing = await tx.get(personRef);
+      assert.equal(existing.exists(), false);
+      const counter = await tx.get(counterRef);
+      const number = counter.data().next;
+      tx.set(
+        personRef,
+        person({
+          member_code: "KH-0" + number,
+          email: "ada@x.test",
+          full_name: "",
+          stay: "",
+          share_with: [],
+          whatsapp: "+41791234567",
+        }),
+      );
+      tx.update(counterRef, { next: number + 1 });
+    }),
+  );
+  await assertSucceeds(
+    setDoc(doc(ada, "directory/ada"), {
+      member_code: "KH-045",
+      full_name: "",
+      email: "ada@x.test",
+      share_with: [],
+    }),
+  );
+  await testEnv.withSecurityRulesDisabled(async function (context) {
+    const snap = await getDoc(doc(context.firestore(), "counters/member"));
+    assert.equal(snap.data().next, 46);
+  });
 });

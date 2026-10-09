@@ -266,7 +266,7 @@ function onReset(event) {
 function onSave(event) {
   event.preventDefault();
   if (useFirebase_()) {
-    say("Saving on Firebase is not switched on yet.");
+    saveWithFirebase(new FormData(event.target));
     return;
   }
   var credentials = readSession();
@@ -1534,6 +1534,9 @@ function escapeInfoAttr_(value) {
 }
 
 function openInfoOnce(memberCode) {
+  if (!memberCode) {
+    return;
+  }
   var key = "herd-roundup-info-" + memberCode;
   var seen = false;
   try {
@@ -1739,7 +1742,6 @@ function startFirebase() {
   registerForm.elements.password.required = true;
   registerForm.elements.password_again.required = true;
   document.querySelector("#reset-submit").textContent = "Email me a reset link";
-  document.querySelector("#save-profile").hidden = true;
   loadFirebaseScripts()
     .then(function () {
       firebase.initializeApp(FIREBASE_CONFIG);
@@ -1881,26 +1883,24 @@ function loadFirebaseProfile(user) {
     .get()
     .then(function (snap) {
       if (!snap.exists) {
-        return {
-          ok: false,
-          error: "There is no camp profile for this account yet.",
-        };
+        return db
+          .collection("directory")
+          .get()
+          .then(function (directorySnap) {
+            return {
+              ok: true,
+              person: campPerson_({ email: user.email }, user.email),
+              directory: readDirectory_(directorySnap),
+              tipi_count: null,
+            };
+          });
       }
       return db
         .collection("directory")
         .get()
         .then(function (directorySnap) {
           var person = campPerson_(snap.data(), user.email);
-          var directory = [];
-          directorySnap.forEach(function (doc) {
-            var data = doc.data();
-            directory.push({
-              member_code: data.member_code || "",
-              full_name: data.full_name || "",
-              email: data.email || "",
-              share_with: data.share_with || [],
-            });
-          });
+          var directory = readDirectory_(directorySnap);
           var result = {
             ok: true,
             person: person,
@@ -1937,6 +1937,133 @@ function loadFirebaseProfile(user) {
               return result;
             });
         });
+    });
+}
+
+function readDirectory_(directorySnap) {
+  var directory = [];
+  directorySnap.forEach(function (doc) {
+    var data = doc.data();
+    directory.push({
+      member_code: data.member_code || "",
+      full_name: data.full_name || "",
+      email: data.email || "",
+      share_with: data.share_with || [],
+    });
+  });
+  return directory;
+}
+
+function profileDraft(data) {
+  var purchased = data.get("purchased") ? "yes" : "";
+  var sale = data.get("sale_available");
+  if (sale !== "yes" && sale !== "no") {
+    sale = "";
+  }
+  var ticket = ticketPayload(data);
+  return {
+    full_name: String(data.get("full_name") || "").trim(),
+    stay: String(data.get("stay") || ""),
+    boomer_email: String(data.get("boomer_email") || "").trim(),
+    purchased: purchased,
+    purchased_size: String(data.get("purchased_size") || ""),
+    whatsapp: storedWhatsapp(data.get("whatsapp")),
+    share_with: state.companions.map(function (item) {
+      return String(item);
+    }),
+    sale_available: sale,
+    kaptain: data.get("kaptain") === "yes" ? "yes" : "",
+    needs_ticket: ticket.needs_ticket,
+    ticket_name: ticket.ticket_name,
+    ticket_email: ticket.ticket_email,
+    ticket_birth: ticket.ticket_birth,
+    ticket_gender: ticket.ticket_gender,
+    ticket_nationality: ticket.ticket_nationality,
+    ticket_residency: ticket.ticket_residency,
+  };
+}
+
+function saveWithFirebase(data) {
+  if (!window.firebase || !firebase.auth || !firebase.firestore) {
+    say("Still loading.");
+    return;
+  }
+  var user = firebase.auth().currentUser;
+  if (!user) {
+    say("Log in again.");
+    return;
+  }
+  var problems = profileProblems();
+  if (problems.length) {
+    showFieldErrors(problems);
+    return;
+  }
+  var draft = profileDraft(data);
+  var extra = draftProblems(draft);
+  if (extra.length) {
+    showFieldErrors(extra);
+    return;
+  }
+  clearFieldErrors();
+  showBusy("Saving…");
+  var db = firebase.firestore();
+  var personRef = db.collection("people").doc(user.uid);
+  var counterRef = db.collection("counters").doc("member");
+  var now = new Date().toISOString();
+  db.runTransaction(function (tx) {
+    return tx.get(personRef).then(function (snap) {
+      if (snap.exists) {
+        var current = snap.data();
+        var written = peopleWrite(draft, {
+          member_code: current.member_code,
+          email: current.email,
+          admin: current.admin,
+          camp_fee_paid: current.camp_fee_paid,
+          amount: current.amount,
+          payment_ref: current.payment_ref,
+          purchased_at: purchasedAtFor(current, draft.purchased, now),
+        });
+        tx.update(personRef, written);
+        return written;
+      }
+      return tx.get(counterRef).then(function (counterSnap) {
+        var number = counterSnap.data().next;
+        var created = peopleWrite(draft, {
+          member_code: memberCodeFromNumber(number),
+          email: user.email,
+          admin: false,
+          camp_fee_paid: "",
+          amount: "",
+          payment_ref: "",
+          purchased_at: purchasedAtFor({ purchased: "" }, draft.purchased, now),
+        });
+        tx.set(personRef, created);
+        tx.update(counterRef, { next: number + 1 });
+        return created;
+      });
+    });
+  })
+    .then(function (written) {
+      return db
+        .collection("directory")
+        .doc(user.uid)
+        .set(directoryEntry(written));
+    })
+    .then(function () {
+      return loadFirebaseProfile(user);
+    })
+    .then(function (result) {
+      hideBusy();
+      if (!result.ok) {
+        say(result.error);
+        return;
+      }
+      showSession(result);
+      toast("Saved.");
+    })
+    .catch(function () {
+      hideBusy();
+      toast("Saving failed.", true);
     });
 }
 
