@@ -109,84 +109,6 @@
       </section>
 
       <section id="profile" class="stack" hidden>
-        <div class="card">
-          <h2>Your kode</h2>
-          <div class="pay">
-            <p id="member-code-line">
-              Your kode is <code id="member-code"></code>.
-            </p>
-            <p id="member-code-pending" hidden>
-              Save your profile to get your kode.
-            </p>
-            <details id="pay-guide" open>
-              <summary>How to pay</summary>
-              <div class="pay-media">
-                <video
-                  id="pay-video"
-                  class="pay-video"
-                  controls
-                  playsinline
-                  preload="metadata"
-                  width="576"
-                  height="1248"
-                  src="how-to-pay.mp4"
-                ></video>
-                <a
-                  class="qr"
-                  href="https://www.leetchi.com/en/c/ofkhorse--boom-2027-1305346"
-                  target="_blank"
-                  rel="noopener"
-                >
-                  <img
-                    src="leetchi-qr.png"
-                    alt="QR kode for the kamp Leetchi pot"
-                    width="220"
-                    height="220"
-                  />
-                </a>
-              </div>
-              <ol>
-                <li>
-                  <a
-                    href="https://www.leetchi.com/en/c/ofkhorse--boom-2027-1305346"
-                    target="_blank"
-                    rel="noopener"
-                    >Open the kamp Leetchi pot (this link or QR code above).</a
-                  >
-                </li>
-                <li>
-                  Pay with the same email you used to sign up on this platform.
-                </li>
-                <li>Klick Participate and pay the kamp fee by kard.</li>
-                <li>
-                  <strong class="pay-kode"
-                    >Leave a message in the pot with your ofKhorse kode.</strong
-                  >
-                </li>
-                <li>
-                  If you skip that, open the pot later. Sign in, or kreate a
-                  Leetchi akkount, with the same email you paid with. Under
-                  Messages, choose Write, and attach the message to that
-                  payment.
-                </li>
-                <li>
-                  To korrekt a message, open Messages, choose the three dots
-                  beside it, then Edit and Save.
-                </li>
-                <li>
-                  <strong>DO NOT DELETE THE MESSAGE!</strong> Deleting the
-                  message is final for that payment. Leetchi will not let you
-                  add another one unless you pay again.
-                </li>
-              </ol>
-              <p>
-                The message is publik on the pot page. That kode is how we match
-                your payment.
-              </p>
-            </details>
-          </div>
-        </div>
-
         <form id="profile-form" class="stack">
           <div class="card">
             <h2>You</h2>
@@ -369,12 +291,91 @@
           </div>
           <div class="actions">
             <button id="save-profile" class="solid" type="submit">Save</button>
-            <button id="logout" class="solid" type="button">Log out</button>
           </div>
         </form>
         <div class="card">
+          <h2>Your kode</h2>
+          <div class="pay">
+            <p id="member-code-line">
+              Your kode is <code id="member-code"></code>.
+            </p>
+            <p id="member-code-pending" hidden>
+              Save your profile to get your kode.
+            </p>
+            <details id="pay-guide" open>
+              <summary>How to pay</summary>
+              <div class="pay-media">
+                <video
+                  id="pay-video"
+                  class="pay-video"
+                  controls
+                  playsinline
+                  preload="metadata"
+                  width="576"
+                  height="1248"
+                  src="how-to-pay.mp4"
+                ></video>
+                <a
+                  class="qr"
+                  href="https://www.leetchi.com/en/c/ofkhorse--boom-2027-1305346"
+                  target="_blank"
+                  rel="noopener"
+                >
+                  <img
+                    src="leetchi-qr.png"
+                    alt="QR kode for the kamp Leetchi pot"
+                    width="220"
+                    height="220"
+                  />
+                </a>
+              </div>
+              <ol>
+                <li>
+                  <a
+                    href="https://www.leetchi.com/en/c/ofkhorse--boom-2027-1305346"
+                    target="_blank"
+                    rel="noopener"
+                    >Open the kamp Leetchi pot (this link or QR code above).</a
+                  >
+                </li>
+                <li>
+                  Pay with the same email you used to sign up on this platform.
+                </li>
+                <li>Klick Participate and pay the kamp fee by kard.</li>
+                <li>
+                  <strong class="pay-kode"
+                    >Leave a message in the pot with your ofKhorse kode.</strong
+                  >
+                </li>
+                <li>
+                  If you skip that, open the pot later. Sign in, or kreate a
+                  Leetchi akkount, with the same email you paid with. Under
+                  Messages, choose Write, and attach the message to that
+                  payment.
+                </li>
+                <li>
+                  To korrekt a message, open Messages, choose the three dots
+                  beside it, then Edit and Save.
+                </li>
+                <li>
+                  <strong>DO NOT DELETE THE MESSAGE!</strong> Deleting the
+                  message is final for that payment. Leetchi will not let you
+                  add another one unless you pay again.
+                </li>
+              </ol>
+              <p>
+                The message is publik on the pot page. That kode is how we match
+                your payment.
+              </p>
+            </details>
+          </div>
+        </div>
+        <div class="card">
           <p id="fee"></p>
           <p id="fee-owed"></p>
+        </div>
+        <div class="actions">
+          <button id="logout" class="solid" type="button">Log out</button>
         </div>
       </section>
 
