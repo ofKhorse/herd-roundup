@@ -614,6 +614,7 @@ function showView() {
     state.admin &&
     (location.hash === "#admin" || location.hash === "#payments");
   document.querySelector("#nav").hidden = !state.admin;
+  document.querySelector("#info").hidden = onAdmin;
   profile.hidden = onAdmin || (!state.memberCode && !state.email);
   document.querySelector("#admin").hidden = !onAdmin;
   document.querySelector("#show-camp").removeAttribute("aria-current");
@@ -989,6 +990,7 @@ function logout() {
   profile.hidden = true;
   document.querySelector("#admin").hidden = true;
   document.querySelector("#nav").hidden = true;
+  document.querySelector("#info").hidden = false;
   auth.hidden = false;
   var hello = document.querySelector("#hello");
   hello.textContent = "";

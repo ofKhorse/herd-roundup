@@ -98,6 +98,10 @@ h2.section-label {
   text-decoration: none;
 }
 
+.nav:not([hidden]) + #info {
+  margin-top: 1rem;
+}
+
 .stack,
 .card,
 .pair,
