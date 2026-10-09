@@ -970,13 +970,23 @@ function clearSession() {
 }
 
 function logout() {
+  firebaseQuietSignOut = true;
   if (useFirebase_() && window.firebase && firebase.auth) {
     firebase.auth().signOut();
   }
+  showLoggedOut(true);
+}
+
+function showLoggedOut(announce) {
   clearSession();
+  state.directory = [];
+  state.companions = [];
   state.memberCode = "";
   state.email = "";
   state.admin = false;
+  state.kaptains = [];
+  state.tickets = [];
+  state.bought = [];
   if (location.hash) {
     history.replaceState(null, "", location.pathname + location.search);
   }
@@ -984,11 +994,17 @@ function logout() {
   document.querySelector("#admin").hidden = true;
   document.querySelector("#nav").hidden = true;
   document.querySelector("#info").hidden = false;
+  document.querySelector("#register-form").hidden = false;
+  document.querySelector("#login-form").hidden = false;
+  document.querySelector("#reset-form").hidden = false;
+  document.querySelector("#confirm-email").hidden = true;
   auth.hidden = false;
   var hello = document.querySelector("#hello");
   hello.textContent = "";
   hello.hidden = true;
-  say("Logged out.");
+  if (announce) {
+    say("Logged out.");
+  }
 }
 
 function showHello(person) {
@@ -1192,7 +1208,7 @@ function callServer(body, options) {
 }
 
 function post(body) {
-  if (!SCRIPT_URL) {
+  if (typeof SCRIPT_URL === "undefined" || !SCRIPT_URL) {
     return Promise.reject(new Error("The script URL is not set yet."));
   }
   return fetch(SCRIPT_URL, {
@@ -1737,6 +1753,8 @@ function showFieldErrors(problems) {
 }
 
 var firebaseAnnounce = "";
+var firebaseHadUser = false;
+var firebaseQuietSignOut = false;
 
 function useFirebase_() {
   return typeof USE_FIREBASE !== "undefined" && USE_FIREBASE;
@@ -1856,6 +1874,30 @@ function startFirebase() {
     });
   singlePasswordField_("login");
   document.querySelector("#reset-submit").textContent = "Email me a reset link";
+  document
+    .querySelector("#confirm-check")
+    .addEventListener("click", confirmChecked_);
+  document
+    .querySelector("#confirm-resend")
+    .addEventListener("click", resendConfirmation_);
+  document.querySelector("#confirm-logout").addEventListener("click", logout);
+  window.addEventListener("focus", function () {
+    var user = window.firebase && firebase.auth && firebase.auth().currentUser;
+    if (!user || user.emailVerified) {
+      return;
+    }
+    if (document.querySelector("#confirm-email").hidden) {
+      return;
+    }
+    user.reload().then(function () {
+      if (!user.emailVerified) {
+        return;
+      }
+      return user.getIdToken(true).then(function () {
+        onFirebaseUser(firebase.auth().currentUser);
+      });
+    });
+  });
   loadFirebaseScripts()
     .then(function () {
       firebase.initializeApp(FIREBASE_CONFIG);
@@ -1958,12 +2000,105 @@ function resetWithFirebase(email) {
     });
 }
 
-function onFirebaseUser(user) {
+function confirmationSettings_() {
+  return { url: "https://herd.ofk.horse/", handleCodeInApp: false };
+}
+
+function showConfirmEmail() {
+  profile.hidden = true;
+  document.querySelector("#admin").hidden = true;
+  document.querySelector("#nav").hidden = true;
+  document.querySelector("#hello").hidden = true;
+  document.querySelector("#register-form").hidden = true;
+  document.querySelector("#login-form").hidden = true;
+  document.querySelector("#reset-form").hidden = true;
+  document.querySelector("#confirm-email").hidden = false;
+  auth.hidden = false;
+  state.memberCode = "";
+  state.email = "";
+  state.admin = false;
+}
+
+function sendConfirmation_(user) {
+  return user.sendEmailVerification(confirmationSettings_());
+}
+
+function resendConfirmation_() {
+  var user = firebase.auth().currentUser;
   if (!user) {
     return;
   }
+  showBusy("Sending a confirmation link…");
+  sendConfirmation_(user)
+    .then(function () {
+      hideBusy();
+      toast("Confirmation link sent.");
+    })
+    .catch(function (error) {
+      hideBusy();
+      toast(
+        firebaseProblem(error, "Could not send a confirmation link."),
+        true,
+      );
+    });
+}
+
+function confirmChecked_() {
+  var user = firebase.auth().currentUser;
+  if (!user) {
+    return;
+  }
+  showBusy("Checking…");
+  user
+    .reload()
+    .then(function () {
+      return user.getIdToken(true);
+    })
+    .then(function () {
+      hideBusy();
+      if (!user.emailVerified) {
+        toast("That email is not confirmed yet.", true);
+        return;
+      }
+      onFirebaseUser(user);
+    })
+    .catch(function () {
+      hideBusy();
+      toast("Could not check the confirmation.", true);
+    });
+}
+
+function onFirebaseUser(user) {
+  if (!user) {
+    if (!firebaseHadUser) {
+      return;
+    }
+    firebaseHadUser = false;
+    var announceSignOut = !firebaseQuietSignOut;
+    firebaseQuietSignOut = false;
+    showLoggedOut(announceSignOut);
+    return;
+  }
+  firebaseHadUser = true;
   var announce = firebaseAnnounce;
   firebaseAnnounce = "";
+  if (!user.emailVerified) {
+    hideBusy();
+    showConfirmEmail();
+    if (announce === "registered") {
+      sendConfirmation_(user).catch(function (error) {
+        toast(
+          firebaseProblem(error, "Could not send a confirmation link."),
+          true,
+        );
+      });
+      toast("Registered. Confirm your email to continue.");
+    } else if (announce === "signed-in") {
+      toast("Confirm your email to continue.", true);
+    }
+    return;
+  }
+  document.querySelector("#confirm-email").hidden = true;
   showBusy(announce === "registered" ? "Registering…" : "Signing in…");
   loadFirebaseProfile(user)
     .then(function (result) {
@@ -2115,26 +2250,31 @@ function saveWithFirebase(data) {
   showBusy("Saving…");
   var db = firebase.firestore();
   var personRef = db.collection("people").doc(user.uid);
-  var counterRef = db.collection("counters").doc("member");
   var now = new Date().toISOString();
   db.runTransaction(function (tx) {
     return tx.get(personRef).then(function (snap) {
-      if (snap.exists) {
-        var current = snap.data();
-        var written = peopleWrite(draft, {
-          member_code: current.member_code,
-          email: current.email,
-          admin: current.admin,
-          camp_fee_paid: current.camp_fee_paid,
-          amount: current.amount,
-          payment_ref: current.payment_ref,
-          purchased_at: purchasedAtFor(current, draft.purchased, now),
-        });
-        tx.update(personRef, written);
+      if (!snap.exists) {
+        return null;
+      }
+      var current = snap.data();
+      var written = peopleWrite(draft, {
+        member_code: current.member_code,
+        email: current.email,
+        admin: current.admin,
+        camp_fee_paid: current.camp_fee_paid,
+        amount: current.amount,
+        payment_ref: current.payment_ref,
+        purchased_at: purchasedAtFor(current, draft.purchased, now),
+      });
+      tx.update(personRef, written);
+      return written;
+    });
+  })
+    .then(function (written) {
+      if (written) {
         return written;
       }
-      return tx.get(counterRef).then(function (counterSnap) {
-        var number = counterSnap.data().next;
+      return claimMemberNumber_(user).then(function (number) {
         var created = peopleWrite(draft, {
           member_code: memberCodeFromNumber(number),
           email: user.email,
@@ -2144,34 +2284,77 @@ function saveWithFirebase(data) {
           payment_ref: "",
           purchased_at: purchasedAtFor({ purchased: "" }, draft.purchased, now),
         });
-        tx.set(personRef, created);
-        tx.update(counterRef, { next: number + 1 });
-        return created;
+        return personRef.set(created).then(function () {
+          return created;
+        });
       });
-    });
-  })
+    })
     .then(function (written) {
-      return db
-        .collection("directory")
-        .doc(user.uid)
-        .set(directoryEntry(written));
+      return writeDirectory_(user, written).then(
+        function () {
+          return true;
+        },
+        function () {
+          return false;
+        },
+      );
     })
-    .then(function () {
-      return loadFirebaseProfile(user);
-    })
-    .then(function (result) {
-      hideBusy();
-      if (!result.ok) {
-        say(result.error);
-        return;
-      }
-      showSession(result);
-      toast("Saved.");
+    .then(function (listed) {
+      return loadFirebaseProfile(user)
+        .then(function (result) {
+          hideBusy();
+          if (!result.ok) {
+            say(result.error);
+            return;
+          }
+          showSession(result);
+          toast(
+            listed
+              ? "Saved."
+              : "Saved. The herd list did not update. Save again.",
+            !listed,
+          );
+        })
+        .catch(function () {
+          hideBusy();
+          toast("Saved. Reload the page if your kode is missing.", true);
+        });
     })
     .catch(function () {
       hideBusy();
       toast("Saving failed.", true);
     });
+}
+
+function claimMemberNumber_(user) {
+  var counterRef = firebase.firestore().collection("counters").doc("member");
+  return firebase.firestore().runTransaction(function (tx) {
+    return tx.get(counterRef).then(function (counterSnap) {
+      var data = counterSnap.data() || {};
+      var claims = Object.assign({}, data.claims || {});
+      var held = claims[user.uid];
+      if (typeof held === "number") {
+        return held;
+      }
+      var number = data.next;
+      claims[user.uid] = number;
+      tx.update(counterRef, { next: number + 1, claims: claims });
+      return number;
+    });
+  });
+}
+
+function writeDirectory_(user, written) {
+  var ref = firebase.firestore().collection("directory").doc(user.uid);
+  function once(triesLeft) {
+    return ref.set(directoryEntry(written)).catch(function (error) {
+      if (triesLeft <= 1) {
+        throw error;
+      }
+      return once(triesLeft - 1);
+    });
+  }
+  return once(3);
 }
 
 function campPerson_(data, email) {

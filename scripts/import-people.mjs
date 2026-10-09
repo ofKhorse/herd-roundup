@@ -90,7 +90,6 @@ for (const record of parsed.records) {
 }
 
 let created = 0;
-let existing = 0;
 for (const [rounds, records] of groups) {
   for (let start = 0; start < records.length; start += 100) {
     const batch = records.slice(start, start + 100);
@@ -104,6 +103,7 @@ for (const [rounds, records] of groups) {
           return {
             localId: record.uid,
             email: record.email,
+            emailVerified: true,
             passwordHash: record.hash,
             salt: record.salt,
           };
@@ -115,24 +115,14 @@ for (const [rounds, records] of groups) {
     created += batch.length - failed.size;
     for (const failure of failures) {
       const record = batch[failure.index];
-      if (!/EMAIL_EXISTS|DUPLICATE_/i.test(failure.message || "")) {
+      if (/EMAIL_EXISTS|DUPLICATE_/i.test(failure.message || "")) {
         throw new Error(
-          `Could not import ${record.email}: ${failure.message || "unknown error"}`,
+          `Refusing to attach imported camp data to an existing sign-in (${record.email}).`,
         );
       }
-      const lookup = await api({
-        url: `https://identitytoolkit.googleapis.com/v1/projects/${project}/accounts:lookup`,
-        method: "POST",
-        data: { email: [record.email] },
-      });
-      const user = lookup.data && lookup.data.users && lookup.data.users[0];
-      if (!user || !user.localId) {
-        throw new Error(
-          `Could not find the existing sign-in for ${record.email}.`,
-        );
-      }
-      record.uid = user.localId;
-      existing += 1;
+      throw new Error(
+        `Could not import ${record.email}: ${failure.message || "unknown error"}`,
+      );
     }
   }
 }
@@ -155,7 +145,7 @@ for (let start = 0; start < writes.length; start += 400) {
   });
 }
 
-console.log(`Created ${created} sign-ins, kept ${existing} existing sign-ins.`);
+console.log(`Created ${created} sign-ins.`);
 console.log(`Wrote ${parsed.records.length} profiles.`);
 
 function documentWrite(path, data) {
