@@ -11,6 +11,10 @@
       <p class="mark">ofKhorse</p>
       <h1>Boom 2027</h1>
       <p id="hello" class="hello" hidden></p>
+      <nav id="nav" class="nav" hidden>
+        <a id="show-camp" href="#camp">Kamp</a>
+        <a id="show-admin" href="#admin">Admin</a>
+      </nav>
       <details id="info" class="card info" open>
         <summary>Info</summary>
         <div class="info-scroll">
@@ -23,10 +27,6 @@
           ></iframe>
         </div>
       </details>
-      <nav id="nav" class="nav" hidden>
-        <a id="show-camp" href="#camp">Kamp</a>
-        <a id="show-admin" href="#admin">Admin</a>
-      </nav>
       <p id="notice" class="notice" role="status"></p>
 
       <section id="auth" class="stack">
@@ -412,16 +412,18 @@
               Copy phone numbers
             </button>
           </div>
-          <table>
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Kode</th>
-                <th>WhatsApp</th>
-              </tr>
-            </thead>
-            <tbody id="kaptain-rows"></tbody>
-          </table>
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Kode</th>
+                  <th>WhatsApp</th>
+                </tr>
+              </thead>
+              <tbody id="kaptain-rows"></tbody>
+            </table>
+          </div>
         </div>
         <div class="card">
           <div class="card-heading">
@@ -456,17 +458,19 @@
               Copy phone numbers
             </button>
           </div>
-          <table>
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Kode</th>
-                <th>WhatsApp</th>
-                <th>Tent</th>
-              </tr>
-            </thead>
-            <tbody id="bought-rows"></tbody>
-          </table>
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Kode</th>
+                  <th>WhatsApp</th>
+                  <th>Tent</th>
+                </tr>
+              </thead>
+              <tbody id="bought-rows"></tbody>
+            </table>
+          </div>
         </div>
         <div class="actions">
           <button id="admin-logout" class="solid" type="button">Log out</button>

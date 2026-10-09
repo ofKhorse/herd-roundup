@@ -37,6 +37,7 @@ main:has(#admin:not([hidden])) {
 }
 
 .table-scroll {
+  min-width: 0;
   overflow-x: auto;
 }
 
@@ -96,6 +97,10 @@ h2.section-label {
 .nav a[aria-current="page"] {
   font-weight: 600;
   text-decoration: none;
+}
+
+.nav:not([hidden]) + #info {
+  margin-top: 1rem;
 }
 
 .stack,
@@ -579,20 +584,14 @@ td {
   overflow-wrap: anywhere;
 }
 
-#members {
-  table-layout: fixed;
+#admin table {
+  width: max-content;
+  min-width: 100%;
+  table-layout: auto;
 }
 
-#members td {
-  overflow: hidden;
+#admin th {
   white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
-#members th {
-  white-space: normal;
-  overflow-wrap: normal;
-  vertical-align: bottom;
 }
 
 #members tbody tr {
