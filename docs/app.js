@@ -1976,6 +1976,7 @@ function showFieldErrors(problems) {
 var firebaseAnnounce = "";
 var firebaseHadUser = false;
 var firebaseQuietSignOut = false;
+var firebaseSettle = 0;
 
 function useFirebase_() {
   return typeof USE_FIREBASE !== "undefined" && USE_FIREBASE;
@@ -2110,14 +2111,7 @@ function startFirebase() {
     if (document.querySelector("#confirm-email").hidden) {
       return;
     }
-    user.reload().then(function () {
-      if (!user.emailVerified) {
-        return;
-      }
-      return user.getIdToken(true).then(function () {
-        onFirebaseUser(firebase.auth().currentUser);
-      });
-    });
+    beginFirebaseSession_(user);
   });
   loadFirebaseScripts()
     .then(function () {
@@ -2160,6 +2154,18 @@ function signInWithFirebase(email, password) {
   firebase
     .auth()
     .signInWithEmailAndPassword(String(email || "").trim(), password)
+    .then(function (result) {
+      var user = (result && result.user) || firebase.auth().currentUser;
+      if (!user) {
+        firebaseAnnounce = "";
+        hideBusy();
+        toast("Sign-in failed.", true);
+        return;
+      }
+      // Already signed in: Firebase resolves this and does not call
+      // onAuthStateChanged again, so the waiting screen would stay up.
+      beginFirebaseSession_(user);
+    })
     .catch(function (error) {
       firebaseAnnounce = "";
       hideBusy();
@@ -2269,28 +2275,163 @@ function confirmChecked_() {
   if (!user) {
     return;
   }
-  showBusy("Checking…");
-  user
-    .reload()
-    .then(function () {
-      return user.getIdToken(true);
-    })
-    .then(function () {
-      hideBusy();
-      if (!user.emailVerified) {
-        toast("That email is not confirmed yet.", true);
-        return;
+  beginFirebaseSession_(user, { checked: true });
+}
+
+function wait_(ms) {
+  return new Promise(function (resolve) {
+    setTimeout(resolve, ms);
+  });
+}
+
+function tokenClaimsVerified_(result) {
+  return !!(result && result.claims && result.claims.email_verified === true);
+}
+
+// The confirmation page marks the email verified before this browser's
+// saved sign-in token includes that fact. Reading the herd with the old
+// token is rejected, which showed up as "Sign-in failed."
+function freshVerifiedToken_(user) {
+  function refresh(attempt) {
+    return user
+      .reload()
+      .then(function () {
+        if (!user.emailVerified) {
+          return false;
+        }
+        return user.getIdTokenResult(true).then(function (result) {
+          if (tokenClaimsVerified_(result)) {
+            return true;
+          }
+          if (attempt >= 4) {
+            return false;
+          }
+          return wait_(500 * attempt).then(function () {
+            return refresh(attempt + 1);
+          });
+        });
+      })
+      .catch(function (error) {
+        if (attempt >= 4) {
+          throw error;
+        }
+        return wait_(500 * attempt).then(function () {
+          return refresh(attempt + 1);
+        });
+      });
+  }
+  return user
+    .getIdTokenResult(false)
+    .then(function (result) {
+      if (user.emailVerified && tokenClaimsVerified_(result)) {
+        return true;
       }
-      onFirebaseUser(user);
+      return refresh(1);
     })
     .catch(function () {
+      return refresh(1);
+    });
+}
+
+function showAuthChoices_() {
+  profile.hidden = true;
+  document.querySelector("#admin").hidden = true;
+  document.querySelector("#nav").hidden = true;
+  document.querySelector("#hello").hidden = true;
+  document.querySelector("#register-form").hidden = false;
+  document.querySelector("#login-form").hidden = false;
+  document.querySelector("#reset-form").hidden = false;
+  document.querySelector("#confirm-email").hidden = true;
+  auth.hidden = false;
+}
+
+function beginFirebaseSession_(user, options) {
+  var ticket = ++firebaseSettle;
+  var announce = firebaseAnnounce;
+  var pending = "Signing in…";
+  if (options && options.checked) {
+    pending = "Checking…";
+  } else if (announce === "registered") {
+    pending = "Registering…";
+  }
+  showBusy(pending);
+  freshVerifiedToken_(user)
+    .then(function (ready) {
+      if (ticket !== firebaseSettle) {
+        return;
+      }
+      firebaseAnnounce = "";
+      if (!ready) {
+        hideBusy();
+        showConfirmEmail();
+        if (options && options.checked) {
+          toast("That email is not confirmed yet.", true);
+        } else if (announce === "registered") {
+          sendConfirmation_(user).catch(function (error) {
+            toast(
+              firebaseProblem(error, "Could not send a confirmation link."),
+              true,
+            );
+          });
+          toast("Registered. Confirm your email to continue.");
+        } else if (announce === "signed-in") {
+          toast("Confirm your email to continue.", true);
+        }
+        return;
+      }
+      document.querySelector("#confirm-email").hidden = true;
+      return loadFirebaseProfile(user)
+        .catch(function () {
+          return freshVerifiedToken_(user).then(function (stillReady) {
+            if (!stillReady) {
+              return null;
+            }
+            return loadFirebaseProfile(user);
+          });
+        })
+        .then(function (result) {
+          if (ticket !== firebaseSettle) {
+            return;
+          }
+          if (!result) {
+            hideBusy();
+            showConfirmEmail();
+            toast("That email is not confirmed yet.", true);
+            return;
+          }
+          hideBusy();
+          if (!result.ok) {
+            say(result.error);
+            showAuthChoices_();
+            if (announce === "registered") {
+              toast("Registered.");
+            }
+            return;
+          }
+          showSession(result);
+          if (announce === "registered") {
+            toast("Registered.");
+          } else if (announce === "signed-in") {
+            toast("Signed in.");
+          }
+        });
+    })
+    .catch(function () {
+      if (ticket !== firebaseSettle) {
+        return;
+      }
+      firebaseAnnounce = "";
       hideBusy();
-      toast("Could not check the confirmation.", true);
+      showAuthChoices_();
+      toast("Could not open your profile. Try logging in again.", true);
     });
 }
 
 function onFirebaseUser(user) {
   if (!user) {
+    firebaseSettle++;
+    firebaseAnnounce = "";
+    hideBusy();
     if (!firebaseHadUser) {
       return;
     }
@@ -2301,47 +2442,7 @@ function onFirebaseUser(user) {
     return;
   }
   firebaseHadUser = true;
-  var announce = firebaseAnnounce;
-  firebaseAnnounce = "";
-  if (!user.emailVerified) {
-    hideBusy();
-    showConfirmEmail();
-    if (announce === "registered") {
-      sendConfirmation_(user).catch(function (error) {
-        toast(
-          firebaseProblem(error, "Could not send a confirmation link."),
-          true,
-        );
-      });
-      toast("Registered. Confirm your email to continue.");
-    } else if (announce === "signed-in") {
-      toast("Confirm your email to continue.", true);
-    }
-    return;
-  }
-  document.querySelector("#confirm-email").hidden = true;
-  showBusy(announce === "registered" ? "Registering…" : "Signing in…");
-  loadFirebaseProfile(user)
-    .then(function (result) {
-      hideBusy();
-      if (!result.ok) {
-        say(result.error);
-        if (announce === "registered") {
-          toast("Registered.");
-        }
-        return;
-      }
-      showSession(result);
-      if (announce === "registered") {
-        toast("Registered.");
-      } else if (announce === "signed-in") {
-        toast("Signed in.");
-      }
-    })
-    .catch(function () {
-      hideBusy();
-      toast("Sign-in failed.", true);
-    });
+  beginFirebaseSession_(user);
 }
 
 function loadFirebaseProfile(user) {
