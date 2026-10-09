@@ -15,6 +15,10 @@
   display: none !important;
 }
 
+.mask-secret {
+  -webkit-text-security: disc;
+}
+
 body {
   margin: 0;
   background-color: #f4efe6;

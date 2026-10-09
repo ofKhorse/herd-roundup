@@ -45,20 +45,22 @@
             Password
             <input
               name="password"
-              type="password"
-              autocomplete="new-password"
+              type="text"
+              class="mask-secret"
+              autocomplete="off"
               minlength="8"
-              data-lpignore="true"
+              spellcheck="false"
             />
           </label>
           <label id="register-password-again" hidden>
             Password again
             <input
               name="password_again"
-              type="password"
-              autocomplete="new-password"
+              type="text"
+              class="mask-secret"
+              autocomplete="off"
               minlength="8"
-              data-lpignore="true"
+              spellcheck="false"
             />
           </label>
           <p class="field-error" data-field="register-password" hidden></p>

@@ -40,12 +40,6 @@ document.querySelector("#busy-ok").addEventListener(
   },
   true,
 );
-document
-  .querySelector("#register-form")
-  .addEventListener("submit", rememberRegisterLogin_, true);
-document
-  .querySelector("#register-form button")
-  .addEventListener("pointerdown", rememberRegisterLogin_, true);
 document.querySelector("#register-form").addEventListener("submit", onRegister);
 document.querySelector("#reset-form").addEventListener("submit", onReset);
 document.querySelector("#profile-form").addEventListener("submit", onSave);
@@ -204,23 +198,6 @@ function signIn(credentials, fromCookie, quiet) {
     }
     showSession(result);
   });
-}
-
-function rememberRegisterLogin_() {
-  if (!useFirebase_()) {
-    return;
-  }
-  var form = document.querySelector("#register-form");
-  var password = form.elements.password.value;
-  var again = form.elements.password_again.value;
-  if (password.length < 8 || password !== again) {
-    return;
-  }
-  var loginForm = document.querySelector("#login-form");
-  loginForm.elements.email.value = form.elements.email.value;
-  loginForm.elements.password.value = password;
-  notifyLoginField_(loginForm.elements.email);
-  notifyLoginField_(loginForm.elements.password);
 }
 
 function onRegister(event) {
@@ -1764,6 +1741,31 @@ function useFirebase_() {
   return typeof USE_FIREBASE !== "undefined" && USE_FIREBASE;
 }
 
+function singlePasswordField_(which) {
+  setSecretField_(
+    document.querySelector("#register-form").elements.password,
+    which === "register",
+    "new-password",
+  );
+  setSecretField_(
+    document.querySelector("#login-form").elements.password,
+    which === "login",
+    "current-password",
+  );
+}
+
+function setSecretField_(input, real, autocomplete) {
+  if (real) {
+    input.type = "password";
+    input.setAttribute("autocomplete", autocomplete);
+    input.classList.remove("mask-secret");
+    return;
+  }
+  input.type = "text";
+  input.setAttribute("autocomplete", "off");
+  input.classList.add("mask-secret");
+}
+
 function startFirebase() {
   var registerForm = document.querySelector("#register-form");
   document.querySelector("#register-whatsapp").hidden = true;
@@ -1772,6 +1774,15 @@ function startFirebase() {
   document.querySelector("#register-password-again").hidden = false;
   registerForm.elements.password.required = true;
   registerForm.elements.password_again.required = true;
+  registerForm.addEventListener("focusin", function () {
+    singlePasswordField_("register");
+  });
+  document
+    .querySelector("#login-form")
+    .addEventListener("focusin", function () {
+      singlePasswordField_("login");
+    });
+  singlePasswordField_("login");
   document.querySelector("#reset-submit").textContent = "Email me a reset link";
   loadFirebaseScripts()
     .then(function () {
