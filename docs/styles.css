@@ -147,6 +147,12 @@ h2.section-label {
   justify-self: start;
 }
 
+.heading-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
 .field-error {
   color: #8f1d1d;
   font-weight: 600;

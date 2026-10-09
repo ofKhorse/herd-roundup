@@ -8,6 +8,7 @@ var state = {
   kaptains: [],
   tickets: [],
   bought: [],
+  members: [],
 };
 
 var notice = document.querySelector("#notice");
@@ -62,9 +63,19 @@ payGuide.addEventListener("toggle", function () {
 });
 document.querySelector("#admin-logout").addEventListener("click", logout);
 document
+  .querySelector("#copy-member-emails")
+  .addEventListener("click", function (event) {
+    copyEmails(state.members, event.currentTarget);
+  });
+document
   .querySelector("#copy-kaptain-phones")
   .addEventListener("click", function (event) {
     copyPhones(state.kaptains, event.currentTarget);
+  });
+document
+  .querySelector("#copy-kaptain-emails")
+  .addEventListener("click", function (event) {
+    copyEmails(state.kaptains, event.currentTarget);
   });
 document
   .querySelector("#copy-ticket-phones")
@@ -72,9 +83,19 @@ document
     copyPhones(state.tickets, event.currentTarget);
   });
 document
+  .querySelector("#copy-ticket-emails")
+  .addEventListener("click", function (event) {
+    copyEmails(state.tickets, event.currentTarget);
+  });
+document
   .querySelector("#copy-bought-phones")
   .addEventListener("click", function (event) {
     copyPhones(state.bought, event.currentTarget);
+  });
+document
+  .querySelector("#copy-bought-emails")
+  .addEventListener("click", function (event) {
+    copyEmails(state.bought, event.currentTarget);
   });
 window.addEventListener("hashchange", showView);
 document.querySelector("#village-select").addEventListener("change", syncStay);
@@ -659,6 +680,7 @@ function renderMembers(result) {
   state.kaptains = [];
   state.tickets = [];
   state.bought = [];
+  state.members = [];
   renderPeopleRows("#kaptain-rows", [], 3);
   renderPeopleRows("#ticket-rows", [], 9);
   renderPeopleRows("#bought-rows", [], 4);
@@ -714,6 +736,7 @@ function renderMembers(result) {
     body.appendChild(row);
   });
   var people = result.payments || [];
+  state.members = people;
   state.kaptains = people.filter(function (member) {
     return member.kaptain === "yes";
   });
@@ -773,20 +796,36 @@ function renderPeopleRows(selector, people, columns, values) {
 }
 
 function copyPhones(people, button) {
-  var numbers = people
-    .map(function (member) {
+  copyValues(
+    people.map(function (member) {
       return String(member.whatsapp || "").trim();
-    })
-    .filter(Boolean);
+    }),
+    button,
+    "No phone numbers",
+  );
+}
+
+function copyEmails(people, button) {
+  copyValues(
+    people.map(function (member) {
+      return String(member.email || "").trim();
+    }),
+    button,
+    "No email addresses",
+  );
+}
+
+function copyValues(values, button, emptyLabel) {
+  var items = values.filter(Boolean);
   var previous = button.textContent;
-  if (!numbers.length) {
-    button.textContent = "No phone numbers";
+  if (!items.length) {
+    button.textContent = emptyLabel;
     window.setTimeout(function () {
       button.textContent = previous;
     }, 1500);
     return;
   }
-  var text = numbers.join(", ");
+  var text = items.join(", ");
   var done = function () {
     button.textContent = "Copied";
     window.setTimeout(function () {
@@ -1043,6 +1082,7 @@ function showLoggedOut(announce) {
   state.kaptains = [];
   state.tickets = [];
   state.bought = [];
+  state.members = [];
   if (location.hash) {
     history.replaceState(null, "", location.pathname + location.search);
   }
