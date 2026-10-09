@@ -1,8 +1,7 @@
 var SCRIPT_URL =
   "https://script.google.com/macros/s/AKfycbzM3Eu4hhmoKzmdC_3Ym4X7YLzimZJ_dm0rd7sIpoUR-_ujQ7OiRGXfRyx1OGuJXQun/exec";
 
-// Stays off until the page is ready to leave Apps Script.
-var USE_FIREBASE = false;
+var USE_FIREBASE = true;
 
 var FIREBASE_CONFIG = {
   apiKey: "AIzaSyBovmleqj29b9pxm2PlB3wKnLiI7dnxJzM",
