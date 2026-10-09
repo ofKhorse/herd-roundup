@@ -37,6 +37,7 @@ main:has(#admin:not([hidden])) {
 }
 
 .table-scroll {
+  min-width: 0;
   overflow-x: auto;
 }
 
@@ -583,20 +584,14 @@ td {
   overflow-wrap: anywhere;
 }
 
-#members {
-  table-layout: fixed;
+#admin table {
+  width: max-content;
+  min-width: 100%;
+  table-layout: auto;
 }
 
-#members td {
-  overflow: hidden;
+#admin th {
   white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
-#members th {
-  white-space: normal;
-  overflow-wrap: normal;
-  vertical-align: bottom;
 }
 
 #members tbody tr {
