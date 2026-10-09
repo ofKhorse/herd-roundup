@@ -44,9 +44,38 @@ if (args.credentials)
   process.env.GOOGLE_APPLICATION_CREDENTIALS = args.credentials;
 
 const { GoogleAuth } = await import("google-auth-library");
-const client = await new GoogleAuth({
-  scopes: ["https://www.googleapis.com/auth/cloud-platform"],
-}).getClient();
+let client;
+try {
+  client = await new GoogleAuth({
+    scopes: ["https://www.googleapis.com/auth/cloud-platform"],
+  }).getClient();
+} catch (error) {
+  console.error(
+    "Google rejected the saved login. Sign in as the account that owns the Firebase project, then run this command again:",
+  );
+  console.error("  gcloud auth application-default login");
+  process.exit(1);
+}
+
+async function api(options) {
+  try {
+    return await client.request(options);
+  } catch (error) {
+    const grant =
+      error &&
+      error.response &&
+      error.response.data &&
+      error.response.data.error;
+    if (grant === "invalid_grant") {
+      console.error(
+        "Google rejected the saved login. Sign in as the account that owns the Firebase project, then run this command again:",
+      );
+      console.error("  gcloud auth application-default login");
+      process.exit(1);
+    }
+    throw error;
+  }
+}
 
 const groups = new Map();
 for (const record of parsed.records) {
@@ -60,7 +89,7 @@ let existing = 0;
 for (const [rounds, records] of groups) {
   for (let start = 0; start < records.length; start += 100) {
     const batch = records.slice(start, start + 100);
-    const response = await client.request({
+    const response = await api({
       url: `https://identitytoolkit.googleapis.com/v1/projects/${project}/accounts:batchCreate`,
       method: "POST",
       data: {
@@ -86,7 +115,7 @@ for (const [rounds, records] of groups) {
           `Could not import ${record.email}: ${failure.message || "unknown error"}`,
         );
       }
-      const lookup = await client.request({
+      const lookup = await api({
         url: `https://identitytoolkit.googleapis.com/v1/projects/${project}/accounts:lookup`,
         method: "POST",
         data: { email: [record.email] },
@@ -114,7 +143,7 @@ writes.push(
   }),
 );
 for (let start = 0; start < writes.length; start += 400) {
-  await client.request({
+  await api({
     url: `https://firestore.googleapis.com/v1/projects/${project}/databases/(default)/documents:commit`,
     method: "POST",
     data: { writes: writes.slice(start, start + 400) },

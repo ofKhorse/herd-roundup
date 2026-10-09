@@ -120,23 +120,29 @@ test("a nameless camper is listed by email and a ticket is kept only for a no", 
   assert.equal(result.records[1].person.ticket_name, "");
 });
 
-test("a name used as a companion and a repeated email are rejected", function () {
+test("a repeated email and a plain password are rejected", function () {
   const result = recordsFromCsv(
     csv([
-      row(),
-      row({
-        member_code: "KH-002",
-        email: "bea@x.test",
-        share_with: "Ada Lovelace",
-      }),
+      row({ share_with: "Ada Lovelace" }),
       row({ member_code: "KH-003", email: "ada@x.test" }),
       row({ member_code: "KH-004", email: "cy@x.test", password: "secret123" }),
     ]),
   );
   assert.equal(result.records.length, 2);
-  assert.match(result.errors[0], /Ada Lovelace is not a member kode/);
-  assert.match(result.errors[1], /repeats ada@x.test/);
-  assert.match(result.errors[2], /stored hash/);
+  assert.deepEqual(result.records[0].person.share_with, ["Ada Lovelace"]);
+  assert.match(result.errors[0], /repeats ada@x.test/);
+  assert.match(result.errors[1], /stored hash/);
+});
+
+test("ticket columns that are not on the sheet yet stay blank", function () {
+  const text = csv([row({ sale_available: "yes", kaptain: "yes" })]).replace(
+    /,needs_ticket,ticket_name,ticket_email,ticket_birth,ticket_gender,ticket_nationality,ticket_residency/g,
+    "",
+  );
+  const result = recordsFromCsv(text);
+  assert.deepEqual(result.errors, []);
+  assert.equal(result.records[0].person.needs_ticket, "");
+  assert.equal(result.records[0].person.kaptain, "yes");
 });
 
 test("a missing column is reported before any camper", function () {

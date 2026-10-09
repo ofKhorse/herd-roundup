@@ -24,23 +24,27 @@ service cloud.firestore {
       return value is string && value.matches("^KH-[0-9]{3,}$");
     }
 
+    function mateOk(value) {
+      return value is string && value.size() > 0 && value.size() < 80;
+    }
+
     function matesOk(codes, self) {
       return codes is list
         && codes.size() <= 12
         && codes.size() == codes.toSet().size()
         && !codes.hasAny([self])
-        && (codes.size() < 1 || codeOk(codes[0]))
-        && (codes.size() < 2 || codeOk(codes[1]))
-        && (codes.size() < 3 || codeOk(codes[2]))
-        && (codes.size() < 4 || codeOk(codes[3]))
-        && (codes.size() < 5 || codeOk(codes[4]))
-        && (codes.size() < 6 || codeOk(codes[5]))
-        && (codes.size() < 7 || codeOk(codes[6]))
-        && (codes.size() < 8 || codeOk(codes[7]))
-        && (codes.size() < 9 || codeOk(codes[8]))
-        && (codes.size() < 10 || codeOk(codes[9]))
-        && (codes.size() < 11 || codeOk(codes[10]))
-        && (codes.size() < 12 || codeOk(codes[11]));
+        && (codes.size() < 1 || mateOk(codes[0]))
+        && (codes.size() < 2 || mateOk(codes[1]))
+        && (codes.size() < 3 || mateOk(codes[2]))
+        && (codes.size() < 4 || mateOk(codes[3]))
+        && (codes.size() < 5 || mateOk(codes[4]))
+        && (codes.size() < 6 || mateOk(codes[5]))
+        && (codes.size() < 7 || mateOk(codes[6]))
+        && (codes.size() < 8 || mateOk(codes[7]))
+        && (codes.size() < 9 || mateOk(codes[8]))
+        && (codes.size() < 10 || mateOk(codes[9]))
+        && (codes.size() < 11 || mateOk(codes[10]))
+        && (codes.size() < 12 || mateOk(codes[11]));
     }
 
     function ticketBlank(data) {
@@ -103,7 +107,7 @@ service cloud.firestore {
         && data.full_name.size() < 200
         && data.stay in ["", "4", "5", "6", "arrange"]
         && data.whatsapp is string
-        && data.whatsapp.matches("^\\+[0-9]{8,15}$")
+        && (data.whatsapp == "" || data.whatsapp.matches("^\\+[0-9]{8,15}$"))
         && data.boomer_email is string
         && (data.boomer_email == "" || emailOk(data.boomer_email))
         && matesOk(data.share_with, data.member_code)
