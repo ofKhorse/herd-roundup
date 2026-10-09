@@ -44,9 +44,9 @@
           <label id="register-password" hidden>
             Password
             <input
-              name="password"
+              id="register-secret"
+              name="unused"
               type="text"
-              class="mask-secret"
               autocomplete="off"
               minlength="8"
               spellcheck="false"
@@ -55,9 +55,9 @@
           <label id="register-password-again" hidden>
             Password again
             <input
-              name="password_again"
+              id="register-again"
+              name="again"
               type="text"
-              class="mask-secret"
               autocomplete="off"
               minlength="8"
               spellcheck="false"
@@ -75,6 +75,7 @@
           <label>
             Password
             <input
+              id="login-secret"
               name="password"
               type="password"
               autocomplete="current-password"
