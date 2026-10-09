@@ -1791,30 +1791,39 @@ function bindHeldSecret(input) {
 }
 
 function singlePasswordField_(which) {
+  var registering = which === "register";
   setSecretField_(
     document.querySelector("#register-secret"),
-    which === "register",
+    registering,
     "new-password",
+    "password",
+  );
+  setSecretField_(
+    document.querySelector("#register-again"),
+    registering,
+    "new-password",
+    "again",
   );
   setSecretField_(
     document.querySelector("#login-secret"),
     which === "login",
     "current-password",
+    "password",
   );
 }
 
-function setSecretField_(input, real, autocomplete) {
+function setSecretField_(input, real, autocomplete, name) {
   var held = input.type === "password" ? input.value : input.dataset.held || "";
   input.dataset.held = held;
   if (real) {
     input.type = "password";
-    input.name = "password";
+    input.name = name;
     input.setAttribute("autocomplete", autocomplete);
     input.value = held;
     return;
   }
   input.type = "text";
-  input.name = "unused";
+  input.name = name === "password" ? "unused" : name;
   input.setAttribute("autocomplete", "off");
   input.value = held.replace(/./g, "•");
 }
@@ -1832,6 +1841,16 @@ function startFirebase() {
   bindHeldSecret(registerSecret);
   bindHeldSecret(registerAgain);
   bindHeldSecret(document.querySelector("#login-secret"));
+  var lastRegisterLength = 0;
+  registerSecret.addEventListener("input", function () {
+    var next = fieldSecret(registerSecret);
+    var jump = next.length - lastRegisterLength;
+    lastRegisterLength = next.length;
+    if (jump > 1 && registerAgain.type === "password") {
+      registerAgain.value = next;
+      registerAgain.dataset.held = next;
+    }
+  });
   registerForm.addEventListener("focusin", function () {
     singlePasswordField_("register");
   });
