@@ -1,4 +1,5 @@
 var USE_FIREBASE = true;
+var PAYMENT_SCRIPT_URL = "";
 
 var FIREBASE_CONFIG = {
   apiKey: "AIzaSyBovmleqj29b9pxm2PlB3wKnLiI7dnxJzM",

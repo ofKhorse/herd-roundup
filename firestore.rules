@@ -86,6 +86,31 @@ service cloud.firestore {
         && data.ticket_residency.size() < 100;
     }
 
+    function paymentOk(data) {
+      return data.keys().hasOnly([
+          "contributor",
+          "payment_count",
+          "total",
+          "last_payment",
+          "sheet_kode",
+          "override_kode",
+        ])
+        && data.contributor is string
+        && data.contributor.size() > 0
+        && data.contributor.size() < 200
+        && data.payment_count is int
+        && data.payment_count >= 0
+        && data.payment_count < 1000
+        && data.total is string
+        && data.total.size() < 40
+        && data.last_payment is string
+        && data.last_payment.size() < 80
+        && data.sheet_kode is string
+        && data.sheet_kode.size() < 20
+        && data.override_kode is string
+        && data.override_kode.size() < 20;
+    }
+
     function profileOk(data) {
       return data.keys().hasOnly([
           "member_code",
@@ -175,16 +200,34 @@ service cloud.firestore {
         && request.resource.data.payment_ref == ""
         && claimedNumber() is int
         && request.resource.data.member_code == memberCode(claimedNumber());
-      allow update: if verified()
-        && request.auth.uid == uid
-        && profileOk(request.resource.data)
-        && request.resource.data.member_code == resource.data.member_code
-        && request.resource.data.email == resource.data.email
-        && request.resource.data.admin == resource.data.admin
-        && request.resource.data.camp_fee_paid == resource.data.camp_fee_paid
-        && request.resource.data.amount == resource.data.amount
-        && request.resource.data.payment_ref == resource.data.payment_ref;
+      allow update: if (
+          verified()
+          && request.auth.uid == uid
+          && profileOk(request.resource.data)
+          && request.resource.data.member_code == resource.data.member_code
+          && request.resource.data.email == resource.data.email
+          && request.resource.data.admin == resource.data.admin
+          && request.resource.data.camp_fee_paid == resource.data.camp_fee_paid
+          && request.resource.data.amount == resource.data.amount
+          && request.resource.data.payment_ref == resource.data.payment_ref
+        ) || (
+          isAdmin()
+          && profileOk(request.resource.data)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            "camp_fee_paid",
+            "amount",
+            "payment_ref",
+          ])
+        );
       allow delete: if false;
+    }
+
+    match /payments/{id} {
+      allow read: if isAdmin();
+      allow create, update: if isAdmin()
+        && paymentOk(request.resource.data)
+        && id.matches("^[a-z0-9-]{1,200}$");
+      allow delete: if isAdmin();
     }
 
     match /directory/{uid} {

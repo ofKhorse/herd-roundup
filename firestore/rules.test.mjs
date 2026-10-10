@@ -225,6 +225,47 @@ test("another camper reads the directory and not the profile", async function ()
   );
 });
 
+test("an admin records a payment and a camper cannot", async function () {
+  await reset(1);
+  await signUp("ada", "ada@x.test");
+  await testEnv.withSecurityRulesDisabled(async function (context) {
+    await setDoc(
+      doc(context.firestore(), "people/admin"),
+      person({
+        email: "admin@x.test",
+        admin: true,
+        member_code: "KH-000",
+      }),
+    );
+  });
+  const admin = db("admin", "admin@x.test");
+  const ada = db("ada", "ada@x.test");
+  await assertSucceeds(
+    updateDoc(doc(admin, "people/ada"), {
+      amount: "365.00",
+      camp_fee_paid: "yes",
+    }),
+  );
+  await assertFails(
+    updateDoc(doc(admin, "people/ada"), { full_name: "Changed" }),
+  );
+  await assertFails(updateDoc(doc(ada, "people/ada"), { amount: "1.00" }));
+  const payment = {
+    contributor: "Alba Reyes",
+    payment_count: 1,
+    total: "365.00",
+    last_payment: "08.10.2026 20:21",
+    sheet_kode: "KH-037",
+    override_kode: "",
+  };
+  await assertSucceeds(setDoc(doc(admin, "payments/alba-reyes"), payment));
+  await assertSucceeds(
+    updateDoc(doc(admin, "payments/alba-reyes"), { override_kode: "KH-014" }),
+  );
+  await assertFails(getDoc(doc(ada, "payments/alba-reyes")));
+  await assertFails(setDoc(doc(ada, "payments/alba-reyes"), payment));
+});
+
 test("an admin reads another camper", async function () {
   await reset(1);
   await testEnv.withSecurityRulesDisabled(async function (context) {
