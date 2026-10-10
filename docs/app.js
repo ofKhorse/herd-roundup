@@ -9,6 +9,7 @@ var state = {
   tickets: [],
   bought: [],
   members: [],
+  paymentRows: [],
 };
 
 var notice = document.querySelector("#notice");
@@ -84,6 +85,22 @@ document
 document
   .querySelector("#member-filter-nameless")
   .addEventListener("change", applyMemberFilter);
+document
+  .querySelector("#update-payments")
+  .addEventListener("click", updatePaymentsFromSheet);
+document
+  .querySelector("#payment-filter-unassigned")
+  .addEventListener("change", function () {
+    clearPaymentMatches();
+    applyPaymentFilter();
+  });
+window.addEventListener(
+  "scroll",
+  function () {
+    clearPaymentMatches();
+  },
+  true,
+);
 document
   .querySelector("#copy-kaptain-phones")
   .addEventListener("click", function (event) {
@@ -698,21 +715,27 @@ function renderMembers(result) {
   state.tickets = [];
   state.bought = [];
   state.members = [];
+  state.paymentRows = [];
+  clearPaymentMatches();
   renderPeopleRows("#kaptain-rows", [], 3);
   renderPeopleRows("#ticket-rows", [], 9);
   renderPeopleRows("#bought-rows", [], 4);
   state.admin = result.person.admin === "yes";
   if (!state.admin) {
+    document.querySelector("#payment-rows").innerHTML = "";
     if (location.hash === "#admin" || location.hash === "#payments") {
       history.replaceState(null, "", location.pathname + location.search);
     }
     return;
   }
+  state.paymentRows = result.payment_rows || [];
   renderTipiBySize(result.tipi_by_size || {});
   if (result.signup_count != null) {
     renderSignupCounts(result.signup_count, result.stay_counts);
   }
+  var paidByUid = paymentTotals(state.paymentRows, result.payments || []);
   (result.payments || []).forEach(function (member) {
+    var paidCents = paidByUid[member.uid] || 0;
     var fields = [
       ["Name", member.full_name],
       ["Kode", member.member_code],
@@ -725,9 +748,9 @@ function renderMembers(result) {
       ["Bought", memberYes(member.purchased)],
       ["Tent", memberTent(member.purchased_size)],
       ["Stable mates", memberMates(member.share_with)],
-      ["Amount", member.amount],
+      ["Owes", member.fee_owed == null ? "" : String(member.fee_owed)],
+      ["Paid", paidCents ? paymentAmountText(paidCents) : ""],
       ["Reference", member.payment_ref],
-      ["Kamp fee", memberYes(member.camp_fee_paid)],
       ["Ticket name", ticketCell(member, member.ticket_name)],
       ["Ticket email", ticketCell(member, member.ticket_email)],
       ["Date of birth", ticketCell(member, member.ticket_birth)],
@@ -788,6 +811,7 @@ function renderMembers(result) {
     ];
   });
   applyMemberFilter();
+  renderPayments();
 }
 
 function renderPeopleRows(selector, people, columns, values) {
@@ -895,6 +919,433 @@ function applyMemberFilter() {
   cell.textContent = "Nobody matches.";
   message.appendChild(cell);
   body.appendChild(message);
+}
+
+var paymentOverrideInput = null;
+
+function clearPaymentMatches() {
+  var box = document.querySelector("#payment-matches");
+  if (!box) {
+    return;
+  }
+  box.innerHTML = "";
+  box.hidden = true;
+  paymentOverrideInput = null;
+}
+
+function readPaymentRows_(snap) {
+  var rows = [];
+  snap.forEach(function (doc) {
+    var data = doc.data() || {};
+    rows.push({
+      id: doc.id,
+      contributor: data.contributor || "",
+      payment_count: data.payment_count || 0,
+      total: data.total || "",
+      last_payment: data.last_payment || "",
+      sheet_kode: data.sheet_kode || "",
+      override_kode: data.override_kode || "",
+    });
+  });
+  rows.sort(function (a, b) {
+    return String(a.contributor).localeCompare(
+      String(b.contributor),
+      undefined,
+      {
+        sensitivity: "base",
+      },
+    );
+  });
+  return rows;
+}
+
+function paymentAssignedText_(match) {
+  if (!match.member) {
+    return "";
+  }
+  if (match.how === "name") {
+    return (match.member.member_code || "") + " by name";
+  }
+  return match.member.member_code || "";
+}
+
+function paymentChoiceLabel_(member) {
+  if (member.full_name) {
+    return member.full_name + " - (" + member.member_code + ")";
+  }
+  return labelFor(member.member_code);
+}
+
+function renderPayments() {
+  var body = document.querySelector("#payment-rows");
+  body.innerHTML = "";
+  clearPaymentMatches();
+  state.paymentRows.forEach(function (row) {
+    var match = paymentMatch(row, state.members);
+    var tr = document.createElement("tr");
+    tr.dataset.assigned = match.member ? "yes" : "";
+    [
+      row.contributor,
+      row.payment_count ? String(row.payment_count) : "",
+      row.total,
+      row.last_payment,
+      row.sheet_kode,
+      paymentAssignedText_(match),
+    ].forEach(function (value) {
+      var cell = document.createElement("td");
+      cell.textContent = value || "";
+      tr.appendChild(cell);
+    });
+    tr.appendChild(paymentOverrideCell_(row));
+    body.appendChild(tr);
+  });
+  applyPaymentFilter();
+}
+
+function paymentOverrideCell_(row) {
+  var cell = document.createElement("td");
+  var sortText = document.createElement("span");
+  sortText.hidden = true;
+  sortText.textContent = row.override_kode || "";
+  var input = document.createElement("input");
+  input.type = "search";
+  input.placeholder = "Kode";
+  input.value = row.override_kode || "";
+  input.setAttribute("aria-label", "Overwrite kode for " + row.contributor);
+  input.addEventListener("focus", function () {
+    paymentOverrideInput = input;
+    renderPaymentMatches_(input, row);
+  });
+  input.addEventListener("input", function () {
+    paymentOverrideInput = input;
+    renderPaymentMatches_(input, row);
+  });
+  input.addEventListener("blur", function () {
+    window.setTimeout(function () {
+      if (paymentOverrideInput !== input) {
+        return;
+      }
+      input.value = row.override_kode || "";
+      clearPaymentMatches();
+    }, 150);
+  });
+  input.addEventListener("keydown", function (event) {
+    if (event.key !== "Enter") {
+      return;
+    }
+    event.preventDefault();
+    var button = document.querySelector(
+      "#payment-matches button:not([data-clear])",
+    );
+    if (button) {
+      button.click();
+    }
+  });
+  cell.appendChild(sortText);
+  cell.appendChild(input);
+  return cell;
+}
+
+function renderPaymentMatches_(input, row) {
+  var box = document.querySelector("#payment-matches");
+  box.innerHTML = "";
+  box.hidden = false;
+  var rect = input.getBoundingClientRect();
+  box.style.left = rect.left + "px";
+  box.style.top = rect.bottom + "px";
+  box.style.width = Math.max(rect.width, 240) + "px";
+  var query = input.value.trim().toLowerCase();
+  var matches = state.members.filter(function (member) {
+    if (!member.member_code) {
+      return false;
+    }
+    if (!query) {
+      return true;
+    }
+    var haystack = (member.full_name + " " + member.member_code).toLowerCase();
+    return haystack.indexOf(query) !== -1;
+  });
+  matches.sort(function (a, b) {
+    return String(a.member_code).localeCompare(
+      String(b.member_code),
+      undefined,
+      {
+        numeric: true,
+      },
+    );
+  });
+  matches.forEach(function (member) {
+    var button = document.createElement("button");
+    button.type = "button";
+    button.textContent = paymentChoiceLabel_(member);
+    button.addEventListener("mousedown", function (event) {
+      event.preventDefault();
+    });
+    button.addEventListener("click", function () {
+      savePaymentOverride(row.id, member.member_code);
+    });
+    box.appendChild(button);
+  });
+  if (row.override_kode) {
+    var clear = document.createElement("button");
+    clear.type = "button";
+    clear.textContent = "Use the sheet";
+    clear.setAttribute("data-clear", "yes");
+    clear.addEventListener("mousedown", function (event) {
+      event.preventDefault();
+    });
+    clear.addEventListener("click", function () {
+      savePaymentOverride(row.id, "");
+    });
+    box.appendChild(clear);
+  }
+  if (!matches.length) {
+    var empty = document.createElement("p");
+    empty.className = "no-match";
+    empty.textContent = "No match found";
+    box.appendChild(empty);
+  }
+}
+
+function applyPaymentFilter() {
+  var only = document.querySelector("#payment-filter-unassigned").checked;
+  var body = document.querySelector("#payment-rows");
+  var shown = 0;
+  Array.prototype.forEach.call(body.rows, function (row) {
+    if (
+      row.classList.contains("payment-filter-empty") ||
+      row.cells.length < 2
+    ) {
+      return;
+    }
+    row.hidden = only && row.dataset.assigned === "yes";
+    if (!row.hidden) {
+      shown += 1;
+    }
+  });
+  var empty = body.querySelector(".payment-filter-empty");
+  if (empty) {
+    empty.remove();
+  }
+  var dataRows = Array.prototype.filter.call(body.rows, function (row) {
+    return row.cells.length > 1;
+  });
+  if (dataRows.length && shown > 0) {
+    return;
+  }
+  var message = document.createElement("tr");
+  message.className = "payment-filter-empty";
+  var cell = document.createElement("td");
+  cell.colSpan = 7;
+  cell.textContent = dataRows.length
+    ? "No unassigned payments."
+    : "No payments yet.";
+  message.appendChild(cell);
+  body.appendChild(message);
+}
+
+function updatePaymentsFromSheet() {
+  var user = firebase.auth().currentUser;
+  if (!user || !state.admin) {
+    return;
+  }
+  var url =
+    typeof PAYMENT_SCRIPT_URL === "string" ? PAYMENT_SCRIPT_URL.trim() : "";
+  if (!url) {
+    toast("The payment sheet link is not set.", true);
+    return;
+  }
+  showBusy("Reading the payment sheet…");
+  user
+    .getIdToken()
+    .then(function (token) {
+      return fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ idToken: token }),
+        redirect: "follow",
+      }).then(function (response) {
+        return response.text();
+      });
+    })
+    .then(function (text) {
+      var payload;
+      try {
+        payload = JSON.parse(text);
+      } catch (err) {
+        throw new Error("The payment sheet could not be read.");
+      }
+      if (!payload || !payload.ok) {
+        throw new Error(
+          (payload && payload.error) || "The payment sheet could not be read.",
+        );
+      }
+      return savePaymentRows_(payload.rows || []);
+    })
+    .then(function (summary) {
+      return loadFirebaseProfile(user).then(function (result) {
+        hideBusy();
+        if (result.ok) {
+          showSession(result);
+        }
+        say(summary);
+        toast("Payment info updated.");
+      });
+    })
+    .catch(function (error) {
+      hideBusy();
+      var message = "The payment sheet could not be read.";
+      if (error && error.code === "permission-denied") {
+        message = "Payments could not be saved.";
+      } else if (
+        error &&
+        error.message &&
+        error.message !== "The payment sheet could not be read."
+      ) {
+        message = error.message;
+      }
+      toast(message, true);
+    });
+}
+
+function savePaymentOverride(id, kode) {
+  var user = firebase.auth().currentUser;
+  if (!user) {
+    return;
+  }
+  clearPaymentMatches();
+  showBusy("Saving the payment…");
+  firebase
+    .firestore()
+    .collection("payments")
+    .doc(id)
+    .update({ override_kode: paymentKode(kode) })
+    .then(function () {
+      return firebase.firestore().collection("payments").get();
+    })
+    .then(function (snap) {
+      return writeMemberPayments_(readPaymentRows_(snap));
+    })
+    .then(function () {
+      return loadFirebaseProfile(user);
+    })
+    .then(function (result) {
+      hideBusy();
+      if (result.ok) {
+        showSession(result);
+      }
+      toast("Payment saved.");
+    })
+    .catch(function () {
+      hideBusy();
+      toast("The payment could not be saved.", true);
+    });
+}
+
+function savePaymentRows_(rows) {
+  var db = firebase.firestore();
+  return db
+    .collection("payments")
+    .get()
+    .then(function (snap) {
+      var existing = {};
+      snap.forEach(function (doc) {
+        existing[doc.id] = doc.data() || {};
+      });
+      var seen = {};
+      var stored = [];
+      var ops = [];
+      var skipped = 0;
+      (rows || []).forEach(function (row) {
+        var contributor = String(row.contributor || "").trim();
+        if (!contributor || contributor.toLowerCase() === "total") {
+          return;
+        }
+        var id = paymentDocId(contributor);
+        var cents = paymentCents(row.total);
+        if (!id || cents === null || seen[id]) {
+          skipped += 1;
+          return;
+        }
+        seen[id] = true;
+        var count = Number(row.payments);
+        if (!isFinite(count) || count < 0) {
+          count = 0;
+        }
+        var override = existing[id]
+          ? String(existing[id].override_kode || "")
+          : "";
+        var data = {
+          contributor: contributor.slice(0, 199),
+          payment_count: Math.round(count),
+          total: paymentAmountText(cents),
+          last_payment: String(row.lastPayment || "")
+            .trim()
+            .slice(0, 79),
+          sheet_kode: paymentKode(row.kode),
+          override_kode: paymentKode(override),
+        };
+        stored.push(data);
+        ops.push(function (batch) {
+          batch.set(db.collection("payments").doc(id), data);
+        });
+      });
+      Object.keys(existing).forEach(function (id) {
+        if (seen[id]) {
+          return;
+        }
+        ops.push(function (batch) {
+          batch.delete(db.collection("payments").doc(id));
+        });
+      });
+      return commitInChunks_(ops).then(function () {
+        return writeMemberPayments_(stored).then(function (summary) {
+          if (!skipped) {
+            return summary;
+          }
+          return summary + " Skipped " + skipped + ".";
+        });
+      });
+    });
+}
+
+function writeMemberPayments_(rows) {
+  var writes = paymentMemberWrites(rows, state.members);
+  var summary = paymentSummary(rows, state.members);
+  var ops = writes.map(function (write) {
+    return function (batch) {
+      var fields = { amount: write.amount };
+      if (write.camp_fee_paid !== undefined) {
+        fields.camp_fee_paid = write.camp_fee_paid;
+      }
+      batch.update(
+        firebase.firestore().collection("people").doc(write.uid),
+        fields,
+      );
+    };
+  });
+  return commitInChunks_(ops).then(function () {
+    return summary;
+  });
+}
+
+function commitInChunks_(ops) {
+  if (!ops.length) {
+    return Promise.resolve();
+  }
+  var index = 0;
+  function next() {
+    if (index >= ops.length) {
+      return Promise.resolve();
+    }
+    var batch = firebase.firestore().batch();
+    var end = Math.min(index + 400, ops.length);
+    for (; index < end; index++) {
+      ops[index](batch);
+    }
+    return batch.commit().then(next);
+  }
+  return next();
 }
 
 function csvCell(value) {
@@ -1031,6 +1482,9 @@ function sortAdminTable(table, index) {
   rows.forEach(function (row) {
     body.appendChild(row);
   });
+  if (table.id === "payments") {
+    applyPaymentFilter();
+  }
 }
 
 function closeMemberDetails() {
@@ -1208,6 +1662,8 @@ function showLoggedOut(announce) {
   state.tickets = [];
   state.bought = [];
   state.members = [];
+  state.paymentRows = [];
+  clearPaymentMatches();
   if (location.hash) {
     history.replaceState(null, "", location.pathname + location.search);
   }
@@ -1976,7 +2432,6 @@ function showFieldErrors(problems) {
 var firebaseAnnounce = "";
 var firebaseHadUser = false;
 var firebaseQuietSignOut = false;
-var firebaseSettle = 0;
 
 function useFirebase_() {
   return typeof USE_FIREBASE !== "undefined" && USE_FIREBASE;
@@ -2111,7 +2566,14 @@ function startFirebase() {
     if (document.querySelector("#confirm-email").hidden) {
       return;
     }
-    beginFirebaseSession_(user);
+    user.reload().then(function () {
+      if (!user.emailVerified) {
+        return;
+      }
+      return user.getIdToken(true).then(function () {
+        onFirebaseUser(firebase.auth().currentUser);
+      });
+    });
   });
   loadFirebaseScripts()
     .then(function () {
@@ -2154,18 +2616,6 @@ function signInWithFirebase(email, password) {
   firebase
     .auth()
     .signInWithEmailAndPassword(String(email || "").trim(), password)
-    .then(function (result) {
-      var user = (result && result.user) || firebase.auth().currentUser;
-      if (!user) {
-        firebaseAnnounce = "";
-        hideBusy();
-        toast("Sign-in failed.", true);
-        return;
-      }
-      // Already signed in: Firebase resolves this and does not call
-      // onAuthStateChanged again, so the waiting screen would stay up.
-      beginFirebaseSession_(user);
-    })
     .catch(function (error) {
       firebaseAnnounce = "";
       hideBusy();
@@ -2275,163 +2725,28 @@ function confirmChecked_() {
   if (!user) {
     return;
   }
-  beginFirebaseSession_(user, { checked: true });
-}
-
-function wait_(ms) {
-  return new Promise(function (resolve) {
-    setTimeout(resolve, ms);
-  });
-}
-
-function tokenClaimsVerified_(result) {
-  return !!(result && result.claims && result.claims.email_verified === true);
-}
-
-// The confirmation page marks the email verified before this browser's
-// saved sign-in token includes that fact. Reading the herd with the old
-// token is rejected, which showed up as "Sign-in failed."
-function freshVerifiedToken_(user) {
-  function refresh(attempt) {
-    return user
-      .reload()
-      .then(function () {
-        if (!user.emailVerified) {
-          return false;
-        }
-        return user.getIdTokenResult(true).then(function (result) {
-          if (tokenClaimsVerified_(result)) {
-            return true;
-          }
-          if (attempt >= 4) {
-            return false;
-          }
-          return wait_(500 * attempt).then(function () {
-            return refresh(attempt + 1);
-          });
-        });
-      })
-      .catch(function (error) {
-        if (attempt >= 4) {
-          throw error;
-        }
-        return wait_(500 * attempt).then(function () {
-          return refresh(attempt + 1);
-        });
-      });
-  }
-  return user
-    .getIdTokenResult(false)
-    .then(function (result) {
-      if (user.emailVerified && tokenClaimsVerified_(result)) {
-        return true;
-      }
-      return refresh(1);
+  showBusy("Checking…");
+  user
+    .reload()
+    .then(function () {
+      return user.getIdToken(true);
     })
-    .catch(function () {
-      return refresh(1);
-    });
-}
-
-function showAuthChoices_() {
-  profile.hidden = true;
-  document.querySelector("#admin").hidden = true;
-  document.querySelector("#nav").hidden = true;
-  document.querySelector("#hello").hidden = true;
-  document.querySelector("#register-form").hidden = false;
-  document.querySelector("#login-form").hidden = false;
-  document.querySelector("#reset-form").hidden = false;
-  document.querySelector("#confirm-email").hidden = true;
-  auth.hidden = false;
-}
-
-function beginFirebaseSession_(user, options) {
-  var ticket = ++firebaseSettle;
-  var announce = firebaseAnnounce;
-  var pending = "Signing in…";
-  if (options && options.checked) {
-    pending = "Checking…";
-  } else if (announce === "registered") {
-    pending = "Registering…";
-  }
-  showBusy(pending);
-  freshVerifiedToken_(user)
-    .then(function (ready) {
-      if (ticket !== firebaseSettle) {
-        return;
-      }
-      firebaseAnnounce = "";
-      if (!ready) {
-        hideBusy();
-        showConfirmEmail();
-        if (options && options.checked) {
-          toast("That email is not confirmed yet.", true);
-        } else if (announce === "registered") {
-          sendConfirmation_(user).catch(function (error) {
-            toast(
-              firebaseProblem(error, "Could not send a confirmation link."),
-              true,
-            );
-          });
-          toast("Registered. Confirm your email to continue.");
-        } else if (announce === "signed-in") {
-          toast("Confirm your email to continue.", true);
-        }
-        return;
-      }
-      document.querySelector("#confirm-email").hidden = true;
-      return loadFirebaseProfile(user)
-        .catch(function () {
-          return freshVerifiedToken_(user).then(function (stillReady) {
-            if (!stillReady) {
-              return null;
-            }
-            return loadFirebaseProfile(user);
-          });
-        })
-        .then(function (result) {
-          if (ticket !== firebaseSettle) {
-            return;
-          }
-          if (!result) {
-            hideBusy();
-            showConfirmEmail();
-            toast("That email is not confirmed yet.", true);
-            return;
-          }
-          hideBusy();
-          if (!result.ok) {
-            say(result.error);
-            showAuthChoices_();
-            if (announce === "registered") {
-              toast("Registered.");
-            }
-            return;
-          }
-          showSession(result);
-          if (announce === "registered") {
-            toast("Registered.");
-          } else if (announce === "signed-in") {
-            toast("Signed in.");
-          }
-        });
-    })
-    .catch(function () {
-      if (ticket !== firebaseSettle) {
-        return;
-      }
-      firebaseAnnounce = "";
+    .then(function () {
       hideBusy();
-      showAuthChoices_();
-      toast("Could not open your profile. Try logging in again.", true);
+      if (!user.emailVerified) {
+        toast("That email is not confirmed yet.", true);
+        return;
+      }
+      onFirebaseUser(user);
+    })
+    .catch(function () {
+      hideBusy();
+      toast("Could not check the confirmation.", true);
     });
 }
 
 function onFirebaseUser(user) {
   if (!user) {
-    firebaseSettle++;
-    firebaseAnnounce = "";
-    hideBusy();
     if (!firebaseHadUser) {
       return;
     }
@@ -2442,7 +2757,47 @@ function onFirebaseUser(user) {
     return;
   }
   firebaseHadUser = true;
-  beginFirebaseSession_(user);
+  var announce = firebaseAnnounce;
+  firebaseAnnounce = "";
+  if (!user.emailVerified) {
+    hideBusy();
+    showConfirmEmail();
+    if (announce === "registered") {
+      sendConfirmation_(user).catch(function (error) {
+        toast(
+          firebaseProblem(error, "Could not send a confirmation link."),
+          true,
+        );
+      });
+      toast("Registered. Confirm your email to continue.");
+    } else if (announce === "signed-in") {
+      toast("Confirm your email to continue.", true);
+    }
+    return;
+  }
+  document.querySelector("#confirm-email").hidden = true;
+  showBusy(announce === "registered" ? "Registering…" : "Signing in…");
+  loadFirebaseProfile(user)
+    .then(function (result) {
+      hideBusy();
+      if (!result.ok) {
+        say(result.error);
+        if (announce === "registered") {
+          toast("Registered.");
+        }
+        return;
+      }
+      showSession(result);
+      if (announce === "registered") {
+        toast("Registered.");
+      } else if (announce === "signed-in") {
+        toast("Signed in.");
+      }
+    })
+    .catch(function () {
+      hideBusy();
+      toast("Sign-in failed.", true);
+    });
 }
 
 function loadFirebaseProfile(user) {
@@ -2484,7 +2839,9 @@ function loadFirebaseProfile(user) {
             .then(function (peopleSnap) {
               var people = [];
               peopleSnap.forEach(function (doc) {
-                people.push(campPerson_(doc.data(), ""));
+                var member = campPerson_(doc.data(), "");
+                member.uid = doc.id;
+                people.push(member);
               });
               result.payments = people;
               result.signup_count = people.length;
@@ -2498,7 +2855,17 @@ function loadFirebaseProfile(user) {
                     (result.tipi_by_size[member.purchased_size] || 0) + 1;
                 }
               });
-              return result;
+              return db
+                .collection("payments")
+                .get()
+                .then(function (paySnap) {
+                  result.payment_rows = readPaymentRows_(paySnap);
+                  return result;
+                })
+                .catch(function () {
+                  result.payment_rows = [];
+                  return result;
+                });
             });
         });
     });

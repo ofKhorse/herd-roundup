@@ -11,4 +11,6 @@ Camp data is `people/{uid}`, `directory/{uid}`, and `counters/member`. `counters
 
 Plain HTML, CSS, and JavaScript. Copy a block twice before adding a helper. Keep a file under about 300 lines.
 
-The old public Apps Script web app is archived, and its source is not in this repo. Do not route auth or profiles through Apps Script. The people spreadsheet can stay in Drive. A payment-sheet copy is not built. Do not invent a column parser.
+Auth and profiles stay on Firebase. Do not route them through Apps Script. The people spreadsheet can stay in Drive.
+
+`apps-script/payment-sheet.gs` is a standalone script for the Leetchi “By contributor” tab only. Deploy it from the Gmail that can view that sheet (execute as that account, access Anyone) and paste the `/exec` URL into `PAYMENT_SCRIPT_URL`. The page sends a Firebase ID token; the script returns rows only when that account’s `people` doc has `admin == true`. Rows are stored in `payments/{id}`. A KH ref matches first, then the contributor name, then an admin overwrite on that payment. An admin may change only `amount`, `camp_fee_paid`, and `payment_ref` on a person. Do not parse any other sheet.

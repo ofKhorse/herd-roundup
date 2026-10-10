@@ -576,11 +576,24 @@ button.solid {
   overflow: auto;
 }
 
-#companion-matches button {
+#companion-matches button,
+#payment-matches button {
   min-height: 44px;
-  padding: 0.35rem 0;
+  padding: 0.35rem 0.6rem;
+  text-align: left;
   text-decoration: none;
   border-bottom: 1px solid #ddd4c6;
+  background: #fffdf8;
+}
+
+#payment-matches {
+  position: fixed;
+  display: grid;
+  max-height: 14rem;
+  overflow: auto;
+  z-index: 5;
+  background: #fffdf8;
+  border: 1px solid #ddd4c6;
 }
 
 .no-match {

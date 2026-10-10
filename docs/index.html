@@ -429,9 +429,9 @@
                   <th>Bought</th>
                   <th>Tent</th>
                   <th>Stable mates</th>
-                  <th>Amount</th>
+                  <th>Owes</th>
+                  <th>Paid</th>
                   <th>Reference</th>
-                  <th>Kamp fee</th>
                   <th>Ticket name</th>
                   <th>Ticket email</th>
                   <th>Date of birth</th>
@@ -443,6 +443,39 @@
               <tbody id="member-rows"></tbody>
             </table>
           </div>
+        </div>
+        <div class="card">
+          <div class="card-heading">
+            <h2>Payments</h2>
+            <div class="heading-actions">
+              <button id="update-payments" class="solid" type="button">
+                Update payment info from sheet
+              </button>
+            </div>
+          </div>
+          <div class="member-filters">
+            <label class="row">
+              <input id="payment-filter-unassigned" type="checkbox" />
+              Unassigned
+            </label>
+          </div>
+          <div class="table-scroll">
+            <table id="payments">
+              <thead>
+                <tr>
+                  <th>Contributor</th>
+                  <th>Payments</th>
+                  <th>Total</th>
+                  <th>Last payment</th>
+                  <th>KH ref</th>
+                  <th>Assigned</th>
+                  <th>Kode overwrite</th>
+                </tr>
+              </thead>
+              <tbody id="payment-rows"></tbody>
+            </table>
+          </div>
+          <div id="payment-matches" hidden></div>
         </div>
         <div class="card">
           <div class="card-heading">
@@ -555,6 +588,7 @@
     <p id="toast" class="toast" role="status" hidden></p>
     <script src="config.js"></script>
     <script src="profile-write.js"></script>
+    <script src="payment-sheet.js"></script>
     <script src="app.js"></script>
   </body>
 </html>
