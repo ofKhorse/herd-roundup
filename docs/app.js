@@ -759,6 +759,10 @@ function renderMembers(result) {
       ["Residency", ticketCell(member, member.ticket_residency)],
     ];
     var row = document.createElement("tr");
+    var owedCents = paymentFeeCents(member.stay);
+    if (owedCents !== null && paidCents < owedCents) {
+      row.className = "member-short";
+    }
     fields.forEach(function (pair) {
       var cell = document.createElement("td");
       cell.textContent = pair[1] || "";
@@ -776,7 +780,9 @@ function renderMembers(result) {
     body.appendChild(row);
   });
   var people = result.payments || [];
-  state.members = people;
+  state.members = people.filter(function (member) {
+    return member.member_code;
+  });
   state.kaptains = people.filter(function (member) {
     return member.kaptain === "yes";
   });
@@ -2757,6 +2763,7 @@ function onFirebaseUser(user) {
     return;
   }
   firebaseHadUser = true;
+  rememberSignup_(user);
   var announce = firebaseAnnounce;
   firebaseAnnounce = "";
   if (!user.emailVerified) {
@@ -2856,8 +2863,25 @@ function loadFirebaseProfile(user) {
                 }
               });
               return db
-                .collection("payments")
+                .collection("signups")
                 .get()
+                .then(function (signupSnap) {
+                  var signups = [];
+                  signupSnap.forEach(function (doc) {
+                    var data = doc.data() || {};
+                    signups.push({ uid: doc.id, email: data.email || "" });
+                  });
+                  addPendingSignups_(people, signups);
+                  return null;
+                })
+                .catch(function () {
+                  return null;
+                })
+                .then(function () {
+                  result.payments = people;
+                  result.signup_count = people.length;
+                  return db.collection("payments").get();
+                })
                 .then(function (paySnap) {
                   result.payment_rows = readPaymentRows_(paySnap);
                   return result;
@@ -2869,6 +2893,52 @@ function loadFirebaseProfile(user) {
             });
         });
     });
+}
+
+function rememberSignup_(user) {
+  if (!user || !user.email || !window.firebase || !firebase.firestore) {
+    return;
+  }
+  var db = firebase.firestore();
+  function write() {
+    db.collection("signups")
+      .doc(user.uid)
+      .set({ email: user.email })
+      .catch(function () {});
+  }
+  if (!user.emailVerified) {
+    write();
+    return;
+  }
+  db.collection("people")
+    .doc(user.uid)
+    .get()
+    .then(function (snap) {
+      if (!snap.exists) {
+        write();
+      }
+    })
+    .catch(function () {});
+}
+
+function addPendingSignups_(people, signups) {
+  var known = {};
+  people.forEach(function (member) {
+    if (member.uid) {
+      known[member.uid] = true;
+    }
+  });
+  (signups || []).forEach(function (signup) {
+    if (!signup || !signup.uid || known[signup.uid]) {
+      return;
+    }
+    var email = signup.email || "";
+    var member = campPerson_({ email: email }, email);
+    member.uid = signup.uid;
+    people.push(member);
+    known[signup.uid] = true;
+  });
+  return people;
 }
 
 function readDirectory_(directorySnap) {
