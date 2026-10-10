@@ -7,7 +7,7 @@ alwaysApply: true
 
 The live page is `docs/` on GitHub Pages (`herd.ofk.horse`). `USE_FIREBASE` in `docs/config.js` is true. The page talks to Firebase Auth and Firestore in `europe-west1` (project `herd-roundup-e7f31`). There are no Cloud Functions. The plan is Spark.
 
-Camp data is `people/{uid}`, `directory/{uid}`, and `counters/member`. `counters/member` stores `next` and `claims`. Each confirmed account can claim one kode, and a new profile can use only that claim. Passwords stay in Firebase Auth, never in Firestore. A new account must confirm its email before it can read or write camp data. Accounts that already had a profile were marked confirmed. The client computes the kamp fee (55 or 365). Save checks live in `docs/profile-write.js` and `firestore.rules`. Rules publish through `scripts/deploy-rules.mjs` and the Rules API. Do not deploy them with the Firebase CLI.
+Camp data is `people/{uid}`, `directory/{uid}`, and `counters/member`. `counters/member` stores `next` and `claims`. Each confirmed account can claim one kode, and a new profile can use only that claim. Passwords stay in Firebase Auth, never in Firestore. A new account must confirm its email before it can read or write camp data. Before it has a kode, it may record only its email in `signups/{uid}`. Admins list those rows, and the members table shows them with a blank kode. Accounts that already had a profile were marked confirmed. The client computes the kamp fee (55 or 365). Save checks live in `docs/profile-write.js` and `firestore.rules`. Rules publish through `scripts/deploy-rules.mjs` and the Rules API. Do not deploy them with the Firebase CLI.
 
 Plain HTML, CSS, and JavaScript. Copy a block twice before adding a helper. Keep a file under about 300 lines.
 

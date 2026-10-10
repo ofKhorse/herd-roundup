@@ -333,6 +333,37 @@ test("two campers cannot take the same kode", async function () {
   );
 });
 
+test("a registration without a kode is visible to an admin", async function () {
+  await reset(1);
+  await testEnv.withSecurityRulesDisabled(async function (context) {
+    await setDoc(
+      doc(context.firestore(), "people/admin"),
+      person({
+        email: "admin@x.test",
+        admin: true,
+        member_code: "KH-000",
+      }),
+    );
+  });
+  const guest = testEnv
+    .authenticatedContext("bea", {
+      email: "bea@x.test",
+      email_verified: false,
+    })
+    .firestore();
+  await assertSucceeds(
+    setDoc(doc(guest, "signups/bea"), { email: "bea@x.test" }),
+  );
+  await assertFails(
+    setDoc(doc(guest, "signups/bea"), { email: "other@x.test" }),
+  );
+  await assertFails(getDoc(doc(guest, "signups/ada")));
+  const admin = db("admin", "admin@x.test");
+  await assertSucceeds(getDoc(doc(admin, "signups/bea")));
+  const ada = db("ada", "ada@x.test");
+  await assertFails(getDoc(doc(ada, "signups/bea")));
+});
+
 test("an unconfirmed email cannot read or write camp data", async function () {
   await reset(1);
   await signUp("ada", "ada@x.test");
