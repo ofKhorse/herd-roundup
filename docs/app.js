@@ -759,6 +759,10 @@ function renderMembers(result) {
       ["Residency", ticketCell(member, member.ticket_residency)],
     ];
     var row = document.createElement("tr");
+    var owedCents = paymentFeeCents(member.stay);
+    if (owedCents !== null && paidCents < owedCents) {
+      row.className = "member-short";
+    }
     fields.forEach(function (pair) {
       var cell = document.createElement("td");
       cell.textContent = pair[1] || "";
