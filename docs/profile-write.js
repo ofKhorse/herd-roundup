@@ -104,7 +104,7 @@ function editableProfileProblems(draft, memberCode) {
     problems.push({
       field: "purchased",
       error:
-        "Tick I bought a tent or tipi at the 13th Oct. sale, or clear which tent or tipi you chose.",
+        "Tick I bought a tipi at the official BOOM sale, or clear which tent or tipi you chose.",
     });
   }
   if (draft.sale_available === "no" && draft.needs_ticket === "yes") {

@@ -127,15 +127,16 @@ function memberEditForm(member, paidText) {
   form.appendChild(kaptainRow);
   form.appendChild(ticketRow);
   var bought = document.createElement("label");
-  bought.className = "row";
+  bought.className = "row ticket-ask";
   var boughtBox = document.createElement("input");
   boughtBox.type = "checkbox";
   boughtBox.name = "purchased";
   boughtBox.checked = member.purchased === "yes";
+  var boughtText = document.createElement("span");
+  boughtText.textContent =
+    "I bought a tipi at the official BOOM sale. I will get reimbursed for that by the ofKhorse kamp soon.";
   bought.appendChild(boughtBox);
-  bought.appendChild(
-    document.createTextNode(" I bought a tent or tipi at the 13th Oct. sale"),
-  );
+  bought.appendChild(boughtText);
   form.appendChild(bought);
   form.appendChild(
     selectField_(
