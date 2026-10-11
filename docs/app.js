@@ -790,9 +790,9 @@ function renderMembers(result) {
       ["Potential Kaptain", memberYes(member.kaptain)],
       ["Bought", memberYes(member.purchased)],
       ["Tent", memberTent(member.purchased_size)],
-      ["Stable mates", memberMates(member.share_with)],
       ["Owes", member.fee_owed == null ? "" : String(member.fee_owed)],
       ["Paid", paidCents ? paymentAmountText(paidCents) : ""],
+      ["Stable mates", memberMates(member.share_with)],
       ["Reference", member.payment_ref],
       ["Ticket name", ticketCell(member, member.ticket_name)],
       ["Ticket email", ticketCell(member, member.ticket_email)],
@@ -808,7 +808,14 @@ function renderMembers(result) {
     }
     fields.forEach(function (pair) {
       var cell = document.createElement("td");
-      cell.textContent = pair[1] || "";
+      if (pair[0] === "Stable mates") {
+        var mates = document.createElement("div");
+        mates.className = "mates-col";
+        mates.textContent = pair[1] || "";
+        cell.appendChild(mates);
+      } else {
+        cell.textContent = pair[1] || "";
+      }
       row.appendChild(cell);
     });
     row.addEventListener("click", function () {

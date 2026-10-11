@@ -647,6 +647,11 @@ td {
   cursor: pointer;
 }
 
+#members .mates-col {
+  max-width: 14rem;
+  white-space: normal;
+}
+
 #members tbody tr:hover td {
   background: rgba(0, 0, 0, 0.08);
 }
