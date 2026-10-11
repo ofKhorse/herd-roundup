@@ -89,6 +89,90 @@ function blankTicketFields() {
   };
 }
 
+function editableProfileProblems(draft, memberCode) {
+  var problems = draftProblems(draft);
+  if (!draft.whatsapp) {
+    problems.push({ field: "whatsapp", error: "Enter a WhatsApp number." });
+  }
+  if (draft.purchased === "yes" && !draft.purchased_size) {
+    problems.push({
+      field: "purchased_size",
+      error: "Choose which tent or tipi you bought.",
+    });
+  }
+  if (draft.purchased !== "yes" && draft.purchased_size) {
+    problems.push({
+      field: "purchased",
+      error: "Tick I bought one, or clear which tent or tipi you chose.",
+    });
+  }
+  if (draft.sale_available === "no" && draft.needs_ticket === "yes") {
+    if (!draft.ticket_name) {
+      problems.push({ field: "ticket_name", error: "Enter the name." });
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(draft.ticket_email)) {
+      problems.push({ field: "ticket_email", error: "Enter an email." });
+    }
+    if (!draft.ticket_birth) {
+      problems.push({ field: "ticket_birth", error: "Enter a date of birth." });
+    }
+    if (
+      draft.ticket_gender !== "male" &&
+      draft.ticket_gender !== "female" &&
+      draft.ticket_gender !== "other"
+    ) {
+      problems.push({
+        field: "ticket_gender",
+        error: "Choose male, female, or other.",
+      });
+    }
+    if (!draft.ticket_nationality) {
+      problems.push({
+        field: "ticket_nationality",
+        error: "Enter a nationality.",
+      });
+    }
+    if (!draft.ticket_residency) {
+      problems.push({ field: "ticket_residency", error: "Enter a residency." });
+    }
+  }
+  if (
+    draft.share_with.length > 0 &&
+    draft.stay !== "4" &&
+    draft.stay !== "5" &&
+    draft.stay !== "6"
+  ) {
+    problems.push({
+      field: "share_with",
+      error:
+        draft.stay === "arrange"
+          ? "You kan add people only when you choose a tent or a tipi."
+          : "Choose a sleeping preference before adding people.",
+    });
+  }
+  var seen = {};
+  for (var i = 0; i < draft.share_with.length; i++) {
+    var code = draft.share_with[i];
+    if (code === memberCode) {
+      problems.push({ field: "share_with", error: "You kan't list yourself." });
+      break;
+    }
+    if (seen[code]) {
+      problems.push({ field: "share_with", error: "List each person once." });
+      break;
+    }
+    if (code.indexOf(",") !== -1) {
+      problems.push({
+        field: "share_with",
+        error: "Names kan't contain a comma.",
+      });
+      break;
+    }
+    seen[code] = true;
+  }
+  return problems;
+}
+
 function draftProblems(draft) {
   var problems = [];
   if (draft.full_name.length >= 200) {
