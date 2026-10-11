@@ -33,7 +33,7 @@ main {
 }
 
 main:has(#admin:not([hidden])) {
-  max-width: 72rem;
+  max-width: none;
 }
 
 .table-scroll {
