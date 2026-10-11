@@ -37,8 +37,10 @@ main:has(#admin:not([hidden])) {
 }
 
 .table-scroll {
+  --row-height: calc(1.45em + 0.7rem + 1px);
   min-width: 0;
-  overflow-x: auto;
+  max-height: calc(var(--row-height) * 11);
+  overflow: auto;
 }
 
 h1,
@@ -619,9 +621,15 @@ td {
   width: max-content;
   min-width: 100%;
   table-layout: auto;
+  border-collapse: separate;
+  border-spacing: 0;
 }
 
 #admin th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #fffdf8;
   white-space: nowrap;
   cursor: pointer;
   user-select: none;
