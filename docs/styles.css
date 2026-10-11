@@ -679,6 +679,30 @@ td {
   border-radius: 0.65rem;
 }
 
+.member-edit {
+  max-width: 36rem;
+}
+
+.member-edit-error {
+  margin: 0;
+  color: #8f1d1d;
+}
+
+.member-matches {
+  display: grid;
+  max-height: 14rem;
+  overflow: auto;
+}
+
+.member-matches button {
+  min-height: 44px;
+  padding: 0.35rem 0.6rem;
+  text-align: left;
+  text-decoration: none;
+  border-bottom: 1px solid #ddd4c6;
+  background: #fffdf8;
+}
+
 .member-box p {
   margin: 0;
   white-space: normal;
@@ -721,7 +745,7 @@ code {
   display: inline-flex;
   align-items: center;
   gap: 2px;
-  background: rgba(0, 80, 160, 0.10);
+  background: rgba(0, 80, 160, 0.1);
   border-radius: 4px;
   padding: 1px 4px;
   margin-right: 4px;

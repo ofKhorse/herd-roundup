@@ -246,9 +246,27 @@ test("an admin records a payment and a camper cannot", async function () {
       camp_fee_paid: "yes",
     }),
   );
-  await assertFails(
-    updateDoc(doc(admin, "people/ada"), { full_name: "Changed" }),
+  await assertSucceeds(
+    updateDoc(doc(admin, "people/ada"), {
+      full_name: "Changed",
+      whatsapp: "+41791111111",
+    }),
   );
+  await assertSucceeds(
+    setDoc(doc(admin, "directory/ada"), {
+      member_code: "KH-001",
+      full_name: "Changed",
+      email: "",
+      share_with: [],
+    }),
+  );
+  await assertFails(
+    updateDoc(doc(admin, "people/ada"), { email: "other@x.test" }),
+  );
+  await assertFails(
+    updateDoc(doc(admin, "people/ada"), { member_code: "KH-999" }),
+  );
+  await assertFails(updateDoc(doc(admin, "people/ada"), { admin: true }));
   await assertFails(updateDoc(doc(ada, "people/ada"), { amount: "1.00" }));
   const payment = {
     contributor: "Alba Reyes",
@@ -273,7 +291,10 @@ test("an admin records a payment and a camper cannot", async function () {
     }),
   );
   await assertFails(
-    setDoc(doc(admin, "payments/alba-reyes"), { ...payment, shares: new Array(13).fill({ kode: "KH-001", amount: "1.00" }) }),
+    setDoc(doc(admin, "payments/alba-reyes"), {
+      ...payment,
+      shares: new Array(13).fill({ kode: "KH-001", amount: "1.00" }),
+    }),
   );
   await assertFails(getDoc(doc(ada, "payments/alba-reyes")));
   await assertFails(setDoc(doc(ada, "payments/alba-reyes"), payment));

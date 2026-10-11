@@ -775,7 +775,17 @@ function renderMembers(result) {
       if (open) {
         return;
       }
-      row.after(memberDetail(fields));
+      if (!member.member_code) {
+        row.after(memberDetail(fields));
+        return;
+      }
+      row.after(
+        memberEditDetail(
+          member,
+          fields.length,
+          paidCents ? paymentAmountText(paidCents) : "",
+        ),
+      );
     });
     body.appendChild(row);
   });
