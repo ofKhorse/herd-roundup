@@ -86,6 +86,9 @@ document
   .querySelector("#member-filter-nameless")
   .addEventListener("change", applyMemberFilter);
 document
+  .querySelector("#member-filter-outstanding")
+  .addEventListener("change", applyMemberFilter);
+document
   .querySelector("#update-payments")
   .addEventListener("click", updatePaymentsFromSheet);
 document
@@ -817,6 +820,7 @@ function renderMembers(result) {
     var owedCents = paymentFeeCents(member.stay);
     if (owedCents !== null && paidCents < owedCents) {
       row.className = "member-short";
+      row.dataset.outstanding = "yes";
     }
     fields.forEach(function (pair) {
       var cell = document.createElement("td");
@@ -969,6 +973,9 @@ function applyMemberFilter() {
     .value.trim()
     .toLowerCase();
   var nameless = document.querySelector("#member-filter-nameless").checked;
+  var outstanding = document.querySelector(
+    "#member-filter-outstanding",
+  ).checked;
   var body = document.querySelector("#member-rows");
   closeMemberDetails();
   var shown = 0;
@@ -980,7 +987,8 @@ function applyMemberFilter() {
     var matchesQuery =
       !query || row.textContent.toLowerCase().indexOf(query) !== -1;
     var matchesName = !nameless || !name;
-    row.hidden = !(matchesQuery && matchesName);
+    var matchesPaid = !outstanding || row.dataset.outstanding === "yes";
+    row.hidden = !(matchesQuery && matchesName && matchesPaid);
     if (!row.hidden) {
       shown += 1;
     }
@@ -999,7 +1007,10 @@ function applyMemberFilter() {
   message.className = "member-filter-empty";
   var cell = document.createElement("td");
   cell.colSpan = document.querySelector("#members").tHead.rows[0].cells.length;
-  cell.textContent = "Nobody matches.";
+  cell.textContent =
+    outstanding && !query && !nameless
+      ? "No outstanding payments."
+      : "Nobody matches.";
   message.appendChild(cell);
   body.appendChild(message);
 }
