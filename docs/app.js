@@ -104,32 +104,75 @@ window.addEventListener(
 document
   .querySelector("#copy-kaptain-phones")
   .addEventListener("click", function (event) {
-    copyPhones(state.kaptains, event.currentTarget);
+    copyRowValues(
+      "#kaptain-rows",
+      "whatsapp",
+      event.currentTarget,
+      "No phone numbers",
+    );
   });
 document
   .querySelector("#copy-kaptain-emails")
   .addEventListener("click", function (event) {
-    copyEmails(state.kaptains, event.currentTarget);
+    copyRowValues(
+      "#kaptain-rows",
+      "email",
+      event.currentTarget,
+      "No email addresses",
+    );
   });
 document
   .querySelector("#copy-ticket-phones")
   .addEventListener("click", function (event) {
-    copyPhones(state.tickets, event.currentTarget);
+    copyRowValues(
+      "#ticket-rows",
+      "whatsapp",
+      event.currentTarget,
+      "No phone numbers",
+    );
   });
 document
   .querySelector("#copy-ticket-emails")
   .addEventListener("click", function (event) {
-    copyEmails(state.tickets, event.currentTarget);
+    copyRowValues(
+      "#ticket-rows",
+      "email",
+      event.currentTarget,
+      "No email addresses",
+    );
   });
 document
   .querySelector("#copy-bought-phones")
   .addEventListener("click", function (event) {
-    copyPhones(state.bought, event.currentTarget);
+    copyRowValues(
+      "#bought-rows",
+      "whatsapp",
+      event.currentTarget,
+      "No phone numbers",
+    );
   });
 document
   .querySelector("#copy-bought-emails")
   .addEventListener("click", function (event) {
-    copyEmails(state.bought, event.currentTarget);
+    copyRowValues(
+      "#bought-rows",
+      "email",
+      event.currentTarget,
+      "No email addresses",
+    );
+  });
+["#kaptain-filter", "#ticket-filter", "#bought-filter"].forEach(function (id) {
+  document.querySelector(id).addEventListener("input", function (event) {
+    applyPeopleFilter(
+      event.currentTarget.closest(".card").querySelector("tbody"),
+    );
+  });
+});
+document
+  .querySelector("#payment-filter")
+  .addEventListener("input", function () {
+    clearPaymentMatches();
+    applyPaymentFilter();
   });
 window.addEventListener("hashchange", showView);
 document.querySelector("#village-select").addEventListener("change", syncStay);
@@ -844,6 +887,8 @@ function renderPeopleRows(selector, people, columns, values) {
   }
   people.forEach(function (member) {
     var row = document.createElement("tr");
+    row.dataset.email = member.email || "";
+    row.dataset.whatsapp = member.whatsapp || "";
     values(member).forEach(function (value) {
       var cell = document.createElement("td");
       cell.textContent = value || "";
@@ -851,6 +896,7 @@ function renderPeopleRows(selector, people, columns, values) {
     });
     body.appendChild(row);
   });
+  applyPeopleFilter(body);
 }
 
 function exportMembersCsv(button) {
@@ -1275,7 +1321,72 @@ function renderPaymentMatches_(input, row) {
   }
 }
 
+function applyPeopleFilter(body) {
+  var inputId = {
+    "kaptain-rows": "kaptain-filter",
+    "ticket-rows": "ticket-filter",
+    "bought-rows": "bought-filter",
+  }[body.id];
+  if (!inputId) {
+    return;
+  }
+  var query = document
+    .querySelector("#" + inputId)
+    .value.trim()
+    .toLowerCase();
+  var shown = 0;
+  Array.prototype.forEach.call(body.rows, function (row) {
+    if (row.classList.contains("table-filter-empty") || row.cells.length < 2) {
+      return;
+    }
+    row.hidden = query && row.textContent.toLowerCase().indexOf(query) === -1;
+    if (!row.hidden) {
+      shown += 1;
+    }
+  });
+  var empty = body.querySelector(".table-filter-empty");
+  if (empty) {
+    empty.remove();
+  }
+  var dataRows = Array.prototype.filter.call(body.rows, function (row) {
+    return row.cells.length > 1;
+  });
+  if (!dataRows.length || shown > 0) {
+    return;
+  }
+  var message = document.createElement("tr");
+  message.className = "table-filter-empty";
+  var cell = document.createElement("td");
+  cell.colSpan = body.parentElement.tHead.rows[0].cells.length;
+  cell.textContent = "Nobody matches.";
+  message.appendChild(cell);
+  body.appendChild(message);
+}
+
+function copyRowValues(selector, field, button, emptyLabel) {
+  copyValues(
+    visiblePeopleRows(selector).map(function (row) {
+      return String(row.dataset[field] || "").trim();
+    }),
+    button,
+    emptyLabel,
+  );
+}
+
+function visiblePeopleRows(selector) {
+  return Array.prototype.filter.call(
+    document.querySelector(selector).rows,
+    function (row) {
+      return row.cells.length > 1 && !row.hidden;
+    },
+  );
+}
+
 function applyPaymentFilter() {
+  var query = document
+    .querySelector("#payment-filter")
+    .value.trim()
+    .toLowerCase();
   var only = document.querySelector("#payment-filter-unassigned").checked;
   var body = document.querySelector("#payment-rows");
   var shown = 0;
@@ -1286,7 +1397,10 @@ function applyPaymentFilter() {
     ) {
       return;
     }
-    row.hidden = only && row.dataset.assigned === "yes";
+    var matchesQuery =
+      !query || row.textContent.toLowerCase().indexOf(query) !== -1;
+    var matchesAssigned = !only || row.dataset.assigned !== "yes";
+    row.hidden = !(matchesQuery && matchesAssigned);
     if (!row.hidden) {
       shown += 1;
     }
@@ -1305,9 +1419,11 @@ function applyPaymentFilter() {
   message.className = "payment-filter-empty";
   var cell = document.createElement("td");
   cell.colSpan = 7;
-  cell.textContent = dataRows.length
-    ? "No unassigned payments."
-    : "No payments yet.";
+  cell.textContent = !dataRows.length
+    ? "No payments yet."
+    : query
+      ? "Nobody matches."
+      : "No unassigned payments.";
   message.appendChild(cell);
   body.appendChild(message);
 }
@@ -1543,26 +1659,6 @@ function downloadText(name, text) {
   URL.revokeObjectURL(url);
 }
 
-function copyPhones(people, button) {
-  copyValues(
-    people.map(function (member) {
-      return String(member.whatsapp || "").trim();
-    }),
-    button,
-    "No phone numbers",
-  );
-}
-
-function copyEmails(people, button) {
-  copyValues(
-    people.map(function (member) {
-      return String(member.email || "").trim();
-    }),
-    button,
-    "No email addresses",
-  );
-}
-
 function copyValues(values, button, emptyLabel) {
   var items = values.filter(Boolean);
   var previous = button.textContent;
@@ -1657,6 +1753,7 @@ function sortAdminTable(table, index) {
   if (table.id === "payments") {
     applyPaymentFilter();
   }
+  applyPeopleFilter(body);
 }
 
 function closeMemberDetails() {
