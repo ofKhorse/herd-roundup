@@ -526,12 +526,13 @@ button.solid {
   margin: 0;
 }
 
-#tipi-by-size {
+.table-stats {
   display: grid;
   gap: 0.15rem;
+  margin: 0;
 }
 
-#tipi-by-size p {
+.table-stats p {
   margin: 0;
 }
 

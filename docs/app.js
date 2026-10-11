@@ -738,7 +738,16 @@ function renderSignupCounts(signupCount, stayCounts) {
 
 function renderTipiBySize(counts) {
   var box = document.querySelector("#tipi-by-size");
+  var sizes = counts || {};
   box.innerHTML = "";
+  var capacity =
+    (sizes.tipi2 || 0) * 2 +
+    (sizes.star2 || 0) * 2 +
+    (sizes.star5 || 0) * 5 +
+    (sizes.tipi6 || 0) * 6;
+  var summary = document.createElement("p");
+  summary.textContent = "Capacity: " + capacity;
+  box.appendChild(summary);
   [
     ["tipi2", "Tipi, up to 2 people"],
     ["star2", "Star Tent, up to 2 people"],
@@ -746,7 +755,7 @@ function renderTipiBySize(counts) {
     ["tipi6", "Tipi, up to 6 people"],
   ].forEach(function (pair) {
     var line = document.createElement("p");
-    line.textContent = pair[1] + ": " + (counts[pair[0]] || 0);
+    line.textContent = pair[1] + ": " + (sizes[pair[0]] || 0);
     box.appendChild(line);
   });
 }
@@ -766,6 +775,9 @@ function renderMembers(result) {
   state.admin = result.person.admin === "yes";
   if (!state.admin) {
     document.querySelector("#payment-rows").innerHTML = "";
+    document.querySelector("#payment-stats").innerHTML = "";
+    document.querySelector("#kaptain-count").textContent = "";
+    document.querySelector("#tipi-by-size").innerHTML = "";
     if (location.hash === "#admin" || location.hash === "#payments") {
       history.replaceState(null, "", location.pathname + location.search);
     }
@@ -855,6 +867,8 @@ function renderMembers(result) {
   renderPeopleRows("#kaptain-rows", state.kaptains, 3, function (member) {
     return [member.full_name, member.member_code, member.whatsapp];
   });
+  document.querySelector("#kaptain-count").textContent =
+    state.kaptains.length + (state.kaptains.length === 1 ? " row" : " rows");
   renderPeopleRows("#ticket-rows", state.tickets, 9, function (member) {
     return [
       member.full_name,
@@ -1088,7 +1102,29 @@ function renderPayments() {
     tr.appendChild(paymentOverrideCell_(row));
     body.appendChild(tr);
   });
+  renderPaymentStats();
   applyPaymentFilter();
+}
+
+function renderPaymentStats() {
+  var box = document.querySelector("#payment-stats");
+  var stats = paymentTableStats(state.paymentRows);
+  box.innerHTML = "";
+  [
+    "Total amount: " + paymentAmountText(stats.totalCents),
+    "Payments of 365: " + stats.exact,
+    "Payments over 365 divisible by 365: " +
+      stats.bundles +
+      " (" +
+      stats.bundleTipis +
+      " tipis)",
+    "Remaining amounts: " +
+      (stats.remaining.length ? stats.remaining.join(", ") : "none"),
+  ].forEach(function (text) {
+    var line = document.createElement("p");
+    line.textContent = text;
+    box.appendChild(line);
+  });
 }
 
 function paymentOverrideCell_(row) {

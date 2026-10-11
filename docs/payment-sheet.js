@@ -198,7 +198,11 @@ function paymentTotals(rows, members) {
           (totals[share.member.uid] || 0) + share.cents;
       }
     });
-    if (alloc.mainMatch.member && alloc.mainMatch.member.uid && alloc.remainder > 0) {
+    if (
+      alloc.mainMatch.member &&
+      alloc.mainMatch.member.uid &&
+      alloc.remainder > 0
+    ) {
       var uid = alloc.mainMatch.member.uid;
       totals[uid] = (totals[uid] || 0) + alloc.remainder;
     }
@@ -261,4 +265,37 @@ function paymentSummary(rows, members) {
     text += " Matched by name: " + byName.join(", ") + ".";
   }
   return text;
+}
+
+function paymentTableStats(rows) {
+  var tipi = 36500;
+  var total = 0;
+  var exact = 0;
+  var bundles = 0;
+  var bundleTipis = 0;
+  var remaining = [];
+  (rows || []).forEach(function (row) {
+    var cents = paymentCents(row && row.total);
+    if (cents === null) {
+      return;
+    }
+    total += cents;
+    if (cents === tipi) {
+      exact += 1;
+      return;
+    }
+    if (cents > tipi && cents % tipi === 0) {
+      bundles += 1;
+      bundleTipis += cents / tipi;
+      return;
+    }
+    remaining.push(paymentAmountText(cents));
+  });
+  return {
+    totalCents: total,
+    exact: exact,
+    bundles: bundles,
+    bundleTipis: bundleTipis,
+    remaining: remaining,
+  };
 }
