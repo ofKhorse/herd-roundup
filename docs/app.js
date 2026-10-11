@@ -1033,10 +1033,18 @@ function paymentOverrideCell_(row) {
     shares.forEach(function (share, i) {
       var pill = document.createElement("span");
       pill.className = "share-pill";
-      var txt = document.createTextNode(
-        "(" + share.kode + " \u2190 " + paymentAmountText(paymentCents(share.amount)) + ")",
-      );
-      pill.appendChild(txt);
+
+      var body = document.createElement("button");
+      body.type = "button";
+      body.className = "share-pill-body";
+      body.setAttribute("aria-label", "Edit share for " + share.kode);
+      body.textContent =
+        "(" + share.kode + " \u2190 " + paymentAmountText(paymentCents(share.amount)) + ")";
+      body.addEventListener("click", function () {
+        showShareEditor(i);
+      });
+      pill.appendChild(body);
+
       var rem = document.createElement("button");
       rem.type = "button";
       rem.className = "share-pill-remove";
@@ -1059,15 +1067,26 @@ function paymentOverrideCell_(row) {
     addBtn.className = "share-add";
     addBtn.textContent = "+";
     addBtn.setAttribute("aria-label", "Add a split for " + row.contributor);
-    addBtn.addEventListener("click", showShareEditor);
+    addBtn.addEventListener("click", function () {
+      showShareEditor(-1);
+    });
     cell.appendChild(addBtn);
   }
 
-  function showShareEditor() {
+  // editIndex >= 0 → editing existing share; -1 → adding new
+  function showShareEditor(editIndex) {
+    var existing = editIndex >= 0 ? (row.shares || [])[editIndex] : null;
+
+    // Hide the pill being edited (if any) and the add button while editor is open
+    var pills = cell.querySelectorAll(".share-pill");
+    if (editIndex >= 0 && pills[editIndex]) {
+      pills[editIndex].hidden = true;
+    }
     var addBtn = cell.querySelector(".share-add");
     if (addBtn) {
       addBtn.hidden = true;
     }
+
     var editor = document.createElement("span");
     editor.className = "share-editor";
 
@@ -1075,6 +1094,9 @@ function paymentOverrideCell_(row) {
     kodeInput.type = "search";
     kodeInput.placeholder = "Kode";
     kodeInput.className = "share-kode-input";
+    if (existing) {
+      kodeInput.value = existing.kode || "";
+    }
 
     var amountInput = document.createElement("input");
     amountInput.type = "number";
@@ -1082,11 +1104,17 @@ function paymentOverrideCell_(row) {
     amountInput.min = "0.01";
     amountInput.step = "0.01";
     amountInput.className = "share-amount-input";
+    if (existing) {
+      var existingCents = paymentCents(existing.amount);
+      if (existingCents !== null) {
+        amountInput.value = (existingCents / 100).toFixed(2);
+      }
+    }
 
     var confirmBtn = document.createElement("button");
     confirmBtn.type = "button";
     confirmBtn.className = "share-confirm";
-    confirmBtn.textContent = "Add";
+    confirmBtn.textContent = existing ? "Save" : "Add";
 
     var cancelBtn = document.createElement("button");
     cancelBtn.type = "button";
@@ -1098,9 +1126,16 @@ function paymentOverrideCell_(row) {
     editor.appendChild(confirmBtn);
     editor.appendChild(cancelBtn);
     cell.appendChild(editor);
-    kodeInput.focus();
 
-    var selectedKode = "";
+    // Focus kode when adding, amount when editing (kode already filled)
+    if (existing) {
+      amountInput.focus();
+      amountInput.select();
+    } else {
+      kodeInput.focus();
+    }
+
+    var selectedKode = existing ? existing.kode || "" : "";
 
     function openDropdown() {
       paymentOverrideInput = kodeInput;
@@ -1109,6 +1144,7 @@ function paymentOverrideCell_(row) {
         kodeInput.value = selectedKode;
         clearPaymentMatches();
         amountInput.focus();
+        amountInput.select();
       };
       renderPaymentMatches_(kodeInput, row);
     }
@@ -1139,25 +1175,29 @@ function paymentOverrideCell_(row) {
       }
     });
 
-    function tryAdd() {
+    function trySave() {
       var kode = paymentKode(selectedKode || kodeInput.value.trim());
       var cents = Math.round(parseFloat(amountInput.value) * 100);
       if (!kode || !isFinite(cents) || cents <= 0) {
         return;
       }
-      var updated = (row.shares || []).concat([
-        { kode: kode, amount: paymentAmountText(cents) },
-      ]);
-      row.shares = updated;
+      var current = (row.shares || []).slice();
+      var newShare = { kode: kode, amount: paymentAmountText(cents) };
+      if (editIndex >= 0) {
+        current[editIndex] = newShare;
+      } else {
+        current = current.concat([newShare]);
+      }
+      row.shares = current;
       renderCell();
-      savePaymentShares(row.id, updated);
+      savePaymentShares(row.id, current);
     }
 
-    confirmBtn.addEventListener("click", tryAdd);
+    confirmBtn.addEventListener("click", trySave);
     amountInput.addEventListener("keydown", function (event) {
       if (event.key === "Enter") {
         event.preventDefault();
-        tryAdd();
+        trySave();
       }
     });
     cancelBtn.addEventListener("click", function () {
