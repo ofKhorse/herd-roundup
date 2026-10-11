@@ -747,6 +747,12 @@ code {
   font-size: 1em;
   line-height: 1;
   padding: 0 2px;
+  opacity: 0;
+  transition: opacity 0.1s;
+}
+
+.share-pill:hover .share-pill-remove {
+  opacity: 1;
 }
 
 .share-pill-remove:hover {
