@@ -695,7 +695,12 @@ td {
 }
 
 .member-edit {
+  position: sticky;
+  left: 50%;
+  z-index: 1;
+  width: min(36rem, calc(100vw - 3rem));
   max-width: 36rem;
+  transform: translateX(-50%);
 }
 
 .member-edit-error {
