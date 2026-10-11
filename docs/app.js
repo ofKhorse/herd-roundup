@@ -2622,7 +2622,7 @@ function profileProblems() {
     problems.push({
       field: "purchased",
       error:
-        "Tick I bought a tent or tipi at the 13th Oct. sale, or clear which tent or tipi you chose.",
+        "Tick I bought a tipi at the official BOOM sale, or clear which tent or tipi you chose.",
     });
   }
   var stay = document.querySelector("#stay-hidden").value;
