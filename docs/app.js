@@ -945,6 +945,12 @@ function readPaymentRows_(snap) {
   var rows = [];
   snap.forEach(function (doc) {
     var data = doc.data() || {};
+    var readShares = data.shares || [];
+    // Backward-compat: old docs store a single reassignment as override_kode with no shares list.
+    // Synthesise a pill so the editor can show and edit it.
+    if (readShares.length === 0 && paymentKode(data.override_kode)) {
+      readShares = [{ kode: data.override_kode, amount: data.total || "" }];
+    }
     rows.push({
       id: doc.id,
       contributor: data.contributor || "",
@@ -953,7 +959,7 @@ function readPaymentRows_(snap) {
       last_payment: data.last_payment || "",
       sheet_kode: data.sheet_kode || "",
       override_kode: data.override_kode || "",
-      shares: data.shares || [],
+      shares: readShares,
     });
   });
   rows.sort(function (a, b) {
@@ -984,8 +990,7 @@ function paymentAssignedText_(alloc) {
     parts.push("unassigned " + leftoverEur);
   }
   alloc.shares.forEach(function (share) {
-    var shareMember = share.member ? " (" + share.member.member_code + ")" : "";
-    parts.push(share.kode + shareMember + " \u2190 " + (share.cents / 100).toFixed(2));
+    parts.push(share.kode + " \u2190 " + (share.cents / 100).toFixed(2));
   });
   return parts.join(", ");
 }
