@@ -1113,6 +1113,7 @@ function renderPaymentStats() {
   [
     "Total amount: " + paymentAmountText(stats.totalCents),
     "Payments of 365: " + stats.exact,
+    "Payments of 55: " + stats.fees,
     "Payments over 365 divisible by 365: " +
       stats.bundles +
       " (" +

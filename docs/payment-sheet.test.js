@@ -341,14 +341,20 @@ test("payment totals separate exact tipis from leftover amounts", function () {
     { total: "730.00" },
     { total: "1095.00" },
     { total: "55.00" },
+    { total: "55" },
+    { total: "110.00" },
     { total: "100.50" },
     { total: "" },
   ]);
-  assert.equal(stats.totalCents, 36500 + 36500 + 73000 + 109500 + 5500 + 10050);
+  assert.equal(
+    stats.totalCents,
+    36500 + 36500 + 73000 + 109500 + 5500 + 5500 + 11000 + 10050,
+  );
   assert.equal(stats.exact, 2);
+  assert.equal(stats.fees, 2);
   assert.equal(stats.bundles, 2);
   assert.equal(stats.bundleTipis, 5);
-  assert.equal(stats.remaining.join(","), "55.00,100.50");
+  assert.equal(stats.remaining.join(","), "110.00,100.50");
 });
 
 test("an old override_kode with no shares moves the full total", function () {
