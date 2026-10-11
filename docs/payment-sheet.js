@@ -99,16 +99,9 @@ function paymentMemberByKode_(members, kode) {
   return null;
 }
 
-function paymentMatch(row, members) {
+function paymentMainMatch_(row, members) {
   var list = members || [];
   var payment = row || {};
-  var override = paymentKode(payment.override_kode);
-  if (override) {
-    return {
-      how: "override",
-      member: paymentMemberByKode_(list, override),
-    };
-  }
   var sheet = paymentKode(payment.sheet_kode || payment.kode);
   if (sheet) {
     var byKode = paymentMemberByKode_(list, sheet);
@@ -132,19 +125,83 @@ function paymentMatch(row, members) {
   return { how: named.length > 1 ? "ambiguous" : "", member: null };
 }
 
+function paymentMatch(row, members) {
+  var list = members || [];
+  var payment = row || {};
+  var override = paymentKode(payment.override_kode);
+  if (override) {
+    return {
+      how: "override",
+      member: paymentMemberByKode_(list, override),
+    };
+  }
+  return paymentMainMatch_(payment, list);
+}
+
+function paymentAllocate(row, members) {
+  var payment = row || {};
+  var list = members || [];
+  var totalCents = paymentCents(payment.total);
+  if (totalCents === null) {
+    totalCents = 0;
+  }
+  var mainMatch = paymentMainMatch_(payment, list);
+  var mainKode = mainMatch.member
+    ? paymentKode(mainMatch.member.member_code)
+    : "";
+  var rawShares = payment.shares;
+  var shareList;
+  if (rawShares && rawShares.length > 0) {
+    shareList = rawShares;
+  } else if (paymentKode(payment.override_kode)) {
+    shareList = [{ kode: payment.override_kode, amount: payment.total }];
+  } else {
+    shareList = [];
+  }
+  var shareCentsTotal = 0;
+  var processedShares = [];
+  var seenKodes = {};
+  for (var i = 0; i < shareList.length; i++) {
+    var s = shareList[i] || {};
+    var kode = paymentKode(s.kode);
+    if (!kode || seenKodes[kode] || kode === mainKode) {
+      continue;
+    }
+    var cents = paymentCents(s.amount);
+    if (cents === null || cents <= 0) {
+      continue;
+    }
+    seenKodes[kode] = true;
+    processedShares.push({
+      kode: kode,
+      cents: cents,
+      member: paymentMemberByKode_(list, kode),
+    });
+    shareCentsTotal += cents;
+  }
+  var remainder = Math.max(0, totalCents - shareCentsTotal);
+  return {
+    mainMatch: mainMatch,
+    shares: processedShares,
+    remainder: remainder,
+    hasLeftover: remainder > 0 && !mainMatch.member,
+  };
+}
+
 function paymentTotals(rows, members) {
   var totals = {};
   (rows || []).forEach(function (row) {
-    var match = paymentMatch(row, members);
-    if (!match.member || !match.member.uid) {
-      return;
+    var alloc = paymentAllocate(row, members);
+    alloc.shares.forEach(function (share) {
+      if (share.member && share.member.uid) {
+        totals[share.member.uid] =
+          (totals[share.member.uid] || 0) + share.cents;
+      }
+    });
+    if (alloc.mainMatch.member && alloc.mainMatch.member.uid && alloc.remainder > 0) {
+      var uid = alloc.mainMatch.member.uid;
+      totals[uid] = (totals[uid] || 0) + alloc.remainder;
     }
-    var cents = paymentCents(row.total);
-    if (cents === null) {
-      return;
-    }
-    var uid = match.member.uid;
-    totals[uid] = (totals[uid] || 0) + cents;
   });
   return totals;
 }
@@ -188,11 +245,11 @@ function paymentSummary(rows, members) {
   var unassigned = [];
   var byName = [];
   (rows || []).forEach(function (row) {
-    var match = paymentMatch(row, members);
+    var alloc = paymentAllocate(row, members);
     var label = row.contributor || row.sheet_kode || "A payment";
-    if (!match.member) {
+    if (alloc.hasLeftover) {
       unassigned.push(label);
-    } else if (match.how === "name") {
+    } else if (alloc.mainMatch.how === "name") {
       byName.push(label);
     }
   });

@@ -257,10 +257,23 @@ test("an admin records a payment and a camper cannot", async function () {
     last_payment: "08.10.2026 20:21",
     sheet_kode: "KH-037",
     override_kode: "",
+    shares: [],
   };
   await assertSucceeds(setDoc(doc(admin, "payments/alba-reyes"), payment));
   await assertSucceeds(
     updateDoc(doc(admin, "payments/alba-reyes"), { override_kode: "KH-014" }),
+  );
+  await assertSucceeds(
+    updateDoc(doc(admin, "payments/alba-reyes"), {
+      override_kode: "",
+      shares: [
+        { kode: "KH-014", amount: "100.00" },
+        { kode: "KH-022", amount: "265.00" },
+      ],
+    }),
+  );
+  await assertFails(
+    setDoc(doc(admin, "payments/alba-reyes"), { ...payment, shares: new Array(13).fill({ kode: "KH-001", amount: "1.00" }) }),
   );
   await assertFails(getDoc(doc(ada, "payments/alba-reyes")));
   await assertFails(setDoc(doc(ada, "payments/alba-reyes"), payment));

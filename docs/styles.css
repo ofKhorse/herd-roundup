@@ -711,3 +711,72 @@ code {
     justify-self: start;
   }
 }
+
+/* Share pills in the payment table */
+.payment-shares-cell {
+  white-space: nowrap;
+}
+
+.share-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  background: rgba(0, 80, 160, 0.10);
+  border-radius: 4px;
+  padding: 1px 4px;
+  margin-right: 4px;
+  font-size: 0.85em;
+}
+
+.share-pill-remove {
+  all: unset;
+  cursor: pointer;
+  color: #888;
+  font-size: 1em;
+  line-height: 1;
+  padding: 0 2px;
+}
+
+.share-pill-remove:hover {
+  color: #b03030;
+}
+
+.share-add {
+  all: unset;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5em;
+  height: 1.5em;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.07);
+  font-size: 1em;
+  line-height: 1;
+  color: #444;
+}
+
+.share-add:hover {
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.share-editor {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  vertical-align: middle;
+}
+
+.share-kode-input {
+  width: 80px;
+}
+
+.share-amount-input {
+  width: 72px;
+}
+
+.share-confirm,
+.share-cancel {
+  padding: 1px 6px;
+  font-size: 0.85em;
+}

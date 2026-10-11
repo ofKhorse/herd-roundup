@@ -172,3 +172,151 @@ test("paid is the sum, and the fee marks the kamp fee", function () {
   assert.equal(unknown[0].amount, "10.00");
   assert.equal(unknown[0].camp_fee_paid, undefined);
 });
+
+test("shares split the payment and the main match keeps the rest", function () {
+  var alba = member({ uid: "alba", stay: "5" });
+  var alex = member({
+    uid: "alex",
+    member_code: "KH-066",
+    full_name: "Alex Keil",
+    stay: "arrange",
+  });
+  var byName = member({ uid: "bea", member_code: "KH-014", full_name: "Bea Schmitt", stay: "arrange" });
+  var allList = [alba, alex, byName];
+
+  var allocKode = context.paymentAllocate(
+    {
+      contributor: "Alba Reyes",
+      sheet_kode: "KH-037",
+      total: "365.00",
+      shares: [{ kode: "KH-066", amount: "50.00" }],
+    },
+    allList,
+  );
+  assert.equal(allocKode.mainMatch.how, "kode");
+  assert.equal(allocKode.mainMatch.member.uid, "alba");
+  assert.equal(allocKode.shares.length, 1);
+  assert.equal(allocKode.shares[0].kode, "KH-066");
+  assert.equal(allocKode.shares[0].cents, 5000);
+  assert.equal(allocKode.remainder, 31500);
+  assert.equal(allocKode.hasLeftover, false);
+
+  var allocName = context.paymentAllocate(
+    {
+      contributor: "Bea Schmitt",
+      sheet_kode: "",
+      total: "55.00",
+      shares: [{ kode: "KH-037", amount: "30.00" }],
+    },
+    allList,
+  );
+  assert.equal(allocName.mainMatch.how, "name");
+  assert.equal(allocName.mainMatch.member.uid, "bea");
+  assert.equal(allocName.remainder, 2500);
+  assert.equal(allocName.hasLeftover, false);
+
+  var writes = context.paymentMemberWrites(
+    [{ contributor: "Alba Reyes", sheet_kode: "KH-037", total: "365.00", shares: [{ kode: "KH-066", amount: "50.00" }] }],
+    allList,
+  );
+  var byUid = {};
+  writes.forEach(function (w) { byUid[w.uid] = w; });
+  assert.equal(byUid["alba"].amount, "315.00");
+  assert.equal(byUid["alba"].camp_fee_paid, "");
+  assert.equal(byUid["alex"].amount, "50.00");
+  assert.equal(byUid["alex"].camp_fee_paid, "");
+});
+
+test("partial shares leave the remainder as a leftover when there is no main match", function () {
+  var alex = member({ uid: "alex", member_code: "KH-066", full_name: "Alex Keil" });
+  var alloc = context.paymentAllocate(
+    {
+      contributor: "Nobody Known",
+      sheet_kode: "",
+      total: "365.00",
+      shares: [{ kode: "KH-066", amount: "100.00" }],
+    },
+    [alex],
+  );
+  assert.equal(alloc.hasLeftover, true);
+  assert.equal(alloc.remainder, 26500);
+  assert.equal(alloc.shares[0].cents, 10000);
+
+  var allShares = context.paymentAllocate(
+    {
+      contributor: "Nobody Known",
+      sheet_kode: "",
+      total: "100.00",
+      shares: [{ kode: "KH-066", amount: "100.00" }],
+    },
+    [alex],
+  );
+  assert.equal(allShares.hasLeftover, false);
+  assert.equal(allShares.remainder, 0);
+});
+
+test("shares that exceed the total do not produce a negative remainder", function () {
+  var alba = member({ uid: "alba" });
+  var alex = member({ uid: "alex", member_code: "KH-066", full_name: "Alex" });
+  var alloc = context.paymentAllocate(
+    {
+      contributor: "Alba Reyes",
+      sheet_kode: "KH-037",
+      total: "50.00",
+      shares: [{ kode: "KH-066", amount: "200.00" }],
+    },
+    [alba, alex],
+  );
+  assert.equal(alloc.remainder, 0);
+  assert.equal(alloc.hasLeftover, false);
+});
+
+test("duplicate kodes in shares are deduplicated and main kode is skipped", function () {
+  var alba = member({ uid: "alba" });
+  var alex = member({ uid: "alex", member_code: "KH-066", full_name: "Alex" });
+  var alloc = context.paymentAllocate(
+    {
+      contributor: "Alba Reyes",
+      sheet_kode: "KH-037",
+      total: "100.00",
+      shares: [
+        { kode: "KH-066", amount: "20.00" },
+        { kode: "KH-066", amount: "30.00" },
+        { kode: "KH-037", amount: "10.00" },
+      ],
+    },
+    [alba, alex],
+  );
+  assert.equal(alloc.shares.length, 1);
+  assert.equal(alloc.shares[0].kode, "KH-066");
+  assert.equal(alloc.shares[0].cents, 2000);
+  assert.equal(alloc.remainder, 8000);
+});
+
+test("an old override_kode with no shares moves the full total", function () {
+  var alba = member({ uid: "alba" });
+  var alex = member({ uid: "alex", member_code: "KH-066", full_name: "Alex" });
+  var alloc = context.paymentAllocate(
+    {
+      contributor: "Alba Reyes",
+      sheet_kode: "KH-037",
+      override_kode: "KH-066",
+      total: "365.00",
+      shares: [],
+    },
+    [alba, alex],
+  );
+  assert.equal(alloc.shares.length, 1);
+  assert.equal(alloc.shares[0].kode, "KH-066");
+  assert.equal(alloc.shares[0].cents, 36500);
+  assert.equal(alloc.remainder, 0);
+  assert.equal(alloc.hasLeftover, false);
+  var writes = context.paymentMemberWrites(
+    [{ contributor: "Alba Reyes", sheet_kode: "KH-037", override_kode: "KH-066", total: "365.00", shares: [] }],
+    [alba, alex],
+  );
+  var byUid = {};
+  writes.forEach(function (w) { byUid[w.uid] = w; });
+  assert.ok(!byUid["alba"], "alba should get 0 euros");
+  assert.equal(byUid["alex"].amount, "365.00");
+});

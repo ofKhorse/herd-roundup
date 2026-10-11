@@ -928,6 +928,7 @@ function applyMemberFilter() {
 }
 
 var paymentOverrideInput = null;
+var paymentMatchCallback_ = null;
 
 function clearPaymentMatches() {
   var box = document.querySelector("#payment-matches");
@@ -937,6 +938,7 @@ function clearPaymentMatches() {
   box.innerHTML = "";
   box.hidden = true;
   paymentOverrideInput = null;
+  paymentMatchCallback_ = null;
 }
 
 function readPaymentRows_(snap) {
@@ -951,6 +953,7 @@ function readPaymentRows_(snap) {
       last_payment: data.last_payment || "",
       sheet_kode: data.sheet_kode || "",
       override_kode: data.override_kode || "",
+      shares: data.shares || [],
     });
   });
   rows.sort(function (a, b) {
@@ -965,14 +968,26 @@ function readPaymentRows_(snap) {
   return rows;
 }
 
-function paymentAssignedText_(match) {
-  if (!match.member) {
-    return "";
+function paymentAssignedText_(alloc) {
+  var parts = [];
+  if (alloc.mainMatch.member) {
+    var kode = alloc.mainMatch.member.member_code || "";
+    var suffix = alloc.mainMatch.how === "name" ? " (name)" : "";
+    var keepsEur = (alloc.remainder / 100).toFixed(2);
+    if (alloc.shares.length > 0) {
+      parts.push(kode + suffix + " keeps " + keepsEur);
+    } else {
+      parts.push(kode + suffix);
+    }
+  } else if (alloc.hasLeftover) {
+    var leftoverEur = (alloc.remainder / 100).toFixed(2);
+    parts.push("unassigned " + leftoverEur);
   }
-  if (match.how === "name") {
-    return (match.member.member_code || "") + " by name";
-  }
-  return match.member.member_code || "";
+  alloc.shares.forEach(function (share) {
+    var shareMember = share.member ? " (" + share.member.member_code + ")" : "";
+    parts.push(share.kode + shareMember + " \u2190 " + (share.cents / 100).toFixed(2));
+  });
+  return parts.join(", ");
 }
 
 function paymentChoiceLabel_(member) {
@@ -987,16 +1002,16 @@ function renderPayments() {
   body.innerHTML = "";
   clearPaymentMatches();
   state.paymentRows.forEach(function (row) {
-    var match = paymentMatch(row, state.members);
+    var alloc = paymentAllocate(row, state.members);
     var tr = document.createElement("tr");
-    tr.dataset.assigned = match.member ? "yes" : "";
+    tr.dataset.assigned = alloc.hasLeftover ? "" : "yes";
     [
       row.contributor,
       row.payment_count ? String(row.payment_count) : "",
       row.total,
       row.last_payment,
       row.sheet_kode,
-      paymentAssignedText_(match),
+      paymentAssignedText_(alloc),
     ].forEach(function (value) {
       var cell = document.createElement("td");
       cell.textContent = value || "";
@@ -1010,45 +1025,148 @@ function renderPayments() {
 
 function paymentOverrideCell_(row) {
   var cell = document.createElement("td");
-  var sortText = document.createElement("span");
-  sortText.hidden = true;
-  sortText.textContent = row.override_kode || "";
-  var input = document.createElement("input");
-  input.type = "search";
-  input.placeholder = "Kode";
-  input.value = row.override_kode || "";
-  input.setAttribute("aria-label", "Overwrite kode for " + row.contributor);
-  input.addEventListener("focus", function () {
-    paymentOverrideInput = input;
-    renderPaymentMatches_(input, row);
-  });
-  input.addEventListener("input", function () {
-    paymentOverrideInput = input;
-    renderPaymentMatches_(input, row);
-  });
-  input.addEventListener("blur", function () {
-    window.setTimeout(function () {
-      if (paymentOverrideInput !== input) {
+  cell.className = "payment-shares-cell";
+
+  function renderCell() {
+    cell.innerHTML = "";
+    var shares = row.shares || [];
+    shares.forEach(function (share, i) {
+      var pill = document.createElement("span");
+      pill.className = "share-pill";
+      var txt = document.createTextNode(
+        "(" + share.kode + " \u2190 " + paymentAmountText(paymentCents(share.amount)) + ")",
+      );
+      pill.appendChild(txt);
+      var rem = document.createElement("button");
+      rem.type = "button";
+      rem.className = "share-pill-remove";
+      rem.textContent = "\xd7";
+      rem.setAttribute("aria-label", "Remove share for " + share.kode);
+      rem.addEventListener("click", function () {
+        var updated = shares.filter(function (_, j) {
+          return j !== i;
+        });
+        row.shares = updated;
+        renderCell();
+        savePaymentShares(row.id, updated);
+      });
+      pill.appendChild(rem);
+      cell.appendChild(pill);
+    });
+
+    var addBtn = document.createElement("button");
+    addBtn.type = "button";
+    addBtn.className = "share-add";
+    addBtn.textContent = "+";
+    addBtn.setAttribute("aria-label", "Add a split for " + row.contributor);
+    addBtn.addEventListener("click", showShareEditor);
+    cell.appendChild(addBtn);
+  }
+
+  function showShareEditor() {
+    var addBtn = cell.querySelector(".share-add");
+    if (addBtn) {
+      addBtn.hidden = true;
+    }
+    var editor = document.createElement("span");
+    editor.className = "share-editor";
+
+    var kodeInput = document.createElement("input");
+    kodeInput.type = "search";
+    kodeInput.placeholder = "Kode";
+    kodeInput.className = "share-kode-input";
+
+    var amountInput = document.createElement("input");
+    amountInput.type = "number";
+    amountInput.placeholder = "EUR";
+    amountInput.min = "0.01";
+    amountInput.step = "0.01";
+    amountInput.className = "share-amount-input";
+
+    var confirmBtn = document.createElement("button");
+    confirmBtn.type = "button";
+    confirmBtn.className = "share-confirm";
+    confirmBtn.textContent = "Add";
+
+    var cancelBtn = document.createElement("button");
+    cancelBtn.type = "button";
+    cancelBtn.className = "share-cancel";
+    cancelBtn.textContent = "\xd7";
+
+    editor.appendChild(kodeInput);
+    editor.appendChild(amountInput);
+    editor.appendChild(confirmBtn);
+    editor.appendChild(cancelBtn);
+    cell.appendChild(editor);
+    kodeInput.focus();
+
+    var selectedKode = "";
+
+    function openDropdown() {
+      paymentOverrideInput = kodeInput;
+      paymentMatchCallback_ = function (member) {
+        selectedKode = member.member_code || "";
+        kodeInput.value = selectedKode;
+        clearPaymentMatches();
+        amountInput.focus();
+      };
+      renderPaymentMatches_(kodeInput, row);
+    }
+
+    kodeInput.addEventListener("focus", openDropdown);
+    kodeInput.addEventListener("input", function () {
+      selectedKode = "";
+      openDropdown();
+    });
+    kodeInput.addEventListener("blur", function () {
+      window.setTimeout(function () {
+        if (paymentOverrideInput !== kodeInput) {
+          return;
+        }
+        clearPaymentMatches();
+      }, 150);
+    });
+    kodeInput.addEventListener("keydown", function (event) {
+      if (event.key !== "Enter") {
         return;
       }
-      input.value = row.override_kode || "";
+      event.preventDefault();
+      var btn = document.querySelector(
+        "#payment-matches button:not([data-clear])",
+      );
+      if (btn) {
+        btn.click();
+      }
+    });
+
+    function tryAdd() {
+      var kode = paymentKode(selectedKode || kodeInput.value.trim());
+      var cents = Math.round(parseFloat(amountInput.value) * 100);
+      if (!kode || !isFinite(cents) || cents <= 0) {
+        return;
+      }
+      var updated = (row.shares || []).concat([
+        { kode: kode, amount: paymentAmountText(cents) },
+      ]);
+      row.shares = updated;
+      renderCell();
+      savePaymentShares(row.id, updated);
+    }
+
+    confirmBtn.addEventListener("click", tryAdd);
+    amountInput.addEventListener("keydown", function (event) {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        tryAdd();
+      }
+    });
+    cancelBtn.addEventListener("click", function () {
       clearPaymentMatches();
-    }, 150);
-  });
-  input.addEventListener("keydown", function (event) {
-    if (event.key !== "Enter") {
-      return;
-    }
-    event.preventDefault();
-    var button = document.querySelector(
-      "#payment-matches button:not([data-clear])",
-    );
-    if (button) {
-      button.click();
-    }
-  });
-  cell.appendChild(sortText);
-  cell.appendChild(input);
+      renderCell();
+    });
+  }
+
+  renderCell();
   return cell;
 }
 
@@ -1088,23 +1206,12 @@ function renderPaymentMatches_(input, row) {
       event.preventDefault();
     });
     button.addEventListener("click", function () {
-      savePaymentOverride(row.id, member.member_code);
+      if (paymentMatchCallback_) {
+        paymentMatchCallback_(member);
+      }
     });
     box.appendChild(button);
   });
-  if (row.override_kode) {
-    var clear = document.createElement("button");
-    clear.type = "button";
-    clear.textContent = "Use the sheet";
-    clear.setAttribute("data-clear", "yes");
-    clear.addEventListener("mousedown", function (event) {
-      event.preventDefault();
-    });
-    clear.addEventListener("click", function () {
-      savePaymentOverride(row.id, "");
-    });
-    box.appendChild(clear);
-  }
   if (!matches.length) {
     var empty = document.createElement("p");
     empty.className = "no-match";
@@ -1214,7 +1321,7 @@ function updatePaymentsFromSheet() {
     });
 }
 
-function savePaymentOverride(id, kode) {
+function savePaymentShares(id, shares) {
   var user = firebase.auth().currentUser;
   if (!user) {
     return;
@@ -1225,7 +1332,7 @@ function savePaymentOverride(id, kode) {
     .firestore()
     .collection("payments")
     .doc(id)
-    .update({ override_kode: paymentKode(kode) })
+    .update({ shares: shares || [], override_kode: "" })
     .then(function () {
       return firebase.firestore().collection("payments").get();
     })
@@ -1281,6 +1388,9 @@ function savePaymentRows_(rows) {
         var override = existing[id]
           ? String(existing[id].override_kode || "")
           : "";
+        var existingShares = existing[id]
+          ? existing[id].shares || []
+          : [];
         var data = {
           contributor: contributor.slice(0, 199),
           payment_count: Math.round(count),
@@ -1290,6 +1400,7 @@ function savePaymentRows_(rows) {
             .slice(0, 79),
           sheet_kode: paymentKode(row.kode),
           override_kode: paymentKode(override),
+          shares: existingShares,
         };
         stored.push(data);
         ops.push(function (batch) {
