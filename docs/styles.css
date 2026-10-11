@@ -728,6 +728,18 @@ code {
   font-size: 0.85em;
 }
 
+.share-pill-body {
+  all: unset;
+  cursor: pointer;
+  color: inherit;
+  font-size: inherit;
+}
+
+.share-pill-body:hover {
+  text-decoration: underline;
+  text-decoration-style: dotted;
+}
+
 .share-pill-remove {
   all: unset;
   cursor: pointer;
@@ -735,6 +747,12 @@ code {
   font-size: 1em;
   line-height: 1;
   padding: 0 2px;
+  opacity: 0;
+  transition: opacity 0.1s;
+}
+
+.share-pill:hover .share-pill-remove {
+  opacity: 1;
 }
 
 .share-pill-remove:hover {
