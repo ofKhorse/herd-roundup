@@ -180,11 +180,20 @@ function paymentAllocate(row, members) {
     shareCentsTotal += cents;
   }
   var remainder = Math.max(0, totalCents - shareCentsTotal);
+  var kept = remainder;
+  if (mainMatch.member && remainder > 36500) {
+    kept = 36500;
+  }
+  if (!mainMatch.member) {
+    kept = 0;
+  }
   return {
     mainMatch: mainMatch,
     shares: processedShares,
     remainder: remainder,
-    hasLeftover: remainder > 0 && !mainMatch.member,
+    kept: kept,
+    unassigned: remainder - kept,
+    hasLeftover: remainder - kept > 0,
   };
 }
 
@@ -201,10 +210,10 @@ function paymentTotals(rows, members) {
     if (
       alloc.mainMatch.member &&
       alloc.mainMatch.member.uid &&
-      alloc.remainder > 0
+      alloc.kept > 0
     ) {
       var uid = alloc.mainMatch.member.uid;
-      totals[uid] = (totals[uid] || 0) + alloc.remainder;
+      totals[uid] = (totals[uid] || 0) + alloc.kept;
     }
   });
   return totals;
