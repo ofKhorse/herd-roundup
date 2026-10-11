@@ -181,7 +181,12 @@ test("shares split the payment and the main match keeps the rest", function () {
     full_name: "Alex Keil",
     stay: "arrange",
   });
-  var byName = member({ uid: "bea", member_code: "KH-014", full_name: "Bea Schmitt", stay: "arrange" });
+  var byName = member({
+    uid: "bea",
+    member_code: "KH-014",
+    full_name: "Bea Schmitt",
+    stay: "arrange",
+  });
   var allList = [alba, alex, byName];
 
   var allocKode = context.paymentAllocate(
@@ -216,11 +221,20 @@ test("shares split the payment and the main match keeps the rest", function () {
   assert.equal(allocName.hasLeftover, false);
 
   var writes = context.paymentMemberWrites(
-    [{ contributor: "Alba Reyes", sheet_kode: "KH-037", total: "365.00", shares: [{ kode: "KH-066", amount: "50.00" }] }],
+    [
+      {
+        contributor: "Alba Reyes",
+        sheet_kode: "KH-037",
+        total: "365.00",
+        shares: [{ kode: "KH-066", amount: "50.00" }],
+      },
+    ],
     allList,
   );
   var byUid = {};
-  writes.forEach(function (w) { byUid[w.uid] = w; });
+  writes.forEach(function (w) {
+    byUid[w.uid] = w;
+  });
   assert.equal(byUid["alba"].amount, "315.00");
   assert.equal(byUid["alba"].camp_fee_paid, "");
   assert.equal(byUid["alex"].amount, "50.00");
@@ -251,7 +265,11 @@ test("a matched payment auto-assigns only 365 and leaves the rest unassigned", f
 });
 
 test("partial shares leave the remainder as a leftover when there is no main match", function () {
-  var alex = member({ uid: "alex", member_code: "KH-066", full_name: "Alex Keil" });
+  var alex = member({
+    uid: "alex",
+    member_code: "KH-066",
+    full_name: "Alex Keil",
+  });
   var alloc = context.paymentAllocate(
     {
       contributor: "Nobody Known",
@@ -326,10 +344,7 @@ test("payment totals separate exact tipis from leftover amounts", function () {
     { total: "100.50" },
     { total: "" },
   ]);
-  assert.equal(
-    stats.totalCents,
-    36500 + 36500 + 73000 + 109500 + 5500 + 10050,
-  );
+  assert.equal(stats.totalCents, 36500 + 36500 + 73000 + 109500 + 5500 + 10050);
   assert.equal(stats.exact, 2);
   assert.equal(stats.bundles, 2);
   assert.equal(stats.bundleTipis, 5);
@@ -355,11 +370,21 @@ test("an old override_kode with no shares moves the full total", function () {
   assert.equal(alloc.remainder, 0);
   assert.equal(alloc.hasLeftover, false);
   var writes = context.paymentMemberWrites(
-    [{ contributor: "Alba Reyes", sheet_kode: "KH-037", override_kode: "KH-066", total: "365.00", shares: [] }],
+    [
+      {
+        contributor: "Alba Reyes",
+        sheet_kode: "KH-037",
+        override_kode: "KH-066",
+        total: "365.00",
+        shares: [],
+      },
+    ],
     [alba, alex],
   );
   var byUid = {};
-  writes.forEach(function (w) { byUid[w.uid] = w; });
+  writes.forEach(function (w) {
+    byUid[w.uid] = w;
+  });
   assert.ok(!byUid["alba"], "alba should get 0 euros");
   assert.equal(byUid["alex"].amount, "365.00");
 });

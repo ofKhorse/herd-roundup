@@ -1143,7 +1143,11 @@ function paymentOverrideCell_(row) {
       body.className = "share-pill-body";
       body.setAttribute("aria-label", "Edit share for " + share.kode);
       body.textContent =
-        "(" + share.kode + " \u2190 " + paymentAmountText(paymentCents(share.amount)) + ")";
+        "(" +
+        share.kode +
+        " \u2190 " +
+        paymentAmountText(paymentCents(share.amount)) +
+        ")";
       body.addEventListener("click", function () {
         showShareEditor(i);
       });
@@ -1602,9 +1606,7 @@ function savePaymentRows_(rows) {
         var override = existing[id]
           ? String(existing[id].override_kode || "")
           : "";
-        var existingShares = existing[id]
-          ? existing[id].shares || []
-          : [];
+        var existingShares = existing[id] ? existing[id].shares || [] : [];
         var data = {
           contributor: contributor.slice(0, 199),
           payment_count: Math.round(count),
