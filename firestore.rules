@@ -94,6 +94,7 @@ service cloud.firestore {
           "last_payment",
           "sheet_kode",
           "override_kode",
+          "shares",
         ])
         && data.contributor is string
         && data.contributor.size() > 0
@@ -108,7 +109,9 @@ service cloud.firestore {
         && data.sheet_kode is string
         && data.sheet_kode.size() < 20
         && data.override_kode is string
-        && data.override_kode.size() < 20;
+        && data.override_kode.size() < 20
+        && data.shares is list
+        && data.shares.size() <= 12;
     }
 
     function profileOk(data) {
