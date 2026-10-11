@@ -874,7 +874,10 @@ function renderMembers(result) {
     return [member.full_name, member.member_code, member.whatsapp];
   });
   document.querySelector("#kaptain-count").textContent =
-    state.kaptains.length + (state.kaptains.length === 1 ? " row" : " rows");
+    state.kaptains.length +
+    (state.kaptains.length === 1
+      ? " potential kaptain"
+      : " potential kaptains");
   renderPeopleRows("#ticket-rows", state.tickets, 9, function (member) {
     return [
       member.full_name,
