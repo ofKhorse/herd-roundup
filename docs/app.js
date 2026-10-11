@@ -779,6 +779,8 @@ function renderMembers(result) {
   if (!state.admin) {
     document.querySelector("#payment-rows").innerHTML = "";
     document.querySelector("#payment-stats").innerHTML = "";
+    document.querySelector("#member-shown").textContent = "0 showing";
+    document.querySelector("#payment-shown").textContent = "0 showing";
     document.querySelector("#kaptain-count").textContent = "";
     document.querySelector("#tipi-by-size").innerHTML = "";
     if (location.hash === "#admin" || location.hash === "#payments") {
@@ -908,6 +910,7 @@ function renderPeopleRows(selector, people, columns, values) {
     cell.textContent = "Nobody yet.";
     empty.appendChild(cell);
     body.appendChild(empty);
+    applyPeopleFilter(body);
     return;
   }
   people.forEach(function (member) {
@@ -958,6 +961,14 @@ function exportMembersCsv(button) {
   }, 1500);
 }
 
+function setShownCount(id, count) {
+  var node = document.querySelector(id);
+  if (!node) {
+    return;
+  }
+  node.textContent = count + " showing";
+}
+
 function visibleMemberRows() {
   return Array.prototype.filter.call(
     document.querySelector("#member-rows").rows,
@@ -1000,6 +1011,7 @@ function applyMemberFilter() {
   var dataRows = Array.prototype.filter.call(body.rows, function (row) {
     return row.cells.length > 1;
   });
+  setShownCount("#member-shown", shown);
   if (!dataRows.length || shown > 0) {
     return;
   }
@@ -1119,10 +1131,11 @@ function renderPayments() {
 
 function renderPaymentStats() {
   var box = document.querySelector("#payment-stats");
-  var stats = paymentTableStats(state.paymentRows);
+  var stats = paymentTableStats(state.paymentRows, state.members);
   box.innerHTML = "";
   [
     "Total amount: " + paymentAmountText(stats.totalCents),
+    "Unassigned: " + paymentAmountText(stats.unassignedCents),
     "Payments of 365: " + stats.exact,
     "Payments of 55: " + stats.fees,
     "Payments over 365 divisible by 365: " +
@@ -1410,6 +1423,14 @@ function applyPeopleFilter(body) {
   var dataRows = Array.prototype.filter.call(body.rows, function (row) {
     return row.cells.length > 1;
   });
+  setShownCount(
+    {
+      "kaptain-rows": "#kaptain-shown",
+      "ticket-rows": "#ticket-shown",
+      "bought-rows": "#bought-shown",
+    }[body.id],
+    shown,
+  );
   if (!dataRows.length || shown > 0) {
     return;
   }
@@ -1471,6 +1492,7 @@ function applyPaymentFilter() {
   var dataRows = Array.prototype.filter.call(body.rows, function (row) {
     return row.cells.length > 1;
   });
+  setShownCount("#payment-shown", shown);
   if (dataRows.length && shown > 0) {
     return;
   }

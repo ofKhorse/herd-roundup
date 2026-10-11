@@ -355,6 +355,36 @@ test("payment totals separate exact tipis from leftover amounts", function () {
   assert.equal(stats.bundles, 2);
   assert.equal(stats.bundleTipis, 5);
   assert.equal(stats.remaining.join(","), "110.00,100.50");
+  assert.equal(stats.unassignedCents, stats.totalCents);
+});
+
+test("payment stats add up money that is still unassigned", function () {
+  var phillipe = member({
+    uid: "phillipe",
+    member_code: "KH-076",
+    full_name: "Phillipe Wigger",
+    stay: "4",
+  });
+  var bea = member({
+    uid: "bea",
+    member_code: "KH-011",
+    full_name: "Bea",
+    stay: "arrange",
+  });
+  var stats = context.paymentTableStats(
+    [
+      {
+        contributor: "Phillipe Wigger",
+        sheet_kode: "KH-076",
+        total: "1825.00",
+        shares: [],
+      },
+      { contributor: "Bea", sheet_kode: "KH-011", total: "55.00", shares: [] },
+      { contributor: "Nobody", total: "20.00", shares: [] },
+    ],
+    [phillipe, bea],
+  );
+  assert.equal(stats.unassignedCents, 146000 + 2000);
 });
 
 test("an old override_kode with no shares moves the full total", function () {

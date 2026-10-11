@@ -276,7 +276,7 @@ function paymentSummary(rows, members) {
   return text;
 }
 
-function paymentTableStats(rows) {
+function paymentTableStats(rows, members) {
   var tipi = 36500;
   var fee = 5500;
   var total = 0;
@@ -285,12 +285,14 @@ function paymentTableStats(rows) {
   var bundles = 0;
   var bundleTipis = 0;
   var remaining = [];
+  var unassigned = 0;
   (rows || []).forEach(function (row) {
     var cents = paymentCents(row && row.total);
     if (cents === null) {
       return;
     }
     total += cents;
+    unassigned += paymentAllocate(row, members).unassigned;
     if (cents === tipi) {
       exact += 1;
       return;
@@ -310,6 +312,7 @@ function paymentTableStats(rows) {
     totalCents: total,
     exact: exact,
     fees: fees,
+    unassignedCents: unassigned,
     bundles: bundles,
     bundleTipis: bundleTipis,
     remaining: remaining,
