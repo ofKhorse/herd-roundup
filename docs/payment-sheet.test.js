@@ -227,6 +227,29 @@ test("shares split the payment and the main match keeps the rest", function () {
   assert.equal(byUid["alex"].camp_fee_paid, "");
 });
 
+test("a matched payment auto-assigns only 365 and leaves the rest unassigned", function () {
+  var phillipe = member({
+    uid: "phil",
+    member_code: "KH-076",
+    full_name: "Phillipe Wigger",
+    stay: "6",
+  });
+  var row = {
+    contributor: "Phillipe Wigger",
+    sheet_kode: "KH-076",
+    total: "1825.00",
+    shares: [],
+  };
+  var alloc = context.paymentAllocate(row, [phillipe]);
+  assert.equal(alloc.kept, 36500);
+  assert.equal(alloc.unassigned, 146000);
+  assert.equal(alloc.hasLeftover, true);
+  var writes = context.paymentMemberWrites([row], [phillipe]);
+  assert.equal(writes.length, 1);
+  assert.equal(writes[0].amount, "365.00");
+  assert.equal(writes[0].camp_fee_paid, "yes");
+});
+
 test("partial shares leave the remainder as a leftover when there is no main match", function () {
   var alex = member({ uid: "alex", member_code: "KH-066", full_name: "Alex Keil" });
   var alloc = context.paymentAllocate(

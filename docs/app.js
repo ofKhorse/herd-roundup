@@ -1056,15 +1056,15 @@ function paymentAssignedText_(alloc) {
   if (alloc.mainMatch.member) {
     var kode = alloc.mainMatch.member.member_code || "";
     var suffix = alloc.mainMatch.how === "name" ? " (name)" : "";
-    var keepsEur = (alloc.remainder / 100).toFixed(2);
-    if (alloc.shares.length > 0) {
+    var keepsEur = (alloc.kept / 100).toFixed(2);
+    if (alloc.shares.length > 0 || alloc.unassigned > 0) {
       parts.push(kode + suffix + " keeps " + keepsEur);
     } else {
       parts.push(kode + suffix);
     }
-  } else if (alloc.hasLeftover) {
-    var leftoverEur = (alloc.remainder / 100).toFixed(2);
-    parts.push("unassigned " + leftoverEur);
+  }
+  if (alloc.unassigned > 0) {
+    parts.push("unassigned " + (alloc.unassigned / 100).toFixed(2));
   }
   alloc.shares.forEach(function (share) {
     parts.push(share.kode + " \u2190 " + (share.cents / 100).toFixed(2));
