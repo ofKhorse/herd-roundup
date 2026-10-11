@@ -278,8 +278,10 @@ function paymentSummary(rows, members) {
 
 function paymentTableStats(rows) {
   var tipi = 36500;
+  var fee = 5500;
   var total = 0;
   var exact = 0;
+  var fees = 0;
   var bundles = 0;
   var bundleTipis = 0;
   var remaining = [];
@@ -293,6 +295,10 @@ function paymentTableStats(rows) {
       exact += 1;
       return;
     }
+    if (cents === fee) {
+      fees += 1;
+      return;
+    }
     if (cents > tipi && cents % tipi === 0) {
       bundles += 1;
       bundleTipis += cents / tipi;
@@ -303,6 +309,7 @@ function paymentTableStats(rows) {
   return {
     totalCents: total,
     exact: exact,
+    fees: fees,
     bundles: bundles,
     bundleTipis: bundleTipis,
     remaining: remaining,
