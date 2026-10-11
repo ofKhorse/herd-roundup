@@ -649,7 +649,9 @@ td {
 
 #members .mates-col {
   max-width: 14rem;
-  white-space: normal;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 #members tbody tr:hover td {
