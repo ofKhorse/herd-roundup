@@ -167,6 +167,12 @@ h2.section-label {
   min-width: 12rem;
 }
 
+.filter-count {
+  margin: 0;
+  white-space: nowrap;
+  color: #8a8175;
+}
+
 .field-error {
   color: #8f1d1d;
   font-weight: 600;
