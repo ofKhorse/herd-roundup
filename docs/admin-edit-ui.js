@@ -20,6 +20,11 @@ function mateEditor_(mates, memberCode) {
       item.className = "person";
       var name = document.createElement("span");
       name.textContent = labelFor(code);
+      var controls = document.createElement("span");
+      controls.appendChild(mateMoveButton_(mates, index, -1, "Up", paint));
+      controls.appendChild(document.createTextNode(" "));
+      controls.appendChild(mateMoveButton_(mates, index, 1, "Down", paint));
+      controls.appendChild(document.createTextNode(" "));
       var remove = document.createElement("button");
       remove.type = "button";
       remove.textContent = "Remove";
@@ -27,8 +32,9 @@ function mateEditor_(mates, memberCode) {
         mates.splice(index, 1);
         paint();
       });
+      controls.appendChild(remove);
       item.appendChild(name);
-      item.appendChild(remove);
+      item.appendChild(controls);
       list.appendChild(item);
     });
   }
@@ -100,6 +106,24 @@ function mateEditor_(mates, memberCode) {
   box.appendChild(matches);
   paint();
   return box;
+}
+
+function mateMoveButton_(mates, index, direction, text, paint) {
+  var button = document.createElement("button");
+  button.type = "button";
+  button.textContent = text;
+  button.disabled = index + direction < 0 || index + direction >= mates.length;
+  button.addEventListener("click", function () {
+    var next = index + direction;
+    if (next < 0 || next >= mates.length) {
+      return;
+    }
+    var swapped = mates[index];
+    mates[index] = mates[next];
+    mates[next] = swapped;
+    paint();
+  });
+  return button;
 }
 
 function stayParts_(stay) {
