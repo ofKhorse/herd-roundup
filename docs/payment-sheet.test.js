@@ -293,6 +293,26 @@ test("duplicate kodes in shares are deduplicated and main kode is skipped", func
   assert.equal(alloc.remainder, 8000);
 });
 
+test("payment totals separate exact tipis from leftover amounts", function () {
+  var stats = context.paymentTableStats([
+    { total: "365.00" },
+    { total: "365.00" },
+    { total: "730.00" },
+    { total: "1095.00" },
+    { total: "55.00" },
+    { total: "100.50" },
+    { total: "" },
+  ]);
+  assert.equal(
+    stats.totalCents,
+    36500 + 36500 + 73000 + 109500 + 5500 + 10050,
+  );
+  assert.equal(stats.exact, 2);
+  assert.equal(stats.bundles, 2);
+  assert.equal(stats.bundleTipis, 5);
+  assert.equal(stats.remaining.join(","), "55.00,100.50");
+});
+
 test("an old override_kode with no shares moves the full total", function () {
   var alba = member({ uid: "alba" });
   var alex = member({ uid: "alex", member_code: "KH-066", full_name: "Alex" });
