@@ -103,7 +103,8 @@ function editableProfileProblems(draft, memberCode) {
   if (draft.purchased !== "yes" && draft.purchased_size) {
     problems.push({
       field: "purchased",
-      error: "Tick I bought one, or clear which tent or tipi you chose.",
+      error:
+        "Tick I bought a tent or tipi at the 13th Oct. sale, or clear which tent or tipi you chose.",
     });
   }
   if (draft.sale_available === "no" && draft.needs_ticket === "yes") {

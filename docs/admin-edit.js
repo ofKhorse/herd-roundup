@@ -133,7 +133,9 @@ function memberEditForm(member, paidText) {
   boughtBox.name = "purchased";
   boughtBox.checked = member.purchased === "yes";
   bought.appendChild(boughtBox);
-  bought.appendChild(document.createTextNode(" I bought one"));
+  bought.appendChild(
+    document.createTextNode(" I bought a tent or tipi at the 13th Oct. sale"),
+  );
   form.appendChild(bought);
   form.appendChild(
     selectField_(
