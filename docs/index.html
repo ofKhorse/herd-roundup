@@ -111,6 +111,13 @@
       <section id="profile" class="stack" hidden>
         <form id="profile-form" class="stack">
           <div class="card">
+            <h2>Did you not get a ticket at the sale?</h2>
+            <label class="row ticket-ask">
+              <input name="no_sale_ticket" type="checkbox" />
+              <span>No, I did not manage to get a ticket at the sale</span>
+            </label>
+          </div>
+          <div class="card">
             <h2>You</h2>
             <label>Full name <input name="full_name" /></label>
             <p class="field-error" data-field="full_name" hidden></p>
@@ -291,13 +298,6 @@
               </select>
             </label>
             <p class="field-error" data-field="purchased_size" hidden></p>
-          </div>
-          <div class="card">
-            <h2>Did you not get a ticket at the sale?</h2>
-            <label class="row ticket-ask">
-              <input name="no_sale_ticket" type="checkbox" />
-              <span>No, I did not manage to get a ticket at the sale</span>
-            </label>
           </div>
           <div class="actions">
             <button id="save-profile" class="solid" type="submit">Save</button>
