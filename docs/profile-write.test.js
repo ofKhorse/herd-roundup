@@ -146,7 +146,8 @@ test("an update keeps the kode, admin flag, and recorded amount", function () {
   assert.equal(written.kaptain, "yes");
   assert.equal(written.needs_ticket, "");
   assert.equal(written.no_sale_ticket, "yes");
-  assert.equal(written.ticket_name, "");
+  assert.equal(written.ticket_name, "Ada");
+  assert.equal(written.ticket_email, "");
 });
 
 test("an admin edit uses the same checks as a participant", function () {
@@ -167,6 +168,21 @@ test("an admin edit uses the same checks as a participant", function () {
       })
       .join(","),
     "purchased_size,ticket_name,ticket_email,ticket_birth,ticket_gender,ticket_nationality,ticket_residency,share_with",
+  );
+});
+
+test("a missed sale ticket asks for the same details", function () {
+  const problems = context.editableProfileProblems(
+    draft({ no_sale_ticket: "yes", sale_available: "", needs_ticket: "" }),
+    "KH-001",
+  );
+  assert.equal(
+    problems
+      .map(function (problem) {
+        return problem.field;
+      })
+      .join(","),
+    "ticket_name,ticket_email,ticket_birth,ticket_gender,ticket_nationality,ticket_residency",
   );
 });
 

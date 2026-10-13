@@ -232,6 +232,12 @@ document
     clearTicketErrors();
     syncTicketForm();
   });
+document
+  .querySelector("[name=no_sale_ticket]")
+  .addEventListener("change", function () {
+    clearTicketErrors();
+    syncTicketForm();
+  });
 [
   "ticket_name",
   "ticket_email",
@@ -536,11 +542,17 @@ function syncSale() {
 }
 
 function syncTicketForm() {
-  var available = document.querySelector("[name=sale_available]").value;
-  var needsTicket = document.querySelector("[name=needs_ticket]").checked;
-  var show = available === "no" && needsTicket;
-  document.querySelector("#ticket-fields").hidden = !show;
-  if (!show) {
+  var missed = document.querySelector("[name=no_sale_ticket]").checked;
+  var asking =
+    document.querySelector("[name=sale_available]").value === "no" &&
+    document.querySelector("[name=needs_ticket]").checked;
+  var fields = document.querySelector("#ticket-fields");
+  (missed
+    ? document.querySelector("#no-sale-ticket-card")
+    : document.querySelector("#ticket-row")
+  ).appendChild(fields);
+  fields.hidden = !(missed || asking);
+  if (!(missed || asking)) {
     return;
   }
   var form = document.querySelector("#profile-form");
@@ -563,10 +575,13 @@ function ticketPayload(data) {
     ticket_nationality: "",
     ticket_residency: "",
   };
-  if (data.get("sale_available") !== "no" || !data.get("needs_ticket")) {
+  var asking =
+    data.get("sale_available") === "no" && Boolean(data.get("needs_ticket"));
+  var missed = Boolean(data.get("no_sale_ticket"));
+  if (!asking && !missed) {
     return blank;
   }
-  blank.needs_ticket = "yes";
+  blank.needs_ticket = asking ? "yes" : "";
   blank.ticket_name = String(data.get("ticket_name") || "").trim();
   blank.ticket_email = String(data.get("ticket_email") || "").trim();
   blank.ticket_birth = String(data.get("ticket_birth") || "").trim();
@@ -802,7 +817,7 @@ function renderMembers(result) {
   clearPaymentMatches();
   renderPeopleRows("#kaptain-rows", [], 3);
   renderPeopleRows("#ticket-rows", [], 9);
-  renderPeopleRows("#no-ticket-rows", [], 3);
+  renderPeopleRows("#no-ticket-rows", [], 9);
   renderPeopleRows("#bought-rows", [], 4);
   state.admin = result.person.admin === "yes";
   if (!state.admin) {
@@ -928,9 +943,19 @@ function renderMembers(result) {
   renderPeopleRows(
     "#no-ticket-rows",
     state.noSaleTickets,
-    3,
+    9,
     function (member) {
-      return [member.full_name, member.member_code, member.whatsapp];
+      return [
+        member.full_name,
+        member.member_code,
+        member.whatsapp,
+        member.ticket_name,
+        member.ticket_email,
+        member.ticket_birth,
+        memberGender(member.ticket_gender),
+        member.ticket_nationality,
+        member.ticket_residency,
+      ];
     },
   );
   document.querySelector("#no-ticket-count").textContent =
@@ -1952,7 +1977,9 @@ function memberGender(value) {
 }
 
 function ticketCell(member, value) {
-  return member.needs_ticket === "yes" ? value || "" : "";
+  return member.needs_ticket === "yes" || member.no_sale_ticket === "yes"
+    ? value || ""
+    : "";
 }
 
 function memberMates(codes) {
@@ -2679,7 +2706,10 @@ function profileProblems() {
       error: "Choose which tent or tipi you bought.",
     });
   }
-  if (form.sale_available.value === "no" && form.needs_ticket.checked) {
+  if (
+    (form.sale_available.value === "no" && form.needs_ticket.checked) ||
+    form.no_sale_ticket.checked
+  ) {
     if (!form.ticket_name.value.trim()) {
       problems.push({ field: "ticket_name", error: "Enter the name." });
     }

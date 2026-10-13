@@ -110,7 +110,7 @@
 
       <section id="profile" class="stack" hidden>
         <form id="profile-form" class="stack">
-          <div class="card">
+          <div class="card" id="no-sale-ticket-card">
             <h2>Did you not get a ticket at the sale?</h2>
             <label class="row ticket-ask">
               <input name="no_sale_ticket" type="checkbox" />
@@ -597,7 +597,7 @@
               <input
                 id="no-ticket-filter"
                 type="search"
-                placeholder="Name, kode, WhatsApp…"
+                placeholder="Name, kode, email…"
               />
             </label>
             <p class="filter-count" id="no-ticket-shown">0 showing</p>
@@ -609,6 +609,12 @@
                   <th>Name</th>
                   <th>Kode</th>
                   <th>WhatsApp</th>
+                  <th>Ticket name</th>
+                  <th>Email</th>
+                  <th>Date of birth</th>
+                  <th>Gender</th>
+                  <th>Nationality</th>
+                  <th>Residency</th>
                 </tr>
               </thead>
               <tbody id="no-ticket-rows"></tbody>

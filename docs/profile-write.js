@@ -38,9 +38,15 @@ function directoryEntry(person) {
 
 function peopleWrite(draft, kept) {
   var ticket = blankTicketFields();
-  if (draft.sale_available === "no" && draft.needs_ticket === "yes") {
+  if (
+    (draft.sale_available === "no" && draft.needs_ticket === "yes") ||
+    draft.no_sale_ticket === "yes"
+  ) {
     ticket = {
-      needs_ticket: "yes",
+      needs_ticket:
+        draft.sale_available === "no" && draft.needs_ticket === "yes"
+          ? "yes"
+          : "",
       ticket_name: draft.ticket_name,
       ticket_email: draft.ticket_email,
       ticket_birth: draft.ticket_birth,
@@ -108,7 +114,10 @@ function editableProfileProblems(draft, memberCode) {
         "Tick I bought a tipi at the official BOOM sale, or clear which tent or tipi you chose.",
     });
   }
-  if (draft.sale_available === "no" && draft.needs_ticket === "yes") {
+  if (
+    (draft.sale_available === "no" && draft.needs_ticket === "yes") ||
+    draft.no_sale_ticket === "yes"
+  ) {
     if (!draft.ticket_name) {
       problems.push({ field: "ticket_name", error: "Enter the name." });
     }
