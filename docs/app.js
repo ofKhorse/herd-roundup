@@ -7,6 +7,7 @@ var state = {
   admin: false,
   kaptains: [],
   tickets: [],
+  noSaleTickets: [],
   bought: [],
   members: [],
   paymentRows: [],
@@ -145,6 +146,26 @@ document
     );
   });
 document
+  .querySelector("#copy-no-ticket-phones")
+  .addEventListener("click", function (event) {
+    copyRowValues(
+      "#no-ticket-rows",
+      "whatsapp",
+      event.currentTarget,
+      "No phone numbers",
+    );
+  });
+document
+  .querySelector("#copy-no-ticket-emails")
+  .addEventListener("click", function (event) {
+    copyRowValues(
+      "#no-ticket-rows",
+      "email",
+      event.currentTarget,
+      "No email addresses",
+    );
+  });
+document
   .querySelector("#copy-bought-phones")
   .addEventListener("click", function (event) {
     copyRowValues(
@@ -164,7 +185,12 @@ document
       "No email addresses",
     );
   });
-["#kaptain-filter", "#ticket-filter", "#bought-filter"].forEach(function (id) {
+[
+  "#kaptain-filter",
+  "#ticket-filter",
+  "#no-ticket-filter",
+  "#bought-filter",
+].forEach(function (id) {
   document.querySelector(id).addEventListener("input", function (event) {
     applyPeopleFilter(
       event.currentTarget.closest(".card").querySelector("tbody"),
@@ -397,6 +423,7 @@ function onSave(event) {
         ? data.get("sale_available")
         : "",
     kaptain: data.get("kaptain") === "yes" ? "yes" : "",
+    no_sale_ticket: data.get("no_sale_ticket") ? "yes" : "",
   };
   var ticket = ticketPayload(data);
   Object.keys(ticket).forEach(function (key) {
@@ -480,6 +507,7 @@ function showSession(result) {
   form.sale_available.value = result.person.sale_available || "";
   form.kaptain.value = result.person.kaptain || "";
   form.needs_ticket.checked = result.person.needs_ticket === "yes";
+  form.no_sale_ticket.checked = result.person.no_sale_ticket === "yes";
   form.ticket_name.value = result.person.ticket_name || "";
   form.ticket_email.value = result.person.ticket_email || "";
   form.ticket_birth.value = result.person.ticket_birth || "";
@@ -768,12 +796,14 @@ function renderMembers(result) {
   body.innerHTML = "";
   state.kaptains = [];
   state.tickets = [];
+  state.noSaleTickets = [];
   state.bought = [];
   state.members = [];
   state.paymentRows = [];
   clearPaymentMatches();
   renderPeopleRows("#kaptain-rows", [], 3);
   renderPeopleRows("#ticket-rows", [], 9);
+  renderPeopleRows("#no-ticket-rows", [], 3);
   renderPeopleRows("#bought-rows", [], 4);
   state.admin = result.person.admin === "yes";
   if (!state.admin) {
@@ -782,6 +812,7 @@ function renderMembers(result) {
     document.querySelector("#member-shown").textContent = "0 showing";
     document.querySelector("#payment-shown").textContent = "0 showing";
     document.querySelector("#kaptain-count").textContent = "";
+    document.querySelector("#no-ticket-count").textContent = "";
     document.querySelector("#tipi-by-size").innerHTML = "";
     if (location.hash === "#admin" || location.hash === "#payments") {
       history.replaceState(null, "", location.pathname + location.search);
@@ -806,6 +837,7 @@ function renderMembers(result) {
       ["At sale", memberSale(member.sale_available)],
       ["Potential Kaptain", memberYes(member.kaptain)],
       ["Bought", memberYes(member.purchased)],
+      ["No ticket", memberYes(member.no_sale_ticket)],
       ["Tent", memberTent(member.purchased_size)],
       ["Owes", member.fee_owed == null ? "" : String(member.fee_owed)],
       ["Paid", paidCents ? paymentAmountText(paidCents) : ""],
@@ -867,6 +899,9 @@ function renderMembers(result) {
   state.tickets = people.filter(function (member) {
     return member.needs_ticket === "yes";
   });
+  state.noSaleTickets = people.filter(function (member) {
+    return member.no_sale_ticket === "yes";
+  });
   state.bought = people.filter(function (member) {
     return member.purchased === "yes";
   });
@@ -891,6 +926,16 @@ function renderMembers(result) {
       member.ticket_residency,
     ];
   });
+  renderPeopleRows(
+    "#no-ticket-rows",
+    state.noSaleTickets,
+    3,
+    function (member) {
+      return [member.full_name, member.member_code, member.whatsapp];
+    },
+  );
+  document.querySelector("#no-ticket-count").textContent =
+    state.noSaleTickets.length + " did not get a ticket";
   renderPeopleRows("#bought-rows", state.bought, 4, function (member) {
     return [
       member.full_name,
@@ -1400,6 +1445,7 @@ function applyPeopleFilter(body) {
   var inputId = {
     "kaptain-rows": "kaptain-filter",
     "ticket-rows": "ticket-filter",
+    "no-ticket-rows": "no-ticket-filter",
     "bought-rows": "bought-filter",
   }[body.id];
   if (!inputId) {
@@ -1430,6 +1476,7 @@ function applyPeopleFilter(body) {
     {
       "kaptain-rows": "#kaptain-shown",
       "ticket-rows": "#ticket-shown",
+      "no-ticket-rows": "#no-ticket-shown",
       "bought-rows": "#bought-shown",
     }[body.id],
     shown,
@@ -2011,6 +2058,7 @@ function showLoggedOut(announce) {
   state.admin = false;
   state.kaptains = [];
   state.tickets = [];
+  state.noSaleTickets = [];
   state.bought = [];
   state.members = [];
   state.paymentRows = [];
@@ -3321,6 +3369,7 @@ function profileDraft(data) {
     sale_available: sale,
     kaptain: data.get("kaptain") === "yes" ? "yes" : "",
     needs_ticket: ticket.needs_ticket,
+    no_sale_ticket: data.get("no_sale_ticket") ? "yes" : "",
     ticket_name: ticket.ticket_name,
     ticket_email: ticket.ticket_email,
     ticket_birth: ticket.ticket_birth,
@@ -3483,6 +3532,7 @@ function campPerson_(data, email) {
     sale_available: person.sale_available || "",
     kaptain: person.kaptain || "",
     needs_ticket: person.needs_ticket || "",
+    no_sale_ticket: person.no_sale_ticket || "",
     ticket_name: person.ticket_name || "",
     ticket_email: person.ticket_email || "",
     ticket_birth: person.ticket_birth || "",

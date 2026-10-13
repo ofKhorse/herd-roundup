@@ -24,6 +24,7 @@ function draft(overrides) {
       sale_available: "",
       kaptain: "",
       needs_ticket: "",
+      no_sale_ticket: "",
       ticket_name: "",
       ticket_email: "",
       ticket_birth: "",
@@ -115,6 +116,7 @@ test("a new profile takes the next kode and leaves payments blank", function () 
   assert.equal(written.payment_ref, "");
   assert.equal(written.kaptain, "");
   assert.equal(written.needs_ticket, "");
+  assert.equal(written.no_sale_ticket, "");
 });
 
 test("an update keeps the kode, admin flag, and recorded amount", function () {
@@ -125,6 +127,7 @@ test("an update keeps the kode, admin flag, and recorded amount", function () {
       kaptain: "yes",
       needs_ticket: "yes",
       ticket_name: "Ada",
+      no_sale_ticket: "yes",
     }),
     {
       member_code: "KH-001",
@@ -142,6 +145,7 @@ test("an update keeps the kode, admin flag, and recorded amount", function () {
   assert.equal(written.camp_fee_paid, "yes");
   assert.equal(written.kaptain, "yes");
   assert.equal(written.needs_ticket, "");
+  assert.equal(written.no_sale_ticket, "yes");
   assert.equal(written.ticket_name, "");
 });
 

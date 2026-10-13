@@ -68,6 +68,7 @@ function peopleWrite(draft, kept) {
     kaptain:
       draft.sale_available === "yes" && draft.kaptain === "yes" ? "yes" : "",
     needs_ticket: ticket.needs_ticket,
+    no_sale_ticket: draft.no_sale_ticket === "yes" ? "yes" : "",
     ticket_name: ticket.ticket_name,
     ticket_email: ticket.ticket_email,
     ticket_birth: ticket.ticket_birth,

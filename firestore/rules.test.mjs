@@ -45,6 +45,7 @@ function person(overrides) {
       sale_available: "",
       kaptain: "",
       needs_ticket: "",
+      no_sale_ticket: "",
       ticket_name: "",
       ticket_email: "",
       ticket_birth: "",
@@ -164,6 +165,18 @@ test("companions require a tent and cannot include yourself", async function () 
       share_with: ["Ada Lovelace"],
       whatsapp: "",
     }),
+  );
+});
+
+test("a missed sale ticket is yes or blank", async function () {
+  await reset(1);
+  await signUp("ada", "ada@x.test");
+  const ada = db("ada", "ada@x.test");
+  await assertFails(
+    updateDoc(doc(ada, "people/ada"), { no_sale_ticket: "no" }),
+  );
+  await assertSucceeds(
+    updateDoc(doc(ada, "people/ada"), { no_sale_ticket: "yes" }),
   );
 });
 

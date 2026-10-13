@@ -292,6 +292,13 @@
             </label>
             <p class="field-error" data-field="purchased_size" hidden></p>
           </div>
+          <div class="card">
+            <h2>Did you not get a ticket at the sale?</h2>
+            <label class="row ticket-ask">
+              <input name="no_sale_ticket" type="checkbox" />
+              <span>No, I did not manage to get a ticket at the sale</span>
+            </label>
+          </div>
           <div class="actions">
             <button id="save-profile" class="solid" type="submit">Save</button>
           </div>
@@ -431,6 +438,7 @@
                   <th>At sale</th>
                   <th>Potential Kaptain</th>
                   <th>Bought</th>
+                  <th>No ticket</th>
                   <th>Tent</th>
                   <th>Owes</th>
                   <th>Paid</th>
@@ -567,6 +575,43 @@
                 </tr>
               </thead>
               <tbody id="ticket-rows"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-heading">
+            <h2>Did not get a ticket</h2>
+            <div class="heading-actions">
+              <button id="copy-no-ticket-emails" class="solid" type="button">
+                Copy email addresses
+              </button>
+              <button id="copy-no-ticket-phones" class="solid" type="button">
+                Copy phone numbers
+              </button>
+            </div>
+          </div>
+          <p id="no-ticket-count" class="table-stats"></p>
+          <div class="member-filters">
+            <label>
+              Filter
+              <input
+                id="no-ticket-filter"
+                type="search"
+                placeholder="Name, kode, WhatsApp…"
+              />
+            </label>
+            <p class="filter-count" id="no-ticket-shown">0 showing</p>
+          </div>
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Kode</th>
+                  <th>WhatsApp</th>
+                </tr>
+              </thead>
+              <tbody id="no-ticket-rows"></tbody>
             </table>
           </div>
         </div>
