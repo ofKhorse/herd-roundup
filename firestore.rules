@@ -69,9 +69,8 @@ service cloud.firestore {
         && data.ticket_residency == "";
     }
 
-    function ticketFilled(data) {
-      return data.needs_ticket == "yes"
-        && data.ticket_name is string
+    function identityFilled(data) {
+      return data.ticket_name is string
         && data.ticket_name.size() > 0
         && data.ticket_name.size() < 200
         && emailOk(data.ticket_email)
@@ -84,6 +83,10 @@ service cloud.firestore {
         && data.ticket_residency is string
         && data.ticket_residency.size() > 0
         && data.ticket_residency.size() < 100;
+    }
+
+    function ticketFilled(data) {
+      return data.needs_ticket == "yes" && identityFilled(data);
     }
 
     function paymentOk(data) {
@@ -170,8 +173,19 @@ service cloud.firestore {
           || (data.sale_available != "yes" && data.kaptain == "")
         )
         && (
-          (data.sale_available == "no" && (ticketBlank(data) || ticketFilled(data)))
-          || (data.sale_available != "no" && ticketBlank(data))
+          (data.sale_available == "no" && ticketFilled(data))
+          || (
+            data.no_sale_ticket == "yes"
+            && data.needs_ticket == ""
+            && identityFilled(data)
+          )
+          || (
+            (
+              !data.keys().hasAny(["no_sale_ticket"])
+              || data.no_sale_ticket != "yes"
+            )
+            && ticketBlank(data)
+          )
         )
         && (
           !data.keys().hasAny(["no_sale_ticket"])

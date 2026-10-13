@@ -168,15 +168,33 @@ test("companions require a tent and cannot include yourself", async function () 
   );
 });
 
-test("a missed sale ticket is yes or blank", async function () {
+test("a missed sale ticket stores the same details without asking for a buyer", async function () {
   await reset(1);
   await signUp("ada", "ada@x.test");
   const ada = db("ada", "ada@x.test");
+  const identity = {
+    no_sale_ticket: "yes",
+    needs_ticket: "",
+    ticket_name: "Ada Lovelace",
+    ticket_email: "ada@boom.test",
+    ticket_birth: "1990-04-05",
+    ticket_gender: "female",
+    ticket_nationality: "Swiss",
+    ticket_residency: "Portugal",
+  };
   await assertFails(
     updateDoc(doc(ada, "people/ada"), { no_sale_ticket: "no" }),
   );
-  await assertSucceeds(
+  await assertFails(
     updateDoc(doc(ada, "people/ada"), { no_sale_ticket: "yes" }),
+  );
+  await assertSucceeds(updateDoc(doc(ada, "people/ada"), identity));
+  await assertSucceeds(
+    updateDoc(doc(ada, "people/ada"), {
+      sale_available: "yes",
+      kaptain: "",
+      ...identity,
+    }),
   );
 });
 

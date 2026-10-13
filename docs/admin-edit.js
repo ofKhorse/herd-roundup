@@ -183,14 +183,25 @@ function memberEditForm(member, paidText) {
   village.querySelector("select").addEventListener("change", function () {
     sizeRow.hidden = village.querySelector("select").value !== "yes";
   });
+  function placeTicketFields() {
+    var missedOn = missedBox.checked;
+    var asking = !ticketRow.hidden && askBox.checked;
+    if (missedOn) {
+      missed.after(ticketFields);
+    } else {
+      ticketRow.appendChild(ticketFields);
+    }
+    ticketFields.hidden = !(missedOn || asking);
+  }
   sale.querySelector("select").addEventListener("change", function () {
     var value = sale.querySelector("select").value;
     kaptainRow.hidden = value !== "yes";
     ticketRow.hidden = value !== "no";
+    placeTicketFields();
   });
-  askBox.addEventListener("change", function () {
-    ticketFields.hidden = !askBox.checked;
-  });
+  askBox.addEventListener("change", placeTicketFields);
+  missedBox.addEventListener("change", placeTicketFields);
+  placeTicketFields();
   form.addEventListener("submit", function (event) {
     event.preventDefault();
     saveAdminMember_(member, form, mates, error);
@@ -291,6 +302,7 @@ function adminDraft_(form, mates) {
     sale = "";
   }
   var needs = sale === "no" && form.needs_ticket.checked;
+  var keepTicket = needs || form.no_sale_ticket.checked;
   return {
     full_name: form.full_name.value.trim(),
     stay: stay,
@@ -303,11 +315,11 @@ function adminDraft_(form, mates) {
     kaptain: form.kaptain.value === "yes" ? "yes" : "",
     needs_ticket: needs ? "yes" : "",
     no_sale_ticket: form.no_sale_ticket.checked ? "yes" : "",
-    ticket_name: needs ? form.ticket_name.value.trim() : "",
-    ticket_email: needs ? form.ticket_email.value.trim() : "",
-    ticket_birth: needs ? form.ticket_birth.value : "",
-    ticket_gender: needs ? form.ticket_gender.value : "",
-    ticket_nationality: needs ? form.ticket_nationality.value.trim() : "",
-    ticket_residency: needs ? form.ticket_residency.value.trim() : "",
+    ticket_name: keepTicket ? form.ticket_name.value.trim() : "",
+    ticket_email: keepTicket ? form.ticket_email.value.trim() : "",
+    ticket_birth: keepTicket ? form.ticket_birth.value : "",
+    ticket_gender: keepTicket ? form.ticket_gender.value : "",
+    ticket_nationality: keepTicket ? form.ticket_nationality.value.trim() : "",
+    ticket_residency: keepTicket ? form.ticket_residency.value.trim() : "",
   };
 }

@@ -177,6 +177,27 @@ function recordFromRow(data, row) {
   if (bought.error) return fail(bought.error);
   const sale = saleAnswer(data);
   if (sale.error) return fail(sale.error);
+  const missedSale = cell(data.no_sale_ticket).toLowerCase() === "yes";
+  const ticket =
+    sale.needs_ticket === "yes"
+      ? sale
+      : missedSale
+        ? {
+            ticket_name: cell(data.ticket_name),
+            ticket_email: normalizeEmail(data.ticket_email),
+            ticket_birth: cell(data.ticket_birth),
+            ticket_gender: cell(data.ticket_gender).toLowerCase(),
+            ticket_nationality: cell(data.ticket_nationality),
+            ticket_residency: cell(data.ticket_residency),
+          }
+        : {
+            ticket_name: "",
+            ticket_email: "",
+            ticket_birth: "",
+            ticket_gender: "",
+            ticket_nationality: "",
+            ticket_residency: "",
+          };
   const person = {
     member_code: code,
     email,
@@ -195,14 +216,13 @@ function recordFromRow(data, row) {
     sale_available: sale.sale_available,
     kaptain: sale.kaptain,
     needs_ticket: sale.needs_ticket,
-    no_sale_ticket:
-      cell(data.no_sale_ticket).toLowerCase() === "yes" ? "yes" : "",
-    ticket_name: sale.ticket_name,
-    ticket_email: sale.ticket_email,
-    ticket_birth: sale.ticket_birth,
-    ticket_gender: sale.ticket_gender,
-    ticket_nationality: sale.ticket_nationality,
-    ticket_residency: sale.ticket_residency,
+    no_sale_ticket: missedSale ? "yes" : "",
+    ticket_name: ticket.ticket_name,
+    ticket_email: ticket.ticket_email,
+    ticket_birth: ticket.ticket_birth,
+    ticket_gender: ticket.ticket_gender,
+    ticket_nationality: ticket.ticket_nationality,
+    ticket_residency: ticket.ticket_residency,
   };
   const keys = Object.keys(person);
   if (
