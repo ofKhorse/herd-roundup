@@ -463,7 +463,6 @@ function showSession(result) {
   }
   clearFieldErrors();
   notice.textContent = "";
-  openInfoOnce(result.person.member_code);
   auth.hidden = true;
   state.directory = result.directory;
   state.companions = result.person.share_with.slice();
@@ -2632,31 +2631,6 @@ function escapeInfoAttr_(value) {
     .replace(/&/g, "&amp;")
     .replace(/"/g, "&quot;")
     .replace(/</g, "&lt;");
-}
-
-function openInfoOnce(memberCode) {
-  if (!memberCode) {
-    return;
-  }
-  var key = "herd-roundup-info-" + memberCode;
-  var seen = false;
-  try {
-    seen = localStorage.getItem(key) === "yes";
-  } catch (error) {
-    seen = false;
-  }
-  if (seen) {
-    return;
-  }
-  var info = document.querySelector("#info");
-  info.open = true;
-  loadInfo();
-  info.scrollIntoView({ block: "start" });
-  try {
-    localStorage.setItem(key, "yes");
-  } catch (error) {
-    return;
-  }
 }
 
 function showWhatsapp(value) {
