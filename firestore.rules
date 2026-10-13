@@ -133,6 +133,7 @@ service cloud.firestore {
           "sale_available",
           "kaptain",
           "needs_ticket",
+          "no_sale_ticket",
           "ticket_name",
           "ticket_email",
           "ticket_birth",
@@ -171,6 +172,10 @@ service cloud.firestore {
         && (
           (data.sale_available == "no" && (ticketBlank(data) || ticketFilled(data)))
           || (data.sale_available != "no" && ticketBlank(data))
+        )
+        && (
+          !data.keys().hasAny(["no_sale_ticket"])
+          || data.no_sale_ticket in ["", "yes"]
         );
     }
 

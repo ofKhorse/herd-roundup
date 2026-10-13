@@ -138,6 +138,17 @@ function memberEditForm(member, paidText) {
   bought.appendChild(boughtBox);
   bought.appendChild(boughtText);
   form.appendChild(bought);
+  var missed = document.createElement("label");
+  missed.className = "row ticket-ask";
+  var missedBox = document.createElement("input");
+  missedBox.type = "checkbox";
+  missedBox.name = "no_sale_ticket";
+  missedBox.checked = member.no_sale_ticket === "yes";
+  var missedText = document.createElement("span");
+  missedText.textContent = "No, I did not manage to get a ticket at the sale";
+  missed.appendChild(missedBox);
+  missed.appendChild(missedText);
+  form.appendChild(missed);
   form.appendChild(
     selectField_(
       "purchased_size",
@@ -291,6 +302,7 @@ function adminDraft_(form, mates) {
     sale_available: sale,
     kaptain: form.kaptain.value === "yes" ? "yes" : "",
     needs_ticket: needs ? "yes" : "",
+    no_sale_ticket: form.no_sale_ticket.checked ? "yes" : "",
     ticket_name: needs ? form.ticket_name.value.trim() : "",
     ticket_email: needs ? form.ticket_email.value.trim() : "",
     ticket_birth: needs ? form.ticket_birth.value : "",

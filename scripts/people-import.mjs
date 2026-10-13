@@ -38,6 +38,7 @@ const PROFILE_KEYS = [
   "sale_available",
   "kaptain",
   "needs_ticket",
+  "no_sale_ticket",
   "ticket_name",
   "ticket_email",
   "ticket_birth",
@@ -194,6 +195,8 @@ function recordFromRow(data, row) {
     sale_available: sale.sale_available,
     kaptain: sale.kaptain,
     needs_ticket: sale.needs_ticket,
+    no_sale_ticket:
+      cell(data.no_sale_ticket).toLowerCase() === "yes" ? "yes" : "",
     ticket_name: sale.ticket_name,
     ticket_email: sale.ticket_email,
     ticket_birth: sale.ticket_birth,
